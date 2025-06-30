@@ -1,3 +1,4 @@
+/* src/app/(routes)/products/page.tsx */
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -85,14 +86,18 @@ export default function ProductsPage() {
   const saveProduct = async () => {
     try {
       if (!title.trim()) return alert("タイトル必須");
-      if (!file) return alert("画像を選択してください");
-      if (price === "" || isNaN(+price) || !file)
+      // 画像は “新規追加” 時のみ必須
+      if (formMode === "add" && !file) {
+        return alert("画像を選択してください");
+      }
+      if (price === "" || isNaN(+price)) {
         return alert("価格を入力してください");
+      }
 
       const id = editing?.id ?? uuid();
       let imageURL = editing?.imageURL ?? "";
 
-      /* 圧縮 & アップロード */
+      /* 圧縮 & アップロード (画像が選択されている場合のみ) */
       if (file) {
         const compressed = await imageCompression(file, {
           maxWidthOrHeight: 1200,
@@ -117,7 +122,6 @@ export default function ProductsPage() {
       }
       closeForm();
     } catch (err: unknown) {
-      // ← any を unknown に
       console.error("saveProduct error:", err);
       alert(`保存に失敗しました: ${getErrorMessage(err)}`);
     }
@@ -169,7 +173,7 @@ export default function ProductsPage() {
         {list.map((p) => (
           <div
             key={p.id}
-            className="border rounded-lg overflow-hidden shadow relative"
+            className="border rounded-lg overflow-hidden shadow relative bg-white"
           >
             {p.imageURL && (
               <div className="relative w-full aspect-square">
@@ -187,9 +191,8 @@ export default function ProductsPage() {
               <p className="text-pink-700 font-semibold">
                 ¥{p.price.toLocaleString()}
               </p>
-              <p className="text-sm whitespace-pre-wrap line-clamp-3">
-                {p.body}
-              </p>
+              {/* ▼ 行数制限を外し全文表示 */}
+              <p className="text-sm whitespace-pre-wrap">{p.body}</p>
 
               {isAdmin && (
                 <div className="flex gap-2 mt-2">
@@ -226,7 +229,7 @@ export default function ProductsPage() {
 
       {/* 管理フォーム (モーダル) */}
       {isAdmin && formMode && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 ">
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md bg-white rounded-lg p-6 space-y-4">
             <h2 className="text-xl font-bold text-center">
               {formMode === "edit" ? "商品を編集" : "新規商品追加"}
@@ -240,10 +243,10 @@ export default function ProductsPage() {
               className="w-full border px-3 py-2 rounded"
             />
             <input
-              type="number" // 数値入力
-              inputMode="numeric" // モバイルで数値キーボードを表示
-              step="1" // 1円単位（小数を許可するなら 0.01 など）
-              min={0} // 0円以上
+              type="number"
+              inputMode="numeric"
+              step="1"
+              min={0}
               placeholder="価格 (円)"
               value={price}
               onChange={(e) =>
@@ -262,12 +265,7 @@ export default function ProductsPage() {
               type="file"
               accept="image/*"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="
-                    bg-gray-500 text-white w-full
-                    h-10 px-3 py-1 text-sm
-                    md:h-12 md:px-4 md:py-2 md:text-base
-                    rounded
-                  "
+              className="bg-gray-500 text-white w-full h-10 px-3 py-1 rounded"
             />
 
             <div className="flex gap-2 justify-center">

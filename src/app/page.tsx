@@ -69,6 +69,7 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen overflow-hidden mt-16">
       {/* カスタム動画があるときだけ描画 */}
+
       {videoUrl && (
         <video
           key={videoUrl}
@@ -77,7 +78,7 @@ export default function HomePage() {
           muted
           playsInline
           preload="metadata"
-          className="absolute inset-0 w-full h-full object-contain bg-black"
+          className="absolute inset-0 w-full h-full object-contain bg-transparent"
         >
           <source src={videoUrl} type="video/mp4" />
         </video>

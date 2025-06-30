@@ -68,7 +68,7 @@ export default function LoginPage() {
   // ログイン済みならログアウト画面を表示
   if (user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
+      <div className="flex min-h-screen items-center justify-center  px-4">
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -88,7 +88,7 @@ export default function LoginPage() {
 
   // 未ログインならログインフォームを表示
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
+    <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -115,7 +115,11 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button onClick={handleLogin} disabled={loading} className="w-full bg-pink-600">
+          <Button
+            onClick={handleLogin}
+            disabled={loading}
+            className="w-full bg-pink-600"
+          >
             {loading ? "ログイン中..." : "ログイン"}
           </Button>
         </CardContent>
