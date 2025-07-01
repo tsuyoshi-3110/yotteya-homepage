@@ -26,6 +26,7 @@ import {
 } from "firebase/storage";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import Head from "next/head";
 
 /* ───────── サイトごとの固定キー ───────── */
 const SITE_KEY = "yotteya";
@@ -217,194 +218,212 @@ export default function ProductsPage() {
 
   /* ──────────── UI ──────────── */
   return (
-    <main className="max-w-5xl mx-auto p-4 mt-20">
-      {/* === アップロード進捗 === */}
-      {uploading && (
-        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/60 gap-4">
-          <p className="text-white">アップロード中… {progress}%</p>
-          <div className="w-64 h-2 bg-gray-700 rounded">
-            <div
-              className="h-full bg-green-500 rounded transition-all"
-              style={{ width: `${progress}%` }}
-            />
+    <>
+      {/* ✅ SEO用 Headタグ */}
+      <Head>
+        <title>メニュー一覧｜甘味処 よって屋</title>
+        <meta
+          name="description"
+          content="甘味処 よって屋の人気クレープメニュー一覧ページ。季節限定商品やおすすめクレープを写真付きでご紹介。"
+        />
+        <meta property="og:title" content="メニュー一覧｜甘味処 よって屋" />
+        <meta
+          property="og:description"
+          content="ふんわり生地とこだわりクリームのクレープメニューをご紹介。大阪市〇〇区の人気クレープ店。"
+        />
+        <meta property="og:image" content="/ogp-products.jpg" />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="ja_JP" />
+      </Head>
+      <main className="max-w-5xl mx-auto p-4 mt-20">
+        {/* === アップロード進捗 === */}
+        {uploading && (
+          <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/60 gap-4">
+            <p className="text-white">アップロード中… {progress}%</p>
+            <div className="w-64 h-2 bg-gray-700 rounded">
+              <div
+                className="h-full bg-green-500 rounded transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* === 商品カード === */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {list.map((p) => {
-          const isLoaded = loadedIds.has(p.id);
+        {/* === 商品カード === */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {list.map((p) => {
+            const isLoaded = loadedIds.has(p.id);
 
-          return (
-            <div
-              key={p.id}
-              className="border rounded-lg overflow-hidden shadow bg-white relative bg-gradient-to-b from-[#fe01be] to-[#fadb9f]"
-            >
-              {/* ⭐ 編集削除ボタン：画像右上に絶対配置 */}
-              {isAdmin && (
-                <div className="absolute top-2 right-2 z-20 flex gap-2">
-                  <button
-                    onClick={() => openEdit(p)}
-                    disabled={uploading}
-                    className="px-2 py-1 bg-blue-600 text-white text-md rounded shadow disabled:opacity-50"
-                  >
-                    編集
-                  </button>
-                  <button
-                    onClick={() => remove(p)}
-                    disabled={uploading}
-                    className="px-2 py-1 bg-red-600 text-white text-md rounded shadow disabled:opacity-50"
-                  >
-                    削除
-                  </button>
-                </div>
-              )}
+            return (
+              <div
+                key={p.id}
+                className="border rounded-lg overflow-hidden shadow bg-white relative bg-gradient-to-b from-[#fe01be] to-[#fadb9f]"
+              >
+                {/* ⭐ 編集削除ボタン：画像右上に絶対配置 */}
+                {isAdmin && (
+                  <div className="absolute top-2 right-2 z-20 flex gap-2">
+                    <button
+                      onClick={() => openEdit(p)}
+                      disabled={uploading}
+                      className="px-2 py-1 bg-blue-600 text-white text-md rounded shadow disabled:opacity-50"
+                    >
+                      編集
+                    </button>
+                    <button
+                      onClick={() => remove(p)}
+                      disabled={uploading}
+                      className="px-2 py-1 bg-red-600 text-white text-md rounded shadow disabled:opacity-50"
+                    >
+                      削除
+                    </button>
+                  </div>
+                )}
 
-              {/* ⭐ スピナー（未ロード時のみ） */}
-              {!isLoaded && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/10">
-                  <svg
-                    className="w-8 h-8 animate-spin text-pink-600"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
+                {/* ⭐ スピナー（未ロード時のみ） */}
+                {!isLoaded && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/10">
+                    <svg
+                      className="w-8 h-8 animate-spin text-pink-600"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      />
+                    </svg>
+                  </div>
+                )}
+
+                {/* メディア本体 */}
+                {p.mediaType === "image" ? (
+                  <div className="relative w-full aspect-square">
+                    <Image
+                      src={p.mediaURL}
+                      alt={p.title}
+                      fill
+                      className="object-cover"
+                      sizes="(min-width:1024px) 320px, (min-width:640px) 45vw, 90vw"
+                      onLoad={() =>
+                        setLoadedIds((prev) => new Set(prev).add(p.id))
+                      }
                     />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                </div>
-              )}
-
-              {/* メディア本体 */}
-              {p.mediaType === "image" ? (
-                <div className="relative w-full aspect-square">
-                  <Image
+                  </div>
+                ) : (
+                  <video
                     src={p.mediaURL}
-                    alt={p.title}
-                    fill
-                    className="object-cover"
-                    sizes="(min-width:1024px) 320px, (min-width:640px) 45vw, 90vw"
-                    onLoad={() =>
+                    muted
+                    playsInline
+                    autoPlay
+                    loop
+                    preload="auto"
+                    className="w-full aspect-square object-cover pointer-events-none"
+                    onLoadedData={() =>
                       setLoadedIds((prev) => new Set(prev).add(p.id))
                     }
                   />
+                )}
+
+                {/* テキスト部分 */}
+                <div className="p-4 space-y-2">
+                  <h2 className="text-lg font-bold">{p.title}</h2>
+                  <p className="text-pink-700 font-semibold">
+                    ¥{p.price.toLocaleString()}
+                  </p>
+                  <p className="text-sm whitespace-pre-wrap">{p.body}</p>
                 </div>
-              ) : (
-                <video
-                  src={p.mediaURL}
-                  muted
-                  playsInline
-                  autoPlay
-                  loop
-                  preload="auto"
-                  className="w-full aspect-square object-cover pointer-events-none"
-                  onLoadedData={() =>
-                    setLoadedIds((prev) => new Set(prev).add(p.id))
-                  }
-                />
-              )}
-
-              {/* テキスト部分 */}
-              <div className="p-4 space-y-2">
-                <h2 className="text-lg font-bold">{p.title}</h2>
-                <p className="text-pink-700 font-semibold">
-                  ¥{p.price.toLocaleString()}
-                </p>
-                <p className="text-sm whitespace-pre-wrap">{p.body}</p>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* === 新規追加ボタン === */}
-      {isAdmin && formMode === null && (
-        <button
-          onClick={openAdd}
-          aria-label="新規追加"
-          disabled={uploading}
-          className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-pink-600 text-white
+        {/* === 新規追加ボタン === */}
+        {isAdmin && formMode === null && (
+          <button
+            onClick={openAdd}
+            aria-label="新規追加"
+            disabled={uploading}
+            className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-pink-600 text-white
                    flex items-center justify-center shadow-lg hover:bg-pink-700
                    active:scale-95 transition disabled:opacity-50"
-        >
-          <Plus size={28} />
-        </button>
-      )}
+          >
+            <Plus size={28} />
+          </button>
+        )}
 
-      {/* === 管理フォーム (モーダル) === */}
-      {isAdmin && formMode && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md bg-white rounded-lg p-6 space-y-4">
-            <h2 className="text-xl font-bold text-center">
-              {formMode === "edit" ? "商品を編集" : "新規商品追加"}
-            </h2>
+        {/* === 管理フォーム (モーダル) === */}
+        {isAdmin && formMode && (
+          <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
+            <div className="w-full max-w-md bg-white rounded-lg p-6 space-y-4">
+              <h2 className="text-xl font-bold text-center">
+                {formMode === "edit" ? "商品を編集" : "新規商品追加"}
+              </h2>
 
-            <input
-              type="text"
-              placeholder="タイトル"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
-              disabled={uploading}
-            />
-            <input
-              type="number"
-              min={0}
-              inputMode="numeric"
-              placeholder="価格 (円)"
-              value={price}
-              onChange={(e) =>
-                setPrice(e.target.value === "" ? "" : Number(e.target.value))
-              }
-              className="w-full border px-3 py-2 rounded"
-              disabled={uploading}
-            />
-            <textarea
-              placeholder="紹介文"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
-              rows={4}
-              disabled={uploading}
-            />
-            <input
-              type="file"
-              accept="image/*,video/mp4"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="bg-gray-500 text-white w-full h-10 px-3 py-1 rounded"
-              disabled={uploading}
-            />
-
-            <div className="flex gap-2 justify-center">
-              <button
-                onClick={saveProduct}
+              <input
+                type="text"
+                placeholder="タイトル"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
                 disabled={uploading}
-                className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
-              >
-                {formMode === "edit" ? "更新" : "追加"}
-              </button>
-              <button
-                onClick={closeForm}
+              />
+              <input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                placeholder="価格 (円)"
+                value={price}
+                onChange={(e) =>
+                  setPrice(e.target.value === "" ? "" : Number(e.target.value))
+                }
+                className="w-full border px-3 py-2 rounded"
                 disabled={uploading}
-                className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
-              >
-                閉じる
-              </button>
+              />
+              <textarea
+                placeholder="紹介文"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+                rows={4}
+                disabled={uploading}
+              />
+              <input
+                type="file"
+                accept="image/*,video/mp4"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="bg-gray-500 text-white w-full h-10 px-3 py-1 rounded"
+                disabled={uploading}
+              />
+
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={saveProduct}
+                  disabled={uploading}
+                  className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
+                >
+                  {formMode === "edit" ? "更新" : "追加"}
+                </button>
+                <button
+                  onClick={closeForm}
+                  disabled={uploading}
+                  className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+                >
+                  閉じる
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </main>
+        )}
+      </main>
+    </>
   );
 }

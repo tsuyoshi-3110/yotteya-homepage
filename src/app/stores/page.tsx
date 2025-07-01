@@ -24,6 +24,7 @@ import {
 } from "firebase/storage";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import Head from "next/head";
 
 const SITE_KEY = "yotteya";
 const STORE_COL = `siteStores/${SITE_KEY}/items`;
@@ -184,150 +185,167 @@ export default function StoresPage() {
   };
 
   return (
-    <main className="max-w-5xl mx-auto p-4 mt-20">
-      {/* 店舗カード */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {stores.map((s) => (
-          <div
-            key={s.id}
-            className="bg-white rounded-lg overflow-hidden shadow relative bg-gradient-to-b from-[#fe01be] to-[#fadb9f]"
-          >
-            <div className="relative w-full h-48">
-              <Image
-                src={s.imageURL}
-                alt={s.name}
-                fill
-                className="object-cover"
-              />
-            </div>
+    <>
+      <Head>
+        <title>店舗一覧｜甘味処 よって屋</title>
+        <meta
+          name="description"
+          content="甘味処 よって屋の店舗一覧ページ。大阪市〇〇区にある各店舗の所在地や紹介文を掲載しています。"
+        />
+        <meta property="og:title" content="店舗一覧｜甘味処 よって屋" />
+        <meta
+          property="og:description"
+          content="甘味処 よって屋 各店舗の住所・紹介情報を掲載。大阪市〇〇区のクレープ店。"
+        />
+        <meta property="og:image" content="/ogp-stores.jpg" />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="ja_JP" />
+      </Head>
+      <main className="max-w-5xl mx-auto p-4 mt-20">
+        {/* 店舗カード */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {stores.map((s) => (
+            <div
+              key={s.id}
+              className="bg-white rounded-lg overflow-hidden shadow relative bg-gradient-to-b from-[#fe01be] to-[#fadb9f]"
+            >
+              <div className="relative w-full h-48">
+                <Image
+                  src={s.imageURL}
+                  alt={s.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
 
-            <div className="p-4 space-y-2">
-              <h2 className="text-xl font-semibold">{s.name}</h2>
+              <div className="p-4 space-y-2">
+                <h2 className="text-xl font-semibold">{s.name}</h2>
 
-              {/* Googleマップリンク付き住所 */}
-              <p className="text-gray-600">
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    s.address
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline text-blue-700 hover:text-blue-900"
-                >
-                  {s.address}
-                </a>
-              </p>
-
-              {s.description && (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {s.description}
+                {/* Googleマップリンク付き住所 */}
+                <p className="text-gray-600">
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      s.address
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-blue-700 hover:text-blue-900"
+                  >
+                    {s.address}
+                  </a>
                 </p>
+
+                {s.description && (
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    {s.description}
+                  </p>
+                )}
+              </div>
+
+              {isAdmin && (
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <button
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-sm"
+                    onClick={() => openEdit(s)}
+                  >
+                    編集
+                  </button>
+                  <button
+                    className="px-2 py-1 bg-red-600 text-white rounded text-sm"
+                    onClick={() => removeStore(s)}
+                  >
+                    削除
+                  </button>
+                </div>
               )}
             </div>
+          ))}
+        </div>
 
-            {isAdmin && (
-              <div className="absolute top-2 right-2 flex gap-2">
-                <button
-                  className="px-2 py-1 bg-blue-600 text-white rounded text-sm"
-                  onClick={() => openEdit(s)}
-                >
-                  編集
-                </button>
-                <button
-                  className="px-2 py-1 bg-red-600 text-white rounded text-sm"
-                  onClick={() => removeStore(s)}
-                >
-                  削除
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+        {/* 新規追加ボタン */}
+        {isAdmin && formMode === null && (
+          <button
+            onClick={openAdd}
+            className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-pink-600 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
+          >
+            <Plus size={28} />
+          </button>
+        )}
 
-      {/* 新規追加ボタン */}
-      {isAdmin && formMode === null && (
-        <button
-          onClick={openAdd}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-pink-600 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
-        >
-          <Plus size={28} />
-        </button>
-      )}
+        {/* フォームモーダル */}
+        {isAdmin && formMode && (
+          <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md space-y-4">
+              <h2 className="text-xl font-bold text-center">
+                {formMode === "edit" ? "店舗を編集" : "店舗を追加"}
+              </h2>
 
-      {/* フォームモーダル */}
-      {isAdmin && formMode && (
-        <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md space-y-4">
-            <h2 className="text-xl font-bold text-center">
-              {formMode === "edit" ? "店舗を編集" : "店舗を追加"}
-            </h2>
+              <input
+                type="text"
+                placeholder="店舗名"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+                disabled={uploading}
+              />
+              <input
+                type="text"
+                placeholder="住所"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+                disabled={uploading}
+              />
+              <textarea
+                placeholder="紹介文"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+                rows={3}
+                disabled={uploading}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="w-full"
+                disabled={uploading}
+              />
 
-            <input
-              type="text"
-              placeholder="店舗名"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
-              disabled={uploading}
-            />
-            <input
-              type="text"
-              placeholder="住所"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
-              disabled={uploading}
-            />
-            <textarea
-              placeholder="紹介文"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
-              rows={3}
-              disabled={uploading}
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="w-full"
-              disabled={uploading}
-            />
-
-            {uploading && (
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500">
-                  アップロード中… {progress}%
-                </p>
-                <div className="w-full h-2 bg-gray-300 rounded">
-                  <div
-                    className="h-full bg-green-500 rounded transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
+              {uploading && (
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">
+                    アップロード中… {progress}%
+                  </p>
+                  <div className="w-full h-2 bg-gray-300 rounded">
+                    <div
+                      className="h-full bg-green-500 rounded transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="flex justify-center gap-2">
-              <button
-                onClick={saveStore}
-                disabled={uploading}
-                className="px-4 py-2 bg-green-600 text-white rounded"
-              >
-                保存
-              </button>
-              <button
-                onClick={closeForm}
-                disabled={uploading}
-                className="px-4 py-2 bg-gray-500 text-white rounded"
-              >
-                キャンセル
-              </button>
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={saveStore}
+                  disabled={uploading}
+                  className="px-4 py-2 bg-green-600 text-white rounded"
+                >
+                  保存
+                </button>
+                <button
+                  onClick={closeForm}
+                  disabled={uploading}
+                  className="px-4 py-2 bg-gray-500 text-white rounded"
+                >
+                  キャンセル
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </main>
+        )}
+      </main>
+    </>
   );
 }
