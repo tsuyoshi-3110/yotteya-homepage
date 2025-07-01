@@ -47,6 +47,10 @@ export default function RootLayout({
       <head>
         <link rel="preload" as="image" href={WALLPAPER} type="image/webp" />
         <meta name="theme-color" content="#ffffff" />
+        <meta
+          name="google-site-verification"
+          content="UcH7-5B4bwpJxxSjIpBskahFhBRTSLRJUZ8A3LAnnFE"
+        />
       </head>
 
       <body className="relative min-h-screen">
