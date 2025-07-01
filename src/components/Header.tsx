@@ -13,10 +13,20 @@ import {
 } from "@/components/ui/sheet";
 import Image from "next/image";
 import clsx from "clsx";
+import { Instagram, X } from "lucide-react";
 
 type HeaderProps = {
   className?: string;
 };
+
+const SNS = [
+  {
+    name: "Instagram",
+    href: "https://www.instagram.com/yotteya_crepe",
+    icon: Instagram,
+  },
+  { name: "X", href: "https://twitter.com/yotteya_crepe", icon: X },
+];
 
 export default function Header({ className = "" }: HeaderProps) {
   /* ▼ 追加：Sheet の開閉を管理するステート */
@@ -42,6 +52,21 @@ export default function Header({ className = "" }: HeaderProps) {
         />
         甘味処 よって屋
       </Link>
+
+      <nav className="flex gap-4">
+        {SNS.map(({ name, href, icon: Icon }) => (
+          <a
+            key={name}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={name}
+            className="text-gray-600 hover:text-pink-600 transition"
+          >
+            <Icon size={22} strokeWidth={1.8} />
+          </a>
+        ))}
+      </nav>
 
       {/* PCナビ */}
       <nav className="hidden lg:flex space-x-6">
@@ -77,6 +102,7 @@ export default function Header({ className = "" }: HeaderProps) {
 
             <div className="flex-1 flex flex-col justify-center items-center space-y-4 text-center">
               {/* onClick で setOpen(false) */}
+
               <Link
                 href="/products"
                 onClick={() => setOpen(false)}
@@ -91,6 +117,21 @@ export default function Header({ className = "" }: HeaderProps) {
               >
                 管理者ログイン
               </Link>
+
+              <nav className="flex gap-4">
+                {SNS.map(({ name, href, icon: Icon }) => (
+                  <a
+                    key={name}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={name}
+                    className="text-gray-600 hover:text-pink-600 transition"
+                  >
+                    <Icon size={22} strokeWidth={1.8} />
+                  </a>
+                ))}
+              </nav>
             </div>
           </SheetContent>
         </Sheet>
