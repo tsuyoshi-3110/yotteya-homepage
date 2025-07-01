@@ -1,5 +1,3 @@
-/* src/app/layout.tsx ─ 抜粋 */
-
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -26,9 +24,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body
-        /* ❶ フォント類 */
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
-        /* ❷ ここで壁紙を直接適用 */
         style={{
           backgroundImage: `url(${WALLPAPER})`,
           backgroundSize: "cover",
@@ -36,7 +32,6 @@ export default function RootLayout({
           backgroundAttachment: "fixed",
         }}
       >
-        {/* 他ページより常に背面なので追加の z-index 調整は不要 */}
         <Header />
         {children}
       </body>

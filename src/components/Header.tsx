@@ -26,9 +26,10 @@ export default function Header({ className = "" }: HeaderProps) {
     <header
       className={clsx(
         "fixed top-0 z-30 w-full",
-        "flex items-center justify-between px-4 py-3 bg-pink-500 text-white",
+        "flex items-center justify-between px-4 py- text-white bg-gradient-to-b from-[#fe01be] to-[#fadb9f]",
         className
       )}
+      style={{ "--header-h": "4rem" } as React.CSSProperties}
     >
       {/* ロゴ */}
       <Link href="/" className="text-xl font-bold flex items-center gap-2 py-2">
@@ -66,7 +67,10 @@ export default function Header({ className = "" }: HeaderProps) {
             </Button>
           </SheetTrigger>
 
-          <SheetContent side="right" className="bg-pink-50 flex flex-col">
+          <SheetContent
+            side="right"
+            className="bg-gradient-to-b from-[#fe01be] to-[#fadb9f] flex flex-col"
+          >
             <SheetHeader className="pt-4 px-4">
               <SheetTitle className="text-center">メニュー</SheetTitle>
             </SheetHeader>
@@ -76,14 +80,14 @@ export default function Header({ className = "" }: HeaderProps) {
               <Link
                 href="/products"
                 onClick={() => setOpen(false)}
-                className="text-pink-700 text-lg"
+                className="text-lg text-white"
               >
                 商品を見る
               </Link>
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className="text-pink-700 text-lg"
+                className=" text-lg text-white"
               >
                 管理者ログイン
               </Link>
