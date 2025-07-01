@@ -130,7 +130,7 @@ export default function Header({ className = "" }: HeaderProps) {
               </Link>
               <Link
                 href="mailto:tsreform.yukisaito@gmail.com"
-                className="hover:underline"
+                className="hover:underline text-white"
               >
                 取材はこちら
               </Link>
