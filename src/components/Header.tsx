@@ -70,27 +70,8 @@ export default function Header({ className = "" }: HeaderProps) {
         ))}
       </nav>
 
-      {/* PCナビ */}
-      <nav className="hidden lg:flex space-x-6">
-        <Link href="/products" className="hover:underline">
-          商品を見る
-        </Link>
-        <Link href="/stores" className="hover:underline">
-          店舗案内
-        </Link>
-        <Link
-          href="mailto:tsreform.yukisaito@gmail.com"
-          className="hover:underline"
-        >
-          取材はこちら
-        </Link>
-        <Link href="/login" className="hover:underline">
-          管理者ログイン
-        </Link>
-      </nav>
-
       {/* スマホハンバーガー */}
-      <div className="lg:hidden">
+      <div>
         {/* open / onOpenChange を指定 */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
@@ -105,10 +86,16 @@ export default function Header({ className = "" }: HeaderProps) {
 
           <SheetContent
             side="right"
-            className="bg-gradient-to-b from-[#fe01be] to-[#fadb9f] flex flex-col"
+            className="
+    bg-gradient-to-b from-[#fe01be] to-[#fadb9f] flex flex-col
+    [&_[data-radix-sheet-close]]:w-10 [&_[data-radix-sheet-close]]:h-10
+    [&_[data-radix-sheet-close]_svg]:w-6 [&_[data-radix-sheet-close]_svg]:h-6
+  "
           >
             <SheetHeader className="pt-4 px-4">
-              <SheetTitle className="text-center">メニュー</SheetTitle>
+              <SheetTitle className="text-center text-xl text-white">
+                メニュー
+              </SheetTitle>
             </SheetHeader>
 
             <div className="flex-1 flex flex-col justify-center items-center space-y-4 text-center">
@@ -129,15 +116,25 @@ export default function Header({ className = "" }: HeaderProps) {
                 店舗案内
               </Link>
               <Link
+                href="/about"
+                onClick={() => setOpen(false)}
+                className="text-lg text-white"
+              >
+                当店の思い
+              </Link>
+              <Link
                 href="mailto:tsreform.yukisaito@gmail.com"
                 className="hover:underline text-white"
               >
                 取材はこちら
               </Link>
+            </div>
+            {/* ▼ ログインだけ下に固定 */}
+            <div className="p-4">
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className=" text-lg text-white"
+                className="block text-center text-white text-lg"
               >
                 管理者ログイン
               </Link>
