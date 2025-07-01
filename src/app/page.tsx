@@ -8,7 +8,6 @@ export default function HomePage() {
     <main className="relative bg-transparent">
       {/* 背景動画コンポーネント */}
       <BackgroundVideo />
-
       {/* ページ内の他のコンテンツがあればここに書く */}
     </main>
   );

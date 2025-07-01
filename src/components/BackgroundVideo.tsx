@@ -79,7 +79,7 @@ export default function BackgroundVideo() {
           preload="auto"
           poster={posterUrl ?? ""}
           onCanPlay={() => setVideoReady(true)}
-          className="absolute inset-0 w-full h-full object-contain bg-black"
+          className="absolute inset-0 w-full h-full object-contain bg-transparen"
         >
           <source src={videoUrl} type="video/mp4" />
         </video>

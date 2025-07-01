@@ -5,7 +5,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 
 /* ★ 背景画像（出来れば webp など軽量形式で用意） */
-const WALLPAPER = "/images/wallpaper/retro-crepe-bg.png";
+const WALLPAPER = "/images/wallpaper/kamon.jpg";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({
@@ -38,7 +38,7 @@ export default function RootLayout({
         {/* === 背景レイヤー（下） === */}
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-0 -z-30 bg-cover bg-center bg-fixed"
+          className="pointer-events-none fixed inset-0 -z-20 bg-cover bg-center bg-fixed"
           style={{ backgroundImage: `url(${WALLPAPER})` }}
         />
 
@@ -46,10 +46,11 @@ export default function RootLayout({
         <div
           aria-hidden
           className="
-            pointer-events-none fixed inset-0 -z-10
-            bg-gradient-to-b
-            from-pink-50/70 via-rose-50/40 to-amber-50/60
-          "
+    pointer-events-none fixed inset-0 -z-10
+    bg-gradient-to-b
+    from-[rgba(245,75,202,0.9)]
+    to-[rgba(250,219,159,0.9)]
+  "
         />
 
         {/* === 常設ヘッダー & ページ内容 === */}
