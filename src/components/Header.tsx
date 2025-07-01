@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import Image from "next/image";
 import clsx from "clsx";
-import { Instagram, X } from "lucide-react";
+import { Instagram } from "lucide-react";
 
 type HeaderProps = {
   className?: string;
@@ -22,10 +22,9 @@ type HeaderProps = {
 const SNS = [
   {
     name: "Instagram",
-    href: "https://www.instagram.com/yotteya_crepe",
+    href: "https://www.instagram.com/yotteya.crape/",
     icon: Instagram,
   },
-  { name: "X", href: "https://twitter.com/yotteya_crepe", icon: X },
 ];
 
 export default function Header({ className = "" }: HeaderProps) {
@@ -36,24 +35,27 @@ export default function Header({ className = "" }: HeaderProps) {
     <header
       className={clsx(
         "fixed top-0 z-30 w-full",
-        "flex items-center justify-between px-4 py- text-white bg-gradient-to-b from-[#fe01be] to-[#fadb9f]",
+        "flex items-center justify-between px-4 py- text-white bg-gradient-to-b from-[#fe01be] to-[#fadb9f] ",
         className
       )}
       style={{ "--header-h": "4rem" } as React.CSSProperties}
     >
       {/* ロゴ */}
-      <Link href="/" className="text-xl font-bold flex items-center gap-2 py-2">
+      <Link
+        href="/"
+        className="text-xl font-bold flex items-center gap-2 py-2  hover:text-pink-600 hover:opacity-50"
+      >
         <Image
           src="/images/logo.jpg"
           alt="ロゴ"
           width={48}
           height={48}
-          className="w-12 h-auto object-contain"
+          className="w-12 h-auto object-contain transition-opacity duration-200 "
         />
         甘味処 よって屋
       </Link>
 
-      <nav className="flex gap-4">
+      <nav className="flex gap-4 ml-auto mr-6">
         {SNS.map(({ name, href, icon: Icon }) => (
           <a
             key={name}
@@ -61,9 +63,9 @@ export default function Header({ className = "" }: HeaderProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={name}
-            className="text-gray-600 hover:text-pink-600 transition"
+            className="text-white hover:text-pink-600 transition"
           >
-            <Icon size={22} strokeWidth={1.8} />
+            <Icon size={26} strokeWidth={1.8} />
           </a>
         ))}
       </nav>
@@ -72,6 +74,9 @@ export default function Header({ className = "" }: HeaderProps) {
       <nav className="hidden lg:flex space-x-6">
         <Link href="/products" className="hover:underline">
           商品を見る
+        </Link>
+        <Link href="/stores" className="hover:underline">
+          店舗案内
         </Link>
         <Link href="/login" className="hover:underline">
           管理者ログイン
@@ -111,27 +116,19 @@ export default function Header({ className = "" }: HeaderProps) {
                 商品を見る
               </Link>
               <Link
+                href="/stores"
+                onClick={() => setOpen(false)}
+                className="text-lg text-white"
+              >
+                店舗案内
+              </Link>
+              <Link
                 href="/login"
                 onClick={() => setOpen(false)}
                 className=" text-lg text-white"
               >
                 管理者ログイン
               </Link>
-
-              <nav className="flex gap-4">
-                {SNS.map(({ name, href, icon: Icon }) => (
-                  <a
-                    key={name}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={name}
-                    className="text-gray-600 hover:text-pink-600 transition"
-                  >
-                    <Icon size={22} strokeWidth={1.8} />
-                  </a>
-                ))}
-              </nav>
             </div>
           </SheetContent>
         </Sheet>

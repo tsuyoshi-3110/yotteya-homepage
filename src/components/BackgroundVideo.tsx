@@ -116,7 +116,7 @@ export default function BackgroundVideo() {
 
       {/* 管理者用 UI */}
       {isAdmin && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-center">
           {editing ? (
             <div className="space-y-2">
               <input
@@ -126,7 +126,7 @@ export default function BackgroundVideo() {
                 disabled={uploading}
                 className="bg-gray-700 text-white px-2 py-1 rounded"
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex justify-center gap-2 mt-2">
                 <button
                   onClick={handleUpload}
                   disabled={!file || uploading}

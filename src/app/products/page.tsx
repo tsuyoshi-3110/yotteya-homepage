@@ -239,8 +239,28 @@ export default function ProductsPage() {
           return (
             <div
               key={p.id}
-              className="border rounded-lg overflow-hidden shadow bg-white relative"
+              className="border rounded-lg overflow-hidden shadow bg-white relative bg-gradient-to-b from-[#fe01be] to-[#fadb9f]"
             >
+              {/* ⭐ 編集削除ボタン：画像右上に絶対配置 */}
+              {isAdmin && (
+                <div className="absolute top-2 right-2 z-20 flex gap-2">
+                  <button
+                    onClick={() => openEdit(p)}
+                    disabled={uploading}
+                    className="px-2 py-1 bg-blue-600 text-white text-md rounded shadow disabled:opacity-50"
+                  >
+                    編集
+                  </button>
+                  <button
+                    onClick={() => remove(p)}
+                    disabled={uploading}
+                    className="px-2 py-1 bg-red-600 text-white text-md rounded shadow disabled:opacity-50"
+                  >
+                    削除
+                  </button>
+                </div>
+              )}
+
               {/* ⭐ スピナー（未ロード時のみ） */}
               {!isLoaded && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/10">
@@ -295,32 +315,13 @@ export default function ProductsPage() {
                 />
               )}
 
-              {/* テキスト & 操作ボタン */}
+              {/* テキスト部分 */}
               <div className="p-4 space-y-2">
                 <h2 className="text-lg font-bold">{p.title}</h2>
                 <p className="text-pink-700 font-semibold">
                   ¥{p.price.toLocaleString()}
                 </p>
                 <p className="text-sm whitespace-pre-wrap">{p.body}</p>
-
-                {isAdmin && (
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      onClick={() => openEdit(p)}
-                      disabled={uploading}
-                      className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
-                    >
-                      編集
-                    </button>
-                    <button
-                      onClick={() => remove(p)}
-                      disabled={uploading}
-                      className="px-3 py-1 bg-red-600 text-white rounded disabled:opacity-50"
-                    >
-                      削除
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           );
@@ -334,8 +335,8 @@ export default function ProductsPage() {
           aria-label="新規追加"
           disabled={uploading}
           className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-pink-600 text-white
-                     flex items-center justify-center shadow-lg hover:bg-pink-700
-                     active:scale-95 transition disabled:opacity-50"
+                   flex items-center justify-center shadow-lg hover:bg-pink-700
+                   active:scale-95 transition disabled:opacity-50"
         >
           <Plus size={28} />
         </button>
