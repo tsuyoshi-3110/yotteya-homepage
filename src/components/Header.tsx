@@ -78,6 +78,12 @@ export default function Header({ className = "" }: HeaderProps) {
         <Link href="/stores" className="hover:underline">
           店舗案内
         </Link>
+        <Link
+          href="mailto:tsreform.yukisaito@gmail.com"
+          className="hover:underline"
+        >
+          取材はこちら
+        </Link>
         <Link href="/login" className="hover:underline">
           管理者ログイン
         </Link>
@@ -121,6 +127,12 @@ export default function Header({ className = "" }: HeaderProps) {
                 className="text-lg text-white"
               >
                 店舗案内
+              </Link>
+              <Link
+                href="mailto:tsreform.yukisaito@gmail.com"
+                className="hover:underline"
+              >
+                取材はこちら
               </Link>
               <Link
                 href="/login"
