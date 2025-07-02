@@ -1,50 +1,83 @@
-// components/BackgroundVideo.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import {
   getStorage,
   ref,
-  getDownloadURL,
   uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
 } from "firebase/storage";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import NextImage from "next/image";
 
 const SITE_KEY = "yotteya";
 const META_REF = doc(db, "siteSettings", SITE_KEY);
-const SITE_PATH = `videos/public/${SITE_KEY}/homeBackground.mp4`;
 const POSTER_EXT = ".jpg";
 
-export default function BackgroundVideo() {
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [posterUrl, setPosterUrl] = useState<string | null>(null);
-  const [videoReady, setVideoReady] = useState(false);
+type MediaType = "video" | "image";
+
+interface MetaDoc {
+  url: string;
+  type: MediaType;
+}
+
+export default function BackgroundMedia() {
+  /* state */
+  const [url, setUrl] = useState<string | null>(null);
+  const [type, setType] = useState<MediaType>("video");
+  const [poster, setPoster] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [editing, setEditing] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
 
   const uploading = progress !== null;
-  const buffering = !!videoUrl && !videoReady;
+  const loading = !!url && !ready;
 
+  /* 初期読み込み */
   useEffect(() => onAuthStateChanged(auth, (u) => setIsAdmin(!!u)), []);
+
   useEffect(() => {
     (async () => {
       const snap = await getDoc(META_REF);
-      if (!snap.exists()) return;
-      const url = snap.data().url as string;
-      setVideoUrl(url);
-      setPosterUrl(url.replace(/\.mp4(\?.*)?$/, POSTER_EXT));
+      if (snap.exists()) {
+        const data = snap.data() as MetaDoc;
+        setUrl(data.url);
+        setType(data.type);
+        if (data.type === "video") {
+          setPoster(data.url.replace(/\.mp4(\?.*)?$/, POSTER_EXT));
+        }
+      }
     })().catch(console.error);
   }, []);
 
-  const handleUpload = () => {
+  /* アップロード */
+  const upload = async () => {
     if (!file) return;
-    const task = uploadBytesResumable(ref(getStorage(), SITE_PATH), file);
+
+    const isVideo = file.type.startsWith("video/");
+    const ext = isVideo ? "mp4" : "jpg";
+    const path = `${
+      isVideo ? "videos" : "images"
+    }/public/${SITE_KEY}/homeBackground.${ext}`;
+    const storageRef = ref(getStorage(), path);
+
+    try {
+      await deleteObject(storageRef);
+    } catch {
+      // ファイルが無くても気にしない
+    }
+
+    const task = uploadBytesResumable(storageRef, file, {
+      contentType: file.type,
+    });
     setProgress(0);
-    setEditing(false);
+
     task.on(
       "state_changed",
       (s) => setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100)),
@@ -54,42 +87,72 @@ export default function BackgroundVideo() {
         setProgress(null);
       },
       async () => {
-        const url = await getDownloadURL(task.snapshot.ref);
-        await setDoc(META_REF, { url });
-        const bust = `&ts=${Date.now()}`;
-        setVideoReady(false);
-        setVideoUrl(`${url}${bust}`);
-        setPosterUrl(`${url.replace(/\.mp4$/, POSTER_EXT)}${bust}`);
+        const downloadURL = await getDownloadURL(storageRef);
+        await setDoc(META_REF, {
+          url: downloadURL,
+          type: isVideo ? "video" : "image",
+        });
+
+        const bust = `?ts=${Date.now()}`;
+        setUrl(downloadURL + bust);
+        setType(isVideo ? "video" : "image");
+        setPoster(
+          isVideo
+            ? downloadURL.replace(/\.mp4(\?.*)?$/, POSTER_EXT) + bust
+            : null
+        );
+        setReady(false);
         setProgress(null);
         setFile(null);
-        alert("動画を更新しました！");
+        setEditing(false);
+        alert("背景を更新しました！");
       }
     );
   };
 
-  return (
-    <div className="fixed inset-x-0 top-10 bottom-0 overflow-hidden bg-transparent">
-      {videoUrl && (
+  /* 描画 */
+  const renderMedia = () => {
+    if (!url) return null;
+    if (type === "video")
+      return (
         <video
-          key={videoUrl}
+          key={url}
           autoPlay
           loop
           muted
           playsInline
           preload="auto"
-          poster={posterUrl ?? ""}
-          onCanPlay={() => setVideoReady(true)}
-          className="absolute inset-0 w-full h-full object-contain bg-transparen"
+          poster={poster ?? ""}
+          onCanPlay={() => setReady(true)}
+          className="absolute inset-0 w-full h-full object-contain bg-transparent pointer-events-none"
         >
-          <source src={videoUrl} type="video/mp4" />
+          <source src={url} type="video/mp4" />
         </video>
-      )}
+      );
 
-      {/* 準備中やアップロード中のオーバーレイ */}
-      {(uploading || buffering) && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/60 gap-4">
+    return (
+      <NextImage
+        src={url}
+        alt="背景"
+        fill
+        className="absolute inset-0 w-full h-full object-contain bg-transparent pointer-events-none"
+        onLoad={() => setReady(true)}
+        priority
+        sizes="100vw"
+      />
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 top-10 bg-transparen">
+      {/* 背景メディア */}
+      {renderMedia()}
+
+      {/* ① 動画読み込み中だけ全画面マスク */}
+      {loading && (
+        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/60 gap-4">
           <svg
-            className="w-10 h-10 animate-spin text-pink-500"
+            className="w-12 h-12 animate-spin text-pink-500"
             viewBox="0 0 24 24"
           >
             <circle
@@ -98,64 +161,82 @@ export default function BackgroundVideo() {
               r="10"
               stroke="currentColor"
               strokeWidth="4"
-              className="opacity-25"
+              className="opacity-20"
             />
             <path
               fill="currentColor"
-              className="opacity-75"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              className="opacity-80"
+              d="M12 2a8 8 0 018 8h-4a4 4 0 00-4-4V2z"
             />
           </svg>
-          {uploading ? (
-            <p className="text-white">アップロード中… {progress}%</p>
-          ) : (
-            <p className="text-white">動画を読み込み中…</p>
-          )}
+          <p className="text-white">動画を読み込み中…</p>
         </div>
       )}
 
-      {/* 管理者用 UI */}
+      {/* ② 管理者 UI */}
       {isAdmin && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-center">
-          {editing ? (
-            <div className="space-y-2">
-              <input
-                type="file"
-                accept="video/mp4"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                disabled={uploading}
-                className="bg-gray-700 text-white px-2 py-1 rounded"
-              />
-              <div className="flex justify-center gap-2 mt-2">
-                <button
-                  onClick={handleUpload}
-                  disabled={!file || uploading}
-                  className="px-4 py-2 bg-green-600 rounded disabled:opacity-50"
-                >
-                  アップロード
-                </button>
-                <button
-                  onClick={() => {
-                    setEditing(false);
-                    setFile(null);
-                  }}
-                  disabled={uploading}
-                  className="px-4 py-2 bg-gray-500 rounded disabled:opacity-50"
-                >
-                  キャンセル
-                </button>
-              </div>
-            </div>
-          ) : (
+        <>
+          {/* 編集ボタン */}
+          {!editing && (
             <button
               onClick={() => setEditing(true)}
               disabled={uploading}
-              className="px-4 py-2 bg-pink-600 rounded disabled:opacity-50"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-pink-600 text-white rounded shadow disabled:opacity-50"
             >
-              動画編集
+              編集
             </button>
           )}
-        </div>
+
+          {/* 編集モーダル */}
+          {editing && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="w-full max-w-sm bg-white p-6 rounded-lg space-y-5">
+                <h2 className="text-lg font-bold text-center">背景を更新</h2>
+
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  className="w-full bg-gray-100 border px-3 py-2 rounded text-sm"
+                  disabled={uploading}
+                />
+
+                {/* ③ アップロード中だけプログレスバー表示 */}
+                {uploading && (
+                  <div className="space-y-1">
+                    <p className="text-center text-sm font-medium">
+                      アップロード中… {progress}%
+                    </p>
+                    <div className="w-64 h-2 bg-gray-700 rounded mx-auto">
+                      <div
+                        className="h-full bg-green-500 rounded transition-all"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-center pt-1">
+                  <button
+                    onClick={upload}
+                    disabled={!file || uploading}
+                    className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
+                  >
+                    アップロード
+                  </button>
+                  <button
+                    onClick={() =>
+                      !uploading && (setEditing(false), setFile(null))
+                    }
+                    className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

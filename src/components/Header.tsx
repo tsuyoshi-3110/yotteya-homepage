@@ -76,11 +76,11 @@ export default function Header({ className = "" }: HeaderProps) {
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button
-              variant="default"
+              variant="ghost"
               size="icon"
-              className="bg-white text-pink-500"
+              className="w-7 h-7 text-white border-2 border-white " // ← 48 × 48 px
             >
-              <Menu size={24} />
+              <Menu size={26} />
             </Button>
           </SheetTrigger>
 
