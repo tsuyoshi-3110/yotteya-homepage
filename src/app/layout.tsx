@@ -57,7 +57,7 @@ export default function RootLayout({
         {/* === 背景レイヤー（下） === */}
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-0 -z-20 bg-cover bg-center bg-fixed"
+          className="pointer-events-none fixed top-0 left-0 w-screen h-screen -z-20 bg-cover bg-center"
           style={{ backgroundImage: `url(${WALLPAPER})` }}
         />
 
