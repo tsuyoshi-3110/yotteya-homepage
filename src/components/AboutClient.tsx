@@ -13,7 +13,12 @@ export default function AboutClient() {
   const [editing, setEditing] = useState<boolean>(false);
   const [draft, setDraft] = useState<string>("");
 
-  const docRef = doc(db, "sitePages", "about");
+  /* ここだけ変えれば他サイトにも流用できます */
+  const SITE_KEY = "yotteya";
+
+  /* 4 セグメント = ドキュメント参照
+   sitePages / {siteId} / pages / about */
+  const docRef = doc(db, "sitePages", SITE_KEY, "pages", "about");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => setIsAdmin(!!user));
