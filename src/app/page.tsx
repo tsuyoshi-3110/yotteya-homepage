@@ -2,7 +2,6 @@
 
 import BackgroundVideo from "@/components/BackgroundVideo";
 import { Metadata } from "next";
-import FreeTextCanvas from "@/components/FreeTextCanvas";
 
 export const metadata: Metadata = {
   title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
@@ -31,7 +30,6 @@ export default function HomePage() {
       {/* 背景動画コンポーネント */}
       <BackgroundVideo />
       {/* ページ内の他のコンテンツがあればここに書く */}
-      <FreeTextCanvas />
     </main>
   );
 }

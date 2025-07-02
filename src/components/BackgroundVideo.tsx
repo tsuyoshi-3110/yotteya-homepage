@@ -124,7 +124,7 @@ export default function BackgroundMedia() {
           preload="auto"
           poster={poster ?? ""}
           onCanPlay={() => setReady(true)}
-          className="absolute inset-0 w-full h-full object-contain bg-transparent pointer-events-none"
+          className="absolute inset-0 w-full h-full object-contain bg-transparen"
         >
           <source src={url} type="video/mp4" />
         </video>
@@ -135,7 +135,7 @@ export default function BackgroundMedia() {
         src={url}
         alt="背景"
         fill
-        className="absolute inset-0 w-full h-full object-contain bg-transparent pointer-events-none"
+        className="absolute inset-0 w-full h-full object-contain bg-transparen"
         onLoad={() => setReady(true)}
         priority
         sizes="100vw"
