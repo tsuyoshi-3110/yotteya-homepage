@@ -1,6 +1,6 @@
 // src/app/(routes)/home/page.tsx
-
 import BackgroundVideo from "@/components/BackgroundVideo";
+import TopFixedText from "@/components/TopFixedText";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -28,6 +28,7 @@ export default function HomePage() {
   return (
     <main className="relative bg-transparent">
       {/* 背景動画コンポーネント */}
+       <TopFixedText />
       <BackgroundVideo />
       {/* ページ内の他のコンテンツがあればここに書く */}
     </main>

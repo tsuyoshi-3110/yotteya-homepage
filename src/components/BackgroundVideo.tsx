@@ -1,5 +1,5 @@
 "use client";
-
+import React from "react";
 import { useEffect, useState } from "react";
 import {
   getStorage,
@@ -24,7 +24,7 @@ interface MetaDoc {
   type: MediaType;
 }
 
-export default function BackgroundMedia() {
+ function BackgroundMedia() {
   /* state */
   const [url, setUrl] = useState<string | null>(null);
   const [type, setType] = useState<MediaType>("video");
@@ -183,7 +183,7 @@ export default function BackgroundMedia() {
               disabled={uploading}
               className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-pink-600 text-white rounded shadow disabled:opacity-50"
             >
-              編集
+              背景編集
             </button>
           )}
 
@@ -241,3 +241,5 @@ export default function BackgroundMedia() {
     </div>
   );
 }
+
+export default React.memo(BackgroundMedia);
