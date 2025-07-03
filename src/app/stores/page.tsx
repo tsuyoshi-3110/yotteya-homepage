@@ -24,5 +24,24 @@ export const metadata: Metadata = {
 };
 
 export default function StoresPage() {
-  return <StoresClient />;
+  return (
+    <main className="px-4 py-16">
+      <section className="max-w-4xl mx-auto text-center mb-12">
+        <h1 className="text-3xl lg:text-4xl font-extrabold mb-4">
+          甘味処 よって 屋 ─ 店舗一覧
+        </h1>
+        <p className="leading-relaxed">
+          <strong>甘味処 よって 屋</strong> は
+          <strong>大阪市北区と東淀川区</strong>に店舗を構えるクレープ専門店。
+          駅チカ店から住宅街の隠れ家店まで、
+          <br className="hidden lg:block" />
+          各店舗限定メニューや営業時間をチェックして、
+          お近くのお店でサクサク生地のクレープをお楽しみください。
+        </p>
+      </section>
+
+      {/* 既存の React クライアントパート */}
+      <StoresClient />
+    </main>
+  );
 }
