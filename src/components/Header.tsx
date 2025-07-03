@@ -123,6 +123,13 @@ export default function Header({ className = "" }: HeaderProps) {
                 当店の思い
               </Link>
               <Link
+                href="/news"
+                onClick={() => setOpen(false)}
+                className="text-lg text-white"
+              >
+                お知らせ
+              </Link>
+              <Link
                 href="mailto:tsreform.yukisaito@gmail.com"
                 className="hover:underline text-white"
               >

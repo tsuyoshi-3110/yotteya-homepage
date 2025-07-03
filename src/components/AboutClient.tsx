@@ -50,6 +50,34 @@ export default function AboutClient() {
         {content || "ただいま準備中です。"}
       </div>
 
+      <div className="max-w-3xl mx-auto p-4 space-y-6">
+        <section>
+          <h3 className="text-xl font-semibold">メディア掲載実績</h3>
+          <ul className="mt-2 space-y-1 list-disc list-inside">
+            <li>
+              <a
+                href="https://okeiko-kidz.com/shimosinjyo-11/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800"
+              >
+                おけいこキッズ｜取材記事
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://higashiyodogawaku.goguynet.jp/2024/11/06/yotteya/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800"
+              >
+                号外NET 東淀川区｜取材記事
+              </a>
+            </li>
+          </ul>
+        </section>
+      </div>
+
       {isAdmin && !editing && (
         <Button onClick={() => setEditing(true)} className="mt-4">
           編集する
