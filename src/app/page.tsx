@@ -34,7 +34,7 @@ export default function HomePage() {
       </section>
 
       {/* ② スクロールして現れる本文・見出し */}
-      <section className="relative z-10 bg-black text-white px-4 py-20 bg-transparent">
+      <section className="relative z-10 text-white px-4 py-20 bg-transparent">
         {/* ログインユーザーが編集できる固定タイトル */}
         <TopFixedText />
 
