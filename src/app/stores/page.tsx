@@ -27,7 +27,7 @@ export default function StoresPage() {
   return (
     <main className="px-4 py-16">
       <section className="max-w-4xl mx-auto text-center mb-12">
-        <h1 className="text-3xl lg:text-4xl font-extrabold mb-4">
+        <h1 className="text-2xl lg:text-3xl font-extrabold mb-4">
           甘味処 よって 屋 ─ 店舗一覧
         </h1>
         <p className="leading-relaxed">
