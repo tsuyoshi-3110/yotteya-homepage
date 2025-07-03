@@ -31,7 +31,7 @@ export default function HomePage() {
   return (
     <main className="w-full overflow-x-hidden">
       {/* ① ファーストビュー：背景動画のみ */}
-      <section className="relative h-screen w-full">
+      <section className="relative h-screen overflow-hidden">
         <BackgroundVideo />
       </section>
 

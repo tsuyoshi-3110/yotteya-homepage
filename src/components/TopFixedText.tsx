@@ -7,14 +7,6 @@ import { onAuthStateChanged } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-/*
- * サイト固定メッセージ (タイトル + 本文)
- * Firestore: sitePages/{SITE_KEY}/pages/topMessage  に以下構造で保存
- * {
- *   title: string,
- *   body : string
- * }
- */
 const SITE_KEY = "yotteya";
 const docRef = doc(db, "sitePages", SITE_KEY, "pages", "topMessage");
 
@@ -57,23 +49,35 @@ export default function TopFixedText() {
     setDraft(emptyMsg);
   };
 
-  /* レンダー */
+  const handleCancel = () => {
+    setEditing(false);
+    setDraft(msg); // 入力欄だけ元に戻す
+  };
+
+  /* ========== ここから JSX ========== */
   return (
     <div className="fixed inset-x-0 top-10 z-30">
       {/* === 表示エリア === */}
-      <div className="max-w-4xl mx-auto text-center space-y-4 px-4 mt-20 ">
+      <div
+        className="max-w-4xl mx-auto text-center space-y-4 px-4 mt-20"
+        suppressHydrationWarning           /* ★ 追加 point ① */
+      >
         <p className="text-3xl font-bold text-white whitespace-pre-wrap">
-          {msg.title}
+          {msg.title || "\u00A0" /* ★ NBSP point ② */}
         </p>
-        <p className="text-2xl text-white whitespace-pre-wrap ">
-          {msg.body}
+        <p className="text-2xl text-white whitespace-pre-wrap">
+          {msg.body || "\u00A0" /* ★ NBSP point ② */}
         </p>
       </div>
 
       {/* === 管理者操作ボタン === */}
       {isAdmin && !editing && (
         <div className="absolute right-10 top-5 flex gap-2 z-30">
-          <Button className="bg-pink-500" size="sm" onClick={() => setEditing(true)}>
+          <Button
+            className="bg-pink-500"
+            size="sm"
+            onClick={() => setEditing(true)}
+          >
             {msg.title || msg.body ? "編集" : "追加"}
           </Button>
           {(msg.title || msg.body) && (
@@ -88,10 +92,12 @@ export default function TopFixedText() {
       {isAdmin && editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg space-y-4 shadow-xl">
-            <h2 className="text-xl font-bold text-center">トップメッセージ編集</h2>
+            <h2 className="text-xl font-bold text-center">
+              トップメッセージ編集
+            </h2>
 
             <input
-              className="border px-3 py-2 w-full font-bold text-lg"
+              className="border px-3 py-2 w-full text-black font-bold text-lg rounded"
               placeholder="タイトル"
               value={draft.title}
               onChange={(e) => setDraft({ ...draft, title: e.target.value })}
@@ -101,11 +107,11 @@ export default function TopFixedText() {
               value={draft.body}
               onChange={(e) => setDraft({ ...draft, body: e.target.value })}
               placeholder="本文を入力…(不要な場合は空文字)"
-              className="border px-3 py-2 w-full "
+              className="border px-3 py-2 w-full text-black"
             />
             <div className="flex justify-center gap-2">
               <Button onClick={handleSave}>保存</Button>
-              <Button variant="outline" onClick={() => setEditing(false)}>
+              <Button variant="outline" onClick={handleCancel}>
                 キャンセル
               </Button>
             </div>
