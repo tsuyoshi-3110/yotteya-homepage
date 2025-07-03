@@ -51,6 +51,10 @@ export default function RootLayout({
           name="google-site-verification"
           content="UcH7-5B4bwpJxxSjIpBskahFhBRTSLRJUZ8A3LAnnFE"
         />
+        <meta
+          name="google-site-verification"
+          content="h2O77asgMDfUmHBb7dda53OOJdsxv9GKXd5rrRgIQ-k"
+        />
       </head>
 
       <body className="relative min-h-screen">

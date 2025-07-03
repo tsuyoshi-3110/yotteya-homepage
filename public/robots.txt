@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://yotteya-homepage.vercel.app/
+Host: https://yotteya.shop
 
 # Sitemaps
-Sitemap: https://yotteya-homepage.vercel.app/sitemap.xml
+Sitemap: https://yotteya.shop/sitemap.xml
