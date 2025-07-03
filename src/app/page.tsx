@@ -4,13 +4,13 @@ import TopFixedText from "@/components/TopFixedText";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
+  title: "甘味処 よって屋｜サクサク生地のクレープ専門店",
   description:
-    "大阪市〇〇区のクレープ専門店『甘味処 よって屋』。ふんわり生地とこだわりクリームが自慢です。",
+    "大阪市東淀川区と北区のクレープ専門店『甘味処 よって屋』。ふんわり生地とこだわりクリームが自慢です。",
   openGraph: {
     title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
     description:
-      "大阪市〇〇区のクレープ専門店『甘味処 よって屋』。季節限定や人気メニューなどご紹介。",
+      "大阪市東淀川区と北区のクレープ専門店『甘味処 よって屋』。季節限定や人気メニューなどご紹介。",
     url: "https://yotteya-homepage.vercel.app/", // 公開URLに合わせて
     images: [
       {
@@ -39,15 +39,15 @@ export default function HomePage() {
         <TopFixedText />
 
         {/* SEO 用コンテンツ */}
-        <h1 className="text-3xl lg:text-4xl font-extrabold mb-6 bg-transparent leading-tigh text-center">
-          甘味処 よって 屋<br />
-          サクサク生地の クレープ
+        <h1 className="text-3xl lg:text-4xl font-extrabold mb-6 leading-tight text-center">
+          甘味処 よって屋
+          <br />
+          サクサク生地のクレープ
         </h1>
-        <p className="max-w-3xl mx-auto text-center leading-relaxed bg-transparent">
-          大阪市東淀川区で開業１年。
-          独自ブレンドのオリジナル粉で焼き上げる“外サクサク・中モチモチ”
-          クレープが評判です。季節フルーツたっぷりの限定メニューに加え、
-          店舗ごとにアイスクリームやふわふわかき氷も提供してます。
+        <p className="max-w-3xl mx-auto text-center leading-relaxed">
+          大阪市東淀川区で開業１年。独自ブレンドのオリジナル粉で焼き上げる
+          “外サクサク・中モチモチ”クレープが評判です。季節フルーツたっぷりの
+          限定メニューに加え、店舗ごとにアイスクリームやふわふわかき氷も提供しています。
         </p>
       </section>
     </main>
