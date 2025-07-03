@@ -24,7 +24,7 @@ interface MetaDoc {
   type: MediaType;
 }
 
- export default function BackgroundMedia() {
+export default function BackgroundMedia() {
   /* state */
   const [url, setUrl] = useState<string | null>(null);
   const [type, setType] = useState<MediaType>("video");
@@ -144,7 +144,7 @@ interface MetaDoc {
   };
 
   return (
-    <div className="fixed inset-0 top-10 bg-transparen">
+    <div className="fixed inset-0 bg-transparen">
       {/* 背景メディア */}
       {renderMedia()}
 
@@ -241,5 +241,3 @@ interface MetaDoc {
     </div>
   );
 }
-
-
