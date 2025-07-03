@@ -43,10 +43,10 @@ export default function AboutClient() {
   };
 
   return (
-    <main className="max-w-3xl mx-auto p-6 space-y-6 mt-20">
+    <main className="max-w-3xl mx-auto p-6 space-y-6 mt-20 ">
       <h1 className="text-3xl font-bold text-center mb-4">当店の思い</h1>
 
-      <div className="bg-pink-50 p-4 rounded shadow-lg border border-pink-200 leading-relaxed whitespace-pre-wrap bg-transparentt">
+      <div className="bg-transparent p-4 rounded shadow-xl border border-pink-600 leading-relaxed whitespace-pre-wrap bg-transparentt">
         {content || "ただいま準備中です。"}
       </div>
 
