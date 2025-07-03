@@ -123,7 +123,7 @@ export default function NewsClient() {
     <div>
       <ul className="space-y-4 p-4">
         {items.map((item) => (
-          <li key={item.id} className="border rounded p-4 bg-transparent">
+          <li key={item.id} className="border border-pink-500 rounded p-4 bg-transparent">
             <h2 className="font-bold">{item.title}</h2>
             <p className="mt-2 whitespace-pre-wrap">{item.body}</p>
 
