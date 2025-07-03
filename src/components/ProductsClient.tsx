@@ -195,7 +195,7 @@ export default function ProductsClient() {
   };
 
   return (
-    <main className="max-w-5xl mx-auto p-4 mt-20">
+    <main className="max-w-5xl mx-auto p-4 pt-20">
       {uploading && (
         <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/60 gap-4">
           <p className="text-white">アップロード中… {progress}%</p>
@@ -208,7 +208,7 @@ export default function ProductsClient() {
         </div>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ">
         {list.map((p) => {
           const isLoaded = loadedIds.has(p.id);
 

@@ -35,7 +35,7 @@ export default function Header({ className = "" }: HeaderProps) {
     <header
       className={clsx(
         "fixed top-0 z-30 w-full",
-        "flex items-center justify-between px-4 py- text-white bg-gradient-to-b from-[#fe01be] to-[#fadb9f] ",
+        "flex items-center justify-between px-4 h-12 text-white bg-gradient-to-b from-[#fe01be] to-[#fadb9f] ",
         className
       )}
       style={{ "--header-h": "4rem" } as React.CSSProperties}

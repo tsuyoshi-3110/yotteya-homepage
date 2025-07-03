@@ -144,7 +144,7 @@ export default function BackgroundMedia() {
   };
 
   return (
-    <div className="fixed inset-0 bg-transparen">
+    <div className="fixed inset-0 top-12 bg-transparen">
       {/* 背景メディア */}
       {renderMedia()}
 
