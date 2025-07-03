@@ -283,7 +283,12 @@ export default function StoresClient() {
               type="file"
               accept="image/*"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="w-full"
+              className="
+    w-full h-10 bg-gray-500 text-white
+    rounded-md
+    file:text-white file:px-4 file:py-1
+    file:border-0 file:cursor-pointer
+  "
               disabled={uploading}
             />
 

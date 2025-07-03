@@ -24,7 +24,7 @@ interface MetaDoc {
   type: MediaType;
 }
 
- function BackgroundMedia() {
+export default function BackgroundMedia() {
   /* state */
   const [url, setUrl] = useState<string | null>(null);
   const [type, setType] = useState<MediaType>("video");
@@ -124,7 +124,7 @@ interface MetaDoc {
           preload="auto"
           poster={poster ?? ""}
           onCanPlay={() => setReady(true)}
-          className="absolute inset-0 w-full h-full object-contain bg-transparen"
+          className="absolute inset-0 w-full h-full object-contain bg-transparent"
         >
           <source src={url} type="video/mp4" />
         </video>
@@ -135,7 +135,7 @@ interface MetaDoc {
         src={url}
         alt="背景"
         fill
-        className="absolute inset-0 w-full h-full object-contain bg-transparen"
+        className="absolute inset-0 w-full h-full object-contain bg-transparent"
         onLoad={() => setReady(true)}
         priority
         sizes="100vw"
@@ -144,7 +144,7 @@ interface MetaDoc {
   };
 
   return (
-    <div className="fixed inset-0 top-10 bg-transparen">
+    <div className="fixed inset-0 top-10 bg-transparent">
       {/* 背景メディア */}
       {renderMedia()}
 
@@ -241,5 +241,3 @@ interface MetaDoc {
     </div>
   );
 }
-
-export default React.memo(BackgroundMedia);

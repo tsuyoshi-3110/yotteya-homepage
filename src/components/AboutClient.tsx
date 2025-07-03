@@ -46,7 +46,7 @@ export default function AboutClient() {
     <main className="max-w-3xl mx-auto p-6 space-y-6 mt-20">
       <h1 className="text-3xl font-bold text-center mb-4">当店の思い</h1>
 
-      <div className="bg-pink-50 p-4 rounded shadow-lg border border-pink-200 leading-relaxed whitespace-pre-wrap bg-transparent">
+      <div className="bg-pink-50 p-4 rounded shadow-lg border border-pink-200 leading-relaxed whitespace-pre-wrap bg-transparentt">
         {content || "ただいま準備中です。"}
       </div>
 
@@ -65,7 +65,7 @@ export default function AboutClient() {
               rows={10}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              className="bg-transparent border border-pink-300 text-black placeholder-gray-400"
+              className="bg-transparentt border border-pink-300 text-black placeholder-gray-400"
               placeholder="ここに文章を入力..."
             />
 
