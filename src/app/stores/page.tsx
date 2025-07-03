@@ -32,7 +32,8 @@ export default function StoresPage() {
         </h1>
         <p className="leading-relaxed">
           <strong>甘味処 よって 屋</strong> は
-          <strong>大阪市北区と東淀川区</strong>に店舗を構えるクレープ専門店。
+          <strong>大阪市北区と東淀川区</strong>
+          に店舗を構えるクレープメインのお店。
           駅チカ店から住宅街の隠れ家店まで、
           <br className="hidden lg:block" />
           各店舗限定メニューや営業時間をチェックして、
