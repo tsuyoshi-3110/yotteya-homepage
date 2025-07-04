@@ -31,9 +31,10 @@ type Product = {
   id: string;
   title: string;
   body: string;
-  price: number;
+  price: string;
   mediaURL: string;
   mediaType: MediaType;
+  originalFileName?: string;
 };
 
 const SITE_KEY = "yotteya";
@@ -46,7 +47,7 @@ export default function ProductsClient() {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [price, setPrice] = useState<number | "">("");
+  const [price, setPrice] = useState<string | "">("");
   const [progress, setProgress] = useState<number | null>(null);
   const uploading = progress !== null;
   const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set());
@@ -74,6 +75,7 @@ export default function ProductsClient() {
           price: data.price ?? 0,
           mediaURL: data.mediaURL ?? data.imageURL ?? "",
           mediaType: (data.mediaType ?? "image") as MediaType,
+          originalFileName: data.originalFileName,
         };
       });
       rows.sort((a, b) => jaCollator.compare(a.title, b.title));
@@ -85,7 +87,7 @@ export default function ProductsClient() {
   const saveProduct = async () => {
     if (uploading) return;
     if (!title.trim()) return alert("タイトル必須");
-    if (price === "" || isNaN(+price)) return alert("価格を入力してください");
+    if (price === "") return alert("価格を入力してください");
     if (formMode === "add" && !file) return alert("メディアを選択してください");
 
     try {
@@ -136,9 +138,10 @@ export default function ProductsClient() {
       const payload = {
         title,
         body,
-        price: Number(price),
+        price: price,
         mediaURL,
         mediaType,
+        originalFileName: file ? file.name : editing?.originalFileName,
       };
 
       if (formMode === "edit" && editing) {
@@ -327,14 +330,11 @@ export default function ProductsClient() {
               disabled={uploading}
             />
             <input
-              type="number"
+              type="text"
               min={0}
-              inputMode="numeric"
               placeholder="価格 (円)"
               value={price}
-              onChange={(e) =>
-                setPrice(e.target.value === "" ? "" : Number(e.target.value))
-              }
+              onChange={(e) => setPrice(e.target.value)}
               className="w-full border px-3 py-2 rounded"
               disabled={uploading}
             />
@@ -353,6 +353,11 @@ export default function ProductsClient() {
               className="bg-gray-500 text-white w-full h-10 px-3 py-1 rounded"
               disabled={uploading}
             />
+            {formMode === "edit" && editing?.originalFileName && (
+              <p className="text-sm text-gray-600">
+                現在のファイル: {editing.originalFileName}
+              </p>
+            )}
 
             <div className="flex gap-2 justify-center">
               <button

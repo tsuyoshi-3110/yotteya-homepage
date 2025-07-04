@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -35,6 +36,7 @@ type Store = {
   address: string;
   description: string;
   imageURL: string;
+  originalFileName?: string;
 };
 
 export default function StoresClient() {
@@ -69,6 +71,7 @@ export default function StoresClient() {
               address: data.address,
               description: data.description ?? "",
               imageURL: data.imageURL,
+              originalFileName: data.originalFileName,
             };
           })
         );
@@ -119,8 +122,7 @@ export default function StoresClient() {
         setProgress(0);
         task.on(
           "state_changed",
-          (s) =>
-            setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100)),
+          (s) => setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100)),
           (e) => {
             console.error(e);
             alert("画像アップロードに失敗しました");
@@ -131,9 +133,7 @@ export default function StoresClient() {
             setProgress(null);
 
             if (formMode === "edit" && editingStore) {
-              const oldExt = editingStore.imageURL.endsWith(".jpg")
-                ? "jpg"
-                : "";
+              const oldExt = editingStore.imageURL.endsWith(".jpg") ? "jpg" : "";
               if (oldExt && oldExt !== ext) {
                 await deleteObject(
                   ref(getStorage(), `${STORAGE_PATH}/${id}.${oldExt}`)
@@ -141,11 +141,11 @@ export default function StoresClient() {
               }
             }
 
-            upsertFirestore(id, imageURL);
+            upsertFirestore(id, imageURL, file.name);
           }
         );
       } else {
-        await upsertFirestore(id, imageURL);
+        upsertFirestore(id, imageURL, editingStore?.originalFileName);
       }
     } catch (e) {
       console.error(e);
@@ -154,13 +154,18 @@ export default function StoresClient() {
     }
   };
 
-  const upsertFirestore = async (id: string, imageURL: string) => {
+  const upsertFirestore = async (
+    id: string,
+    imageURL: string,
+    originalFileName?: string
+  ) => {
     const payload = {
       name,
       address,
       description,
       imageURL,
       updatedAt: serverTimestamp(),
+      originalFileName,
     };
     if (formMode === "edit" && editingStore) {
       await updateDoc(doc(colRef, id), payload);
@@ -184,6 +189,7 @@ export default function StoresClient() {
   return (
     <main className="max-w-5xl mx-auto p-4 mt-20">
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* ストア一覧 */}
         {stores.map((s) => (
           <div
             key={s.id}
@@ -197,7 +203,6 @@ export default function StoresClient() {
                 className="object-cover"
               />
             </div>
-
             <div className="p-4 space-y-2">
               <h2 className="text-xl font-semibold">{s.name}</h2>
               <p className="text-gray-600">
@@ -218,7 +223,6 @@ export default function StoresClient() {
                 </p>
               )}
             </div>
-
             {isAdmin && (
               <div className="absolute top-2 right-2 flex gap-2">
                 <button
@@ -239,6 +243,7 @@ export default function StoresClient() {
         ))}
       </div>
 
+      {/* 新規追加ボタン */}
       {isAdmin && formMode === null && (
         <button
           onClick={openAdd}
@@ -248,13 +253,13 @@ export default function StoresClient() {
         </button>
       )}
 
+      {/* フォームモーダル */}
       {isAdmin && formMode && (
         <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 w-full max-w-md space-y-4">
             <h2 className="text-xl font-bold text-center">
               {formMode === "edit" ? "店舗を編集" : "店舗を追加"}
             </h2>
-
             <input
               type="text"
               placeholder="店舗名"
@@ -279,18 +284,24 @@ export default function StoresClient() {
               rows={3}
               disabled={uploading}
             />
+            {/* ファイル入力 */}
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="
-    w-full h-10 bg-gray-500 text-white
-    rounded-md
-    file:text-white file:px-4 file:py-1
-    file:border-0 file:cursor-pointer
-  "
+              className="w-full h-10 bg-gray-500 text-white rounded-md file:text-white file:px-4 file:py-1 file:border-0 file:cursor-pointer"
               disabled={uploading}
             />
+            {/* 選択または既存のファイル名を表示 */}
+            {file ? (
+              <p className="text-sm text-gray-600">
+                選択中のファイル: {file.name}
+              </p>
+            ) : formMode === "edit" && editingStore?.originalFileName ? (
+              <p className="text-sm text-gray-600">
+                現在登録されているファイル: {editingStore.originalFileName}
+              </p>
+            ) : null}
 
             {uploading && (
               <div className="space-y-2">
@@ -328,3 +339,4 @@ export default function StoresClient() {
     </main>
   );
 }
+
