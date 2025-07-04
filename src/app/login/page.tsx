@@ -77,7 +77,7 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-center">
             <p>{user.email} としてログイン中です。</p>
-            <Button onClick={handleLogout} className="w-full  bg-pink-600">
+            <Button onClick={handleLogout} className="w-full  bg-blue-500">
               ログアウト
             </Button>
           </CardContent>
@@ -118,7 +118,7 @@ export default function LoginPage() {
           <Button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full bg-pink-600"
+            className="w-full bg-blue-500"
           >
             {loading ? "ログイン中..." : "ログイン"}
           </Button>

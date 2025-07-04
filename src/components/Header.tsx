@@ -14,6 +14,7 @@ import {
 import Image from "next/image";
 import clsx from "clsx";
 import { Instagram } from "lucide-react";
+import { useThemeGradient } from "@/lib/useThemeGradient";
 
 type HeaderProps = {
   className?: string;
@@ -30,12 +31,16 @@ const SNS = [
 export default function Header({ className = "" }: HeaderProps) {
   /* ▼ 追加：Sheet の開閉を管理するステート */
   const [open, setOpen] = useState(false);
+  const gradient = useThemeGradient();
+
+   if (!gradient) return null;
 
   return (
     <header
       className={clsx(
         "fixed top-0 z-30 w-full",
-        "flex items-center justify-between px-4 h-12 text-white bg-gradient-to-b from-[#fe01be] to-[#fadb9f] ",
+        "flex items-center justify-between px-4 h-12 text-whit ",
+        `bg-gradient-to-b ${gradient}`,
         className
       )}
       style={{ "--header-h": "4rem" } as React.CSSProperties}
@@ -43,7 +48,7 @@ export default function Header({ className = "" }: HeaderProps) {
       {/* ロゴ */}
       <Link
         href="/"
-        className="text-xl font-bold flex items-center gap-2 py-2  hover:text-pink-600 hover:opacity-50"
+        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
       >
         <Image
           src="/images/logo.jpg"
@@ -86,11 +91,13 @@ export default function Header({ className = "" }: HeaderProps) {
 
           <SheetContent
             side="right"
-            className="
-    bg-gradient-to-b from-[#fe01be] to-[#fadb9f] flex flex-col
-    [&_[data-radix-sheet-close]]:w-10 [&_[data-radix-sheet-close]]:h-10
-    [&_[data-radix-sheet-close]_svg]:w-6 [&_[data-radix-sheet-close]_svg]:h-6
-  "
+            className={clsx(
+              "flex flex-col",
+              "bg-gradient-to-b",
+              gradient,
+              "[&_[data-radix-sheet-close]]:w-10 [&_[data-radix-sheet-close]]:h-10",
+              "[&_[data-radix-sheet-close]_svg]:w-6 [&_[data-radix-sheet-close]_svg]:h-6"
+            )}
           >
             <SheetHeader className="pt-4 px-4">
               <SheetTitle className="text-center text-xl text-white">

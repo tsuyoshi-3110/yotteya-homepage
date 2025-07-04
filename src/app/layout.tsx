@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Script from "next/script";
+import ThemeBackground from "@/components/ThemeBackground"; // 新規追加
 
 const WALLPAPER = "/images/wallpaper/kamon.jpg";
 
@@ -66,15 +67,7 @@ export default function RootLayout({
         />
 
         {/* === パステルグラデーション（上） === */}
-        <div
-          aria-hidden
-          className="
-            pointer-events-none fixed inset-0 -z-10
-            bg-gradient-to-b
-            from-[rgba(245,75,202,0.9)]
-            to-[rgba(250,219,159,0.9)]
-          "
-        />
+        <ThemeBackground />
 
         {/* === 常設ヘッダー & ページ内容 === */}
         <Header />

@@ -123,7 +123,10 @@ export default function NewsClient() {
     <div>
       <ul className="space-y-4 p-4">
         {items.map((item) => (
-          <li key={item.id} className="border border-pink-500 rounded p-4 bg-transparent">
+          <li
+            key={item.id}
+            className="border border-black rounded p-4 bg-white"
+          >
             <h2 className="font-bold">{item.title}</h2>
             <p className="mt-2 whitespace-pre-wrap">{item.body}</p>
 
@@ -152,7 +155,7 @@ export default function NewsClient() {
           onClick={openAdd}
           aria-label="新規追加"
           disabled={uploading}
-          className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-pink-600 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
+          className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
         >
           <Plus size={28} />
         </button>

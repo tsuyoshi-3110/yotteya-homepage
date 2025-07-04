@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -25,6 +24,9 @@ import {
 } from "firebase/storage";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { FieldValue } from "firebase/firestore";
+import { useThemeGradient } from "@/lib/useThemeGradient";
+import clsx from "clsx";
 
 const SITE_KEY = "yotteya";
 const STORE_COL = `siteStores/${SITE_KEY}/items`;
@@ -50,6 +52,10 @@ export default function StoresClient() {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const uploading = progress !== null;
+
+
+  const gradient = useThemeGradient();
+
 
   const colRef: CollectionReference = useMemo(
     () => collection(db, STORE_COL),
@@ -105,16 +111,23 @@ export default function StoresClient() {
   };
 
   const saveStore = async () => {
-    if (!name.trim() || !address.trim() || (!file && formMode === "add")) {
-      return alert("名前・住所・画像をすべて入力してください");
+    if (!name.trim() || !address.trim()) {
+      return alert("名前と住所は必須です");
     }
 
     try {
       const id = editingStore?.id ?? uuid();
       let imageURL = editingStore?.imageURL ?? "";
+      const originalFileName =
+        file?.name ?? editingStore?.originalFileName ?? "";
 
       if (file) {
-        const ext = file.type.startsWith("image/") ? "jpg" : "";
+        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const allowedExts = ["jpg", "jpeg", "png", "webp"];
+        if (!ext || !allowedExts.includes(ext)) {
+          alert("サポートされていない画像形式です");
+          return;
+        }
         const storageRef = ref(getStorage(), `${STORAGE_PATH}/${id}.${ext}`);
         const task = uploadBytesResumable(storageRef, file, {
           contentType: file.type,
@@ -122,7 +135,8 @@ export default function StoresClient() {
         setProgress(0);
         task.on(
           "state_changed",
-          (s) => setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100)),
+          (s) =>
+            setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100)),
           (e) => {
             console.error(e);
             alert("画像アップロードに失敗しました");
@@ -133,7 +147,8 @@ export default function StoresClient() {
             setProgress(null);
 
             if (formMode === "edit" && editingStore) {
-              const oldExt = editingStore.imageURL.endsWith(".jpg") ? "jpg" : "";
+              const oldExt =
+                editingStore.imageURL.split(".").pop()?.toLowerCase() || "";
               if (oldExt && oldExt !== ext) {
                 await deleteObject(
                   ref(getStorage(), `${STORAGE_PATH}/${id}.${oldExt}`)
@@ -141,11 +156,11 @@ export default function StoresClient() {
               }
             }
 
-            upsertFirestore(id, imageURL, file.name);
+            upsertFirestore(id, imageURL, originalFileName);
           }
         );
       } else {
-        upsertFirestore(id, imageURL, editingStore?.originalFileName);
+        upsertFirestore(id, imageURL, originalFileName);
       }
     } catch (e) {
       console.error(e);
@@ -159,32 +174,62 @@ export default function StoresClient() {
     imageURL: string,
     originalFileName?: string
   ) => {
-    const payload = {
-      name,
-      address,
-      description,
-      imageURL,
-      updatedAt: serverTimestamp(),
-      originalFileName,
-    };
-    if (formMode === "edit" && editingStore) {
-      await updateDoc(doc(colRef, id), payload);
-    } else {
-      await addDoc(colRef, { ...payload, createdAt: serverTimestamp() });
+    try {
+      const payload: {
+        name: string;
+        address: string;
+        description?: string;
+        imageURL: string;
+        updatedAt: FieldValue;
+        originalFileName?: string;
+      } = {
+        name,
+        address,
+        ...(description.trim() && { description }), // 空文字なら入れない
+        imageURL,
+        updatedAt: serverTimestamp(),
+        ...(originalFileName && { originalFileName }),
+      };
+
+      if (formMode === "edit" && editingStore) {
+        await updateDoc(doc(colRef, id), payload);
+      } else {
+        await addDoc(colRef, {
+          ...payload,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      closeForm();
+    } catch (err) {
+      console.error("Firestore 保存エラー:", err);
+      alert("データの保存に失敗しました");
     }
-    closeForm();
   };
 
   const removeStore = async (s: Store) => {
     if (!confirm(`「${s.name}」を削除しますか？`)) return;
-    await deleteDoc(doc(colRef, s.id));
-    const ext = s.imageURL.endsWith(".jpg") ? "jpg" : "";
-    if (ext) {
-      await deleteObject(
-        ref(getStorage(), `${STORAGE_PATH}/${s.id}.${ext}`)
-      ).catch(() => {});
+
+    try {
+      await deleteDoc(doc(colRef, s.id));
+
+      if (s.imageURL) {
+        const ext = s.imageURL.split(".").pop()?.toLowerCase();
+        const allowedExts = ["jpg", "jpeg", "png", "webp"];
+        if (ext && allowedExts.includes(ext)) {
+          const fileRef = ref(getStorage(), `${STORAGE_PATH}/${s.id}.${ext}`);
+          await deleteObject(fileRef).catch((err) => {
+            console.warn("画像の削除に失敗しました:", err);
+          });
+        }
+      }
+    } catch (err) {
+      console.error("削除に失敗しました:", err);
+      alert("削除中にエラーが発生しました");
     }
   };
+
+   if (!gradient) return null;
 
   return (
     <main className="max-w-5xl mx-auto p-4 mt-20">
@@ -193,16 +238,22 @@ export default function StoresClient() {
         {stores.map((s) => (
           <div
             key={s.id}
-            className="bg-white rounded-lg overflow-hidden shadow relative bg-gradient-to-b from-[#fe01be] to-[#fadb9f]"
+            className={clsx(
+              "bg-white rounded-lg overflow-hidden shadow relative ",
+              "bg-gradient-to-b",
+              gradient
+            )}
           >
-            <div className="relative w-full h-48">
-              <Image
-                src={s.imageURL}
-                alt={s.name}
-                fill
-                className="object-cover"
-              />
-            </div>
+            {s.imageURL && (
+              <div className="relative w-full aspect-[1/1]">
+                <Image
+                  src={s.imageURL}
+                  alt={s.name}
+                  fill
+                  className="object-cover rounded-t-lg"
+                />
+              </div>
+            )}
             <div className="p-4 space-y-2">
               <h2 className="text-xl font-semibold">{s.name}</h2>
               <p className="text-gray-600">
@@ -247,7 +298,7 @@ export default function StoresClient() {
       {isAdmin && formMode === null && (
         <button
           onClick={openAdd}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-pink-600 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
         >
           <Plus size={28} />
         </button>
@@ -260,6 +311,7 @@ export default function StoresClient() {
             <h2 className="text-xl font-bold text-center">
               {formMode === "edit" ? "店舗を編集" : "店舗を追加"}
             </h2>
+
             <input
               type="text"
               placeholder="店舗名"
@@ -268,6 +320,7 @@ export default function StoresClient() {
               className="w-full border px-3 py-2 rounded"
               disabled={uploading}
             />
+
             <input
               type="text"
               placeholder="住所"
@@ -276,22 +329,34 @@ export default function StoresClient() {
               className="w-full border px-3 py-2 rounded"
               disabled={uploading}
             />
-            <textarea
-              placeholder="紹介文"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
-              rows={3}
-              disabled={uploading}
-            />
-            {/* ファイル入力 */}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="w-full h-10 bg-gray-500 text-white rounded-md file:text-white file:px-4 file:py-1 file:border-0 file:cursor-pointer"
-              disabled={uploading}
-            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                （任意）
+              </label>
+              <textarea
+                placeholder="紹介文"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+                rows={3}
+                disabled={uploading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                （任意）
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="w-full h-10 bg-gray-400 text-white rounded-md file:text-white file:px-4 file:py-1 file:border-0 file:cursor-pointer"
+                disabled={uploading}
+              />
+            </div>
+
             {/* 選択または既存のファイル名を表示 */}
             {file ? (
               <p className="text-sm text-gray-600">
@@ -339,4 +404,3 @@ export default function StoresClient() {
     </main>
   );
 }
-

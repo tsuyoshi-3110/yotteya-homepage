@@ -60,7 +60,7 @@ export default function TopFixedText() {
       {/* === 表示エリア === */}
       <div
         className="max-w-4xl mx-auto text-center space-y-4 px-4 mt-20"
-        suppressHydrationWarning           /* ★ 追加 point ① */
+        suppressHydrationWarning /* ★ 追加 point ① */
       >
         <p className="text-3xl font-bold text-white whitespace-pre-wrap">
           {msg.title || "\u00A0" /* ★ NBSP point ② */}
@@ -74,7 +74,7 @@ export default function TopFixedText() {
       {isAdmin && !editing && (
         <div className="absolute right-10 top-5 flex gap-2 z-30">
           <Button
-            className="bg-pink-500"
+            className="bg-blue-600"
             size="sm"
             onClick={() => setEditing(true)}
           >

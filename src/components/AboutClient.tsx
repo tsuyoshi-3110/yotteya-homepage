@@ -46,7 +46,7 @@ export default function AboutClient() {
     <main className="max-w-3xl mx-auto p-6 space-y-6 pt-20">
       <h1 className="text-3xl font-bold text-center mb-4">当店の思い</h1>
 
-      <div className="bg-transparent p-4 rounded shadow-xl border border-pink-600 leading-relaxed whitespace-pre-wrap bg-transparentt ">
+      <div className="bg-transparent p-4 rounded shadow-xl  leading-relaxed whitespace-pre-wrap bg-transparentt ">
         {content || "ただいま準備中です。"}
       </div>
 
@@ -79,7 +79,7 @@ export default function AboutClient() {
       </div>
 
       {isAdmin && !editing && (
-        <Button onClick={() => setEditing(true)} className="mt-4">
+        <Button onClick={() => setEditing(true)} className="mt-4 bg-blue-500">
           編集する
         </Button>
       )}
@@ -93,13 +93,16 @@ export default function AboutClient() {
               rows={10}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              className="bg-transparentt border border-pink-300 text-black placeholder-gray-400"
+              className="bg-transparentt border text-black placeholder-gray-400"
               placeholder="ここに文章を入力..."
             />
 
             <div className="flex justify-center gap-2">
-              <Button onClick={handleSave}>保存</Button>
+              <Button className="bg-green-500" onClick={handleSave}>
+                保存
+              </Button>
               <Button
+                className="bg-gray-300"
                 variant="outline"
                 onClick={() => {
                   setDraft(content);

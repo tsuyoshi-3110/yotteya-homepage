@@ -25,6 +25,8 @@ import {
 } from "firebase/storage";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { useThemeGradient } from "@/lib/useThemeGradient";
+import clsx from "clsx";
 
 type MediaType = "image" | "video";
 type Product = {
@@ -51,6 +53,8 @@ export default function ProductsClient() {
   const [progress, setProgress] = useState<number | null>(null);
   const uploading = progress !== null;
   const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set());
+
+  const gradient = useThemeGradient();
 
   const colRef: CollectionReference = useMemo(
     () => collection(db, "siteProducts", SITE_KEY, "items"),
@@ -95,16 +99,38 @@ export default function ProductsClient() {
       let mediaURL = editing?.mediaURL ?? "";
       let mediaType: MediaType = editing?.mediaType ?? "image";
 
+      if (!file) return;
       if (file) {
         const isVideo = file.type.startsWith("video/");
         mediaType = isVideo ? "video" : "image";
-        const ext = isVideo ? "mp4" : "jpg";
+
+        const isValidImage =
+          file.type === "image/jpeg" || file.type === "image/png";
+        const isValidVideo =
+          file.type === "video/mp4" || file.type === "video/quicktime";
+
+        if (!isValidImage && !isValidVideo) {
+          alert("対応形式：画像（JPEG, PNG）／動画（MP4, MOV）");
+          return;
+        }
+
+        if (isVideo && file.size > 50 * 1024 * 1024) {
+          alert("動画サイズは50MB未満にしてください");
+          return;
+        }
+
+        const ext = isVideo
+          ? file.type === "video/quicktime"
+            ? "mov"
+            : "mp4"
+          : "jpg";
 
         const uploadFile = isVideo
           ? file
           : await imageCompression(file, {
               maxWidthOrHeight: 1200,
               maxSizeMB: 0.7,
+              useWebWorker: true,
               fileType: "image/jpeg",
               initialQuality: 0.8,
             });
@@ -113,8 +139,9 @@ export default function ProductsClient() {
           getStorage(),
           `products/public/${SITE_KEY}/${id}.${ext}`
         );
+
         const task = uploadBytesResumable(storageRef, uploadFile, {
-          contentType: file.type,
+          contentType: isVideo ? file.type : "image/jpeg",
         });
 
         setProgress(0);
@@ -122,9 +149,15 @@ export default function ProductsClient() {
           setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100))
         );
         await task;
-        mediaURL = await getDownloadURL(storageRef);
+
+        const downloadURL = await getDownloadURL(storageRef);
+        if (!downloadURL) throw new Error("画像URLの取得に失敗しました");
+
+        // キャッシュバスターで強制更新
+        mediaURL = `${downloadURL}?v=${uuid()}`;
         setProgress(null);
 
+        // 拡張子変更に伴う旧ファイル削除
         if (formMode === "edit" && editing) {
           const oldExt = editing.mediaType === "video" ? "mp4" : "jpg";
           if (oldExt !== ext) {
@@ -135,24 +168,39 @@ export default function ProductsClient() {
         }
       }
 
-      const payload = {
+      type ProductPayload = {
+        title: string;
+        body: string;
+        price: string;
+        mediaURL: string;
+        mediaType: "image" | "video";
+        originalFileName?: string;
+      };
+
+      const payload: ProductPayload = {
         title,
         body,
-        price: price,
+        price,
         mediaURL,
         mediaType,
-        originalFileName: file ? file.name : editing?.originalFileName,
       };
+
+      // originalFileName があるときだけ追加
+      const originalFileName = file?.name || editing?.originalFileName;
+      if (originalFileName) {
+        payload.originalFileName = originalFileName;
+      }
 
       if (formMode === "edit" && editing) {
         await updateDoc(doc(colRef, id), payload);
       } else {
         await addDoc(colRef, { ...payload, createdAt: serverTimestamp() });
       }
+
       closeForm();
     } catch (e) {
       console.error(e);
-      alert("保存に失敗しました");
+      alert("保存に失敗しました。対応形式や容量をご確認ください。");
       setProgress(null);
     }
   };
@@ -184,11 +232,15 @@ export default function ProductsClient() {
     setFile(null);
     setFormMode("edit");
   };
+
   const closeForm = () => {
     if (uploading) return;
-    resetFields();
-    setFormMode(null);
+    setTimeout(() => {
+      resetFields();
+      setFormMode(null);
+    }, 100); // 少しだけ遅延させるとUIフリーズ対策になる
   };
+
   const resetFields = () => {
     setEditing(null);
     setTitle("");
@@ -196,6 +248,8 @@ export default function ProductsClient() {
     setPrice("");
     setFile(null);
   };
+
+   if (!gradient) return null;
 
   return (
     <main className="max-w-5xl mx-auto p-4 pt-20">
@@ -218,7 +272,11 @@ export default function ProductsClient() {
           return (
             <div
               key={p.id}
-              className="border rounded-lg overflow-hidden shadow bg-white relative bg-gradient-to-b from-[#fe01be] to-[#fadb9f]"
+              className={clsx(
+                "border rounded-lg overflow-hidden shadow bg-white relative",
+                "bg-gradient-to-b",
+                gradient
+              )}
             >
               {isAdmin && (
                 <div className="absolute top-2 right-2 z-20 flex gap-2">
@@ -264,7 +322,7 @@ export default function ProductsClient() {
               )}
 
               {p.mediaType === "image" ? (
-                <div className="relative w-full aspect-square">
+                <div className="relative w-full aspect-[1/1] sm:aspect-square">
                   <Image
                     src={p.mediaURL}
                     alt={p.title}
@@ -277,18 +335,20 @@ export default function ProductsClient() {
                   />
                 </div>
               ) : (
-                <video
-                  src={p.mediaURL}
-                  muted
-                  playsInline
-                  autoPlay
-                  loop
-                  preload="auto"
-                  className="w-full aspect-square object-cover pointer-events-none"
-                  onLoadedData={() =>
-                    setLoadedIds((prev) => new Set(prev).add(p.id))
-                  }
-                />
+                <div className="relative w-full aspect-[1/1] sm:aspect-square">
+                  <video
+                    src={p.mediaURL}
+                    muted
+                    playsInline
+                    autoPlay
+                    loop
+                    preload="auto"
+                    className="w-full h-full object-cover pointer-events-none absolute top-0 left-0"
+                    onLoadedData={() =>
+                      setLoadedIds((prev) => new Set(prev).add(p.id))
+                    }
+                  />
+                </div>
               )}
 
               <div className="p-4 space-y-2">
@@ -308,7 +368,7 @@ export default function ProductsClient() {
           onClick={openAdd}
           aria-label="新規追加"
           disabled={uploading}
-          className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-pink-600 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
+          className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
         >
           <Plus size={28} />
         </button>
