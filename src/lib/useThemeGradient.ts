@@ -8,7 +8,7 @@ const SITE_KEY = "yotteya";
 type ThemeValue = (typeof THEMES)[ThemeKey];
 
 export function useThemeGradient(): ThemeValue | null {
-  const [gradient, setGradient] = useState<ThemeValue | null>(null); // 初期値を null に
+  const [gradient, setGradient] = useState<ThemeValue | null>(null);
 
   useEffect(() => {
     const ref = doc(db, "siteSettings", SITE_KEY);
@@ -16,7 +16,7 @@ export function useThemeGradient(): ThemeValue | null {
       const data = snap.data();
       if (
         data?.themeGradient &&
-        Object.keys(THEMES).includes(data.themeGradient)
+        data.themeGradient in THEMES
       ) {
         const key = data.themeGradient as ThemeKey;
         setGradient(THEMES[key]);
@@ -26,5 +26,5 @@ export function useThemeGradient(): ThemeValue | null {
     return () => unsubscribe();
   }, []);
 
-  return gradient; // null の可能性あり
+  return gradient;
 }

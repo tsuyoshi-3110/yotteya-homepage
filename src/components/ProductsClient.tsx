@@ -27,6 +27,7 @@ import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import clsx from "clsx";
+import { ThemeKey, THEMES } from "@/lib/themes";
 
 type MediaType = "image" | "video";
 type Product = {
@@ -38,6 +39,7 @@ type Product = {
   mediaType: MediaType;
   originalFileName?: string;
 };
+
 
 const SITE_KEY = "yotteya";
 
@@ -54,7 +56,15 @@ export default function ProductsClient() {
   const uploading = progress !== null;
   const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set());
 
+
+
   const gradient = useThemeGradient();
+
+  const isDark = useMemo(() => {
+    const darkThemes: ThemeKey[] = ["brandG", "brandH", "brandI"];
+    if (!gradient) return false;
+    return darkThemes.some((key) => gradient === THEMES[key]);
+  }, [gradient]);
 
   const colRef: CollectionReference = useMemo(
     () => collection(db, "siteProducts", SITE_KEY, "items"),
@@ -249,7 +259,7 @@ export default function ProductsClient() {
     setFile(null);
   };
 
-   if (!gradient) return null;
+  if (!gradient) return null;
 
   return (
     <main className="max-w-5xl mx-auto p-4 pt-20">
@@ -273,9 +283,10 @@ export default function ProductsClient() {
             <div
               key={p.id}
               className={clsx(
-                "border rounded-lg overflow-hidden shadow bg-white relative",
+                "border rounded-lg overflow-hidden shadow relative",
                 "bg-gradient-to-b",
-                gradient
+                gradient,
+                isDark ? "bg-black/40 text-white" : "bg-white" // ✅ ここを追加！
               )}
             >
               {isAdmin && (
@@ -352,11 +363,25 @@ export default function ProductsClient() {
               )}
 
               <div className="p-4 space-y-2">
-                <h2 className="text-lg font-bold">{p.title}</h2>
-                <p className="text-pink-700 font-semibold">
+                <h2
+                  className={clsx("text-lg font-bold", {
+                    "text-white": isDark,
+                  })}
+                >
+                  {p.title}
+                </h2>
+
+                <p className={clsx("font-semibold", { "text-white": isDark })}>
                   ¥{p.price.toLocaleString()}
                 </p>
-                <p className="text-sm whitespace-pre-wrap">{p.body}</p>
+                <p
+                  className={clsx(
+                    "text-sm whitespace-pre-wrap",
+                    isDark && "text-white"
+                  )}
+                >
+                  {p.body}
+                </p>
               </div>
             </div>
           );

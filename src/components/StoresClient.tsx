@@ -27,6 +27,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { FieldValue } from "firebase/firestore";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import clsx from "clsx";
+import { ThemeKey, THEMES } from "@/lib/themes";
 
 const SITE_KEY = "yotteya";
 const STORE_COL = `siteStores/${SITE_KEY}/items`;
@@ -53,9 +54,13 @@ export default function StoresClient() {
   const [progress, setProgress] = useState<number | null>(null);
   const uploading = progress !== null;
 
-
   const gradient = useThemeGradient();
 
+  const isDark = useMemo(() => {
+    const darkThemes: ThemeKey[] = ["brandG", "brandH", "brandI"];
+    if (!gradient) return false;
+    return darkThemes.some((key) => gradient === THEMES[key]);
+  }, [gradient]);
 
   const colRef: CollectionReference = useMemo(
     () => collection(db, STORE_COL),
@@ -229,7 +234,7 @@ export default function StoresClient() {
     }
   };
 
-   if (!gradient) return null;
+  if (!gradient) return null;
 
   return (
     <main className="max-w-5xl mx-auto p-4 mt-20">
@@ -254,9 +259,9 @@ export default function StoresClient() {
                 />
               </div>
             )}
-            <div className="p-4 space-y-2">
-              <h2 className="text-xl font-semibold">{s.name}</h2>
-              <p className="text-gray-600">
+            <div className={clsx("p-4 space-y-2", isDark && "text-white")}>
+              <h2 className="text-xl font-semibold ">{s.name}</h2>
+              <p>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                     s.address
@@ -269,7 +274,12 @@ export default function StoresClient() {
                 </a>
               </p>
               {s.description && (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                <p
+                  className={clsx(
+                    "text-sm whitespace-pre-wrap",
+                    isDark && "text-white"
+                  )}
+                >
                   {s.description}
                 </p>
               )}

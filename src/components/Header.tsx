@@ -15,6 +15,7 @@ import Image from "next/image";
 import clsx from "clsx";
 import { Instagram } from "lucide-react";
 import { useThemeGradient } from "@/lib/useThemeGradient";
+import { useHeaderLogoUrl } from "../hooks/useHeaderLogoUrl";
 
 type HeaderProps = {
   className?: string;
@@ -32,8 +33,9 @@ export default function Header({ className = "" }: HeaderProps) {
   /* ▼ 追加：Sheet の開閉を管理するステート */
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
+  const logoUrl = useHeaderLogoUrl();
 
-   if (!gradient) return null;
+  if (!gradient) return null;
 
   return (
     <header
@@ -50,13 +52,15 @@ export default function Header({ className = "" }: HeaderProps) {
         href="/"
         className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
       >
-        <Image
-          src="/images/logo.jpg"
-          alt="ロゴ"
-          width={48}
-          height={48}
-          className="w-12 h-auto object-contain transition-opacity duration-200 "
-        />
+        {logoUrl && logoUrl.trim() !== "" && (
+          <Image
+            src={logoUrl}
+            alt="ロゴ"
+            width={48}
+            height={48}
+            className="w-12 h-12 object-contain transition-opacity duration-200"
+          />
+        )}
         甘味処 よって屋
       </Link>
 

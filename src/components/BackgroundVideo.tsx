@@ -13,6 +13,11 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { THEMES, ThemeKey } from "@/lib/themes";
 import ThemeSelector from "./ThemeSelector";
+import { Button } from "@/components/ui/button";
+import imageCompression from "browser-image-compression";
+
+import ThemeWallpaper from "./ThemeWallpaper";
+import HeaderLogoPicker from "./HeaderLogoPicker";
 
 const SITE_KEY = "yotteya";
 const META_REF = doc(db, "siteSettings", SITE_KEY);
@@ -69,6 +74,15 @@ export default function BackgroundMedia() {
 
   const upload = async () => {
     if (!file) return;
+
+    const MAX_SIZE_MB = 200;
+    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+    if (file.size > MAX_SIZE_BYTES) {
+      alert(`動画サイズが大きすぎます。最大 ${MAX_SIZE_MB}MB までです。`);
+      return;
+    }
+
     const isVideo = file.type.startsWith("video/");
     const ext = isVideo ? "mp4" : "jpg";
     const path = `${
@@ -164,6 +178,86 @@ export default function BackgroundMedia() {
     );
   };
 
+  const uploadImage = async (imageFile: File) => {
+    const imagePath = `images/public/${SITE_KEY}/wallpaper.jpg`;
+    const imageRef = ref(getStorage(), imagePath);
+
+    try {
+      await deleteObject(imageRef);
+    } catch {
+      // 画像がなければ無視
+    }
+
+    const task = uploadBytesResumable(imageRef, imageFile);
+
+    setProgress(0); // プログレスバー表示
+
+    task.on(
+      "state_changed",
+      (snapshot) => {
+        const percent = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        );
+        setProgress(percent);
+      },
+      (error) => {
+        console.error("画像アップロード失敗:", error);
+        setProgress(null);
+        alert("アップロードに失敗しました");
+      },
+      async () => {
+        const imageUrl = await getDownloadURL(imageRef);
+        await setDoc(META_REF, { imageUrl }, { merge: true });
+
+        setProgress(null); // 完了後モーダル非表示
+        alert("画像を更新しました！");
+      }
+    );
+  };
+
+  const uploadHeaderImage = async (file: File) => {
+    const imagePath = `images/public/${SITE_KEY}/headerLogo.jpg`;
+    const imageRef = ref(getStorage(), imagePath);
+
+    const compressedFile = await imageCompression(file, {
+      maxWidthOrHeight: 96,
+      maxSizeMB: 0.3,
+      useWebWorker: true,
+    });
+
+    try {
+      await deleteObject(imageRef);
+    } catch {}
+
+    const task = uploadBytesResumable(imageRef, compressedFile);
+    setProgress(0); // プログレスバー表示
+
+    task.on(
+      "state_changed",
+      (snapshot) => {
+        const percent = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        );
+        setProgress(percent);
+      },
+      (error) => {
+        console.error("ロゴアップロード失敗:", error);
+        setProgress(null);
+        alert("アップロードに失敗しました");
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(imageRef);
+        await setDoc(
+          doc(db, "siteSettings", SITE_KEY),
+          { headerLogoUrl: downloadURL },
+          { merge: true }
+        );
+        setProgress(null);
+        alert("ヘッダー画像を更新しました！");
+      }
+    );
+  };
+
   return (
     <div className="fixed inset-0 top-12">
       {renderMedia()}
@@ -176,25 +270,65 @@ export default function BackgroundMedia() {
 
       {isAdmin && (
         <>
+          {progress !== null && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+              <div className="bg-white rounded-lg p-6 shadow-md w-full max-w-sm">
+                <p className="text-center text-gray-800 mb-2">
+                  アップロード中… {progress}%
+                </p>
+                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 transition-all"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {!editing && (
             <>
               {/* 編集ボタンなど他の管理機能 */}
               {!editing && (
-                <button
+                <Button
                   onClick={() => setEditing(true)}
                   disabled={uploading}
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-blue-500 text-white rounded shadow"
+                  size="sm"
+                  className="absolute bottom-35 left-1/2 -translate-x-1/2  bg-blue-500 text-white rounded shadow"
                 >
-                  背景編集
-                </button>
+                  背景動画
+                </Button>
               )}
+
+              {/* カラーセレクター（ログインユーザーのみ表示） */}
+              <div className="absolute bottom-50 left-1/2 -translate-x-1/2">
+                <ThemeSelector
+                  currentTheme={theme}
+                  onChange={handleThemeChange}
+                />
+              </div>
+
+              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-8 items-end">
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-sm text-white">背景画像</span>
+                  <ThemeWallpaper
+                    onFileSelect={async (file) => {
+                      await uploadImage(file);
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-sm text-white">ロゴ画像</span>
+                  <HeaderLogoPicker
+                    onSelectFile={async (file) => {
+                      await uploadHeaderImage(file);
+                    }}
+                  />
+                </div>
+              </div>
             </>
           )}
-
-          {/* カラーセレクター（ログインユーザーのみ表示） */}
-          <div className="absolute bottom-20 left-1/2 -translate-x-1/2">
-            <ThemeSelector currentTheme={theme} onChange={handleThemeChange} />
-          </div>
 
           {editing && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

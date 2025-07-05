@@ -23,14 +23,15 @@ export const metadata: Metadata = {
   },
 };
 
+
 export default function StoresPage() {
   return (
     <main className="px-4 py-16">
       <section className="max-w-4xl mx-auto text-center mb-12">
-        <h1 className="text-2xl lg:text-3xl font-extrabold mb-4">
+        <h1 className="text-2xl lg:text-3xl font-extrabold mb-4 text-white/80">
           甘味処 よって 屋 ─ 店舗一覧
         </h1>
-        <p className="leading-relaxed">
+        <p className="leading-relaxed text-white/80">
           <strong>甘味処 よって 屋</strong> は
           <strong>大阪市北区と東淀川区</strong>
           に店舗を構えるクレープメインのお店。

@@ -33,7 +33,7 @@ export default function AboutClient() {
         setDraft(text);
       }
     });
-  }, []);
+  }, [docRef]);
 
   const handleSave = async () => {
     await setDoc(docRef, { text: draft });
@@ -42,17 +42,21 @@ export default function AboutClient() {
     alert("保存しました！");
   };
 
-  return (
-    <main className="max-w-3xl mx-auto p-6 space-y-6 pt-20">
-      <h1 className="text-3xl font-bold text-center mb-4">当店の思い</h1>
 
-      <div className="bg-transparent p-4 rounded shadow-xl  leading-relaxed whitespace-pre-wrap bg-transparentt ">
-        {content || "ただいま準備中です。"}
+
+  return (
+    <main className="max-w-3xl mx-auto ">
+      <div className=" bg-white/50 p-5 ml-5 mr-5 rounded-lg shadow-2xs">
+
+
+        <div className="bg-transparent p-4 rounded  leading-relaxed whitespace-pre-wrap bg-transparentt ">
+          {content || "ただいま準備中です。"}
+        </div>
       </div>
 
       <div className="max-w-3xl mx-auto p-4 space-y-6 ">
         <section>
-          <h3 className="text-xl font-semibold">メディア掲載実績</h3>
+          <h3 className="text-xl font-semibold text-white/80 ">メディア掲載実績</h3>
           <ul className="mt-2 space-y-1 list-disc list-inside">
             <li>
               <a

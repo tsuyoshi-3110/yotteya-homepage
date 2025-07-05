@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Script from "next/script";
 import ThemeBackground from "@/components/ThemeBackground"; // 新規追加
 
-const WALLPAPER = "/images/wallpaper/kamon.jpg";
+import WallpaperBackground from "@/components/WallpaperBackground"; // ← 追加
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({
@@ -46,7 +46,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
       <head>
-        <link rel="preload" as="image" href={WALLPAPER} type="image/webp" />
+        <link
+          rel="preload"
+          as="image"
+          href="/images/wallpaper/kamon.jpg"
+          type="image/webp"
+        />
         <meta name="theme-color" content="#ffffff" />
         <meta
           name="google-site-verification"
@@ -59,12 +64,8 @@ export default function RootLayout({
       </head>
 
       <body className="relative min-h-screen">
-        {/* === 背景レイヤー（下） === */}
-        <div
-          aria-hidden
-          className="pointer-events-none fixed top-0 left-0 w-screen h-screen -z-20 bg-cover bg-center"
-          style={{ backgroundImage: `url(${WALLPAPER})` }}
-        />
+        {/* === 背景レイヤー（Firestoreの画像） === */}
+        <WallpaperBackground />
 
         {/* === パステルグラデーション（上） === */}
         <ThemeBackground />

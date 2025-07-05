@@ -125,7 +125,7 @@ export default function NewsClient() {
         {items.map((item) => (
           <li
             key={item.id}
-            className="border border-black rounded p-4 bg-white"
+            className=" bg-white/50 p-10 rounded-lg shadow-2xs"
           >
             <h2 className="font-bold">{item.title}</h2>
             <p className="mt-2 whitespace-pre-wrap">{item.body}</p>

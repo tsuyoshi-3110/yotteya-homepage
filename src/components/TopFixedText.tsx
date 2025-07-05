@@ -74,11 +74,11 @@ export default function TopFixedText() {
       {isAdmin && !editing && (
         <div className="absolute right-10 top-5 flex gap-2 z-30">
           <Button
-            className="bg-blue-600"
+            className="bg-blue-500"
             size="sm"
             onClick={() => setEditing(true)}
           >
-            {msg.title || msg.body ? "編集" : "追加"}
+            {msg.title || msg.body ? "トップ編集" : "トップ追加"}
           </Button>
           {(msg.title || msg.body) && (
             <Button size="sm" variant="destructive" onClick={handleDelete}>

@@ -24,5 +24,12 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
-  return <AboutClient />;
+  return (
+    <main className="px-4 py-12 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mt-6 mb-6 text-center text-white/80">
+        当店の思い
+      </h1>
+      <AboutClient />
+    </main>
+  );
 }
