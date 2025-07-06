@@ -52,7 +52,11 @@ export default function StoresClient() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const uploading = progress !== null;
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiKeyword, setAiKeyword] = useState("");
+  const [aiFeature, setAiFeature] = useState("");
 
   const gradient = useThemeGradient();
 
@@ -355,11 +359,166 @@ export default function StoresClient() {
                 placeholder="紹介文"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full h-50 border px-3 py-2 rounded"
                 rows={3}
                 disabled={uploading}
               />
             </div>
+
+            <button
+              onClick={() => {
+                if (!name.trim() || !address.trim()) {
+                  alert("店舗名と住所を入力してください");
+                  return;
+                }
+                setShowAIModal(true);
+              }}
+              disabled={uploading || aiLoading}
+              className="w-full mt-2 px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {aiLoading ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  <span>生成中…</span>
+                </>
+              ) : (
+                "AIで紹介文を生成"
+              )}
+            </button>
+
+            {showAIModal && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                <div className="bg-white rounded-lg p-6 w-full max-w-sm space-y-4">
+                  <h3 className="text-lg font-semibold text-center">
+                    紹介文をAIで生成
+                  </h3>
+
+                  <input
+                    type="text"
+                    placeholder="何の店舗か？（例: クレープ屋）"
+                    value={aiKeyword}
+                    onChange={(e) => setAiKeyword(e.target.value)}
+                    className="w-full border px-3 py-2 rounded"
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="イチオシは？（例: チョコバナナ）"
+                    value={aiFeature}
+                    onChange={(e) => setAiFeature(e.target.value)}
+                    className="w-full border px-3 py-2 rounded"
+                  />
+
+                  <div className="flex justify-center gap-2">
+                    <button
+                      onClick={async () => {
+                        if (!aiKeyword || !aiFeature) {
+                          alert("すべての項目を入力してください");
+                          return;
+                        }
+                        setAiLoading(true);
+                        try {
+                          const res = await fetch(
+                            "/api/generate-store-description",
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                name,
+                                address,
+                                keyword: aiKeyword,
+                                feature: aiFeature,
+                              }),
+                            }
+                          );
+
+                          const data = await res.json();
+                          if (data.description) {
+                            setDescription(data.description);
+                            setShowAIModal(false);
+                            setAiKeyword(""); // 🔽 リセット
+                            setAiFeature(""); // 🔽 リセット
+                          } else {
+                            alert("生成に失敗しました");
+                          }
+                        } catch (err) {
+                          alert("エラーが発生しました");
+                          console.error(err);
+                        } finally {
+                          setAiLoading(false);
+                        }
+                        if (!aiKeyword || !aiFeature) {
+                          alert("すべての項目を入力してください");
+                          return;
+                        }
+                        setAiLoading(true);
+                        try {
+                          const res = await fetch(
+                            "/api/generate-store-description",
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                name,
+                                address,
+                                keyword: aiKeyword,
+                                feature: aiFeature,
+                              }),
+                            }
+                          );
+
+                          const data = await res.json();
+                          if (data.description) {
+                            setDescription(data.description);
+                            setShowAIModal(false);
+                          } else {
+                            alert("生成に失敗しました");
+                          }
+                        } catch (err) {
+                          alert("エラーが発生しました");
+                          console.error(err);
+                        } finally {
+                          setAiLoading(false);
+                        }
+                      }}
+                      disabled={aiLoading}
+                      className="px-4 py-2 bg-green-600 text-white rounded"
+                    >
+                      {aiLoading ? "生成中…" : "生成する"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAIModal(false);
+                        setAiKeyword(""); // 🔽 リセット
+                        setAiFeature(""); // 🔽 リセット
+                      }}
+                      className="px-4 py-2 bg-gray-400 text-white rounded"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

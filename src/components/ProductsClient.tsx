@@ -462,6 +462,7 @@ export default function ProductsClient() {
               rows={4}
               disabled={uploading}
             />
+            
             <button
               onClick={async () => {
                 if (!title) return alert("タイトルを入力してください");
