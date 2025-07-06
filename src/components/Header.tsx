@@ -124,7 +124,7 @@ export default function Header({ className = "" }: HeaderProps) {
                 onClick={() => setOpen(false)}
                 className="text-lg text-white"
               >
-                店舗案内
+                アクセス
               </Link>
               <Link
                 href="/about"
