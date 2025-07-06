@@ -6,7 +6,7 @@ const openai = new OpenAI({
 });
 
 export async function POST(req: NextRequest) {
-  const { title, price } = await req.json();
+  const { title } = await req.json();
 
   if (!title) {
     return NextResponse.json({ error: "タイトルが必要です" }, { status: 400 });
@@ -16,16 +16,16 @@ export async function POST(req: NextRequest) {
     {
       role: "system",
       content:
-        "あなたは商品説明を日本語で親しみやすく簡潔に書くプロのコピーライターです。",
+        "あなたは商品説明を日本語で親しみやすく簡潔に書くプロのコピーライターです。価格・メーカー名・産地の情報は一切含めないでください。",
     },
     {
       role: "user",
-      content: `商品タイトル: ${title}\n価格: ${price}円\n→ 商品の紹介文を短めに生成してください。`,
+      content: `商品タイトル: ${title}\n→ 商品の紹介文を短めに生成してください。価格・メーカー名・産地は書かないでください。`,
     },
   ];
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4", // または "gpt-3.5-turbo"
+    model: "gpt-4",
     messages,
     temperature: 0.8,
     max_tokens: 200,
