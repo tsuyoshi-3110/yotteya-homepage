@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     model: "gpt-4",
     messages,
     temperature: 0.7,
-    max_tokens: 500,
+    max_tokens: 300,
   });
 
   const content = completion.choices[0].message.content;
