@@ -30,14 +30,16 @@ import clsx from "clsx";
 import { ThemeKey, THEMES } from "@/lib/themes";
 
 type MediaType = "image" | "video";
+
 type Product = {
   id: string;
   title: string;
   body: string;
-  price: string;
+  price: number;
   mediaURL: string;
   mediaType: MediaType;
   originalFileName?: string;
+  taxIncluded?: boolean; // 🔧 追加（オプション型）
 };
 
 const SITE_KEY = "yotteya";
@@ -50,7 +52,8 @@ export default function ProductsClient() {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [price, setPrice] = useState<string | "">("");
+  const [price, setPrice] = useState<number | "">("");
+  const [taxIncluded, setTaxIncluded] = useState(true); // デフォルト税込
   const [progress, setProgress] = useState<number | null>(null);
   const uploading = progress !== null;
   const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set());
@@ -88,6 +91,7 @@ export default function ProductsClient() {
           mediaURL: data.mediaURL ?? data.imageURL ?? "",
           mediaType: (data.mediaType ?? "image") as MediaType,
           originalFileName: data.originalFileName,
+          taxIncluded: data.taxIncluded ?? true, // 🔧 デフォルトでtrue（=税込）
         };
       });
       rows.sort((a, b) => jaCollator.compare(a.title, b.title));
@@ -107,7 +111,9 @@ export default function ProductsClient() {
       let mediaURL = editing?.mediaURL ?? "";
       let mediaType: MediaType = editing?.mediaType ?? "image";
 
-      if (!file) return;
+      if (formMode === "add" && !file)
+        return alert("メディアを選択してください");
+
       if (file) {
         const isVideo = file.type.startsWith("video/");
         mediaType = isVideo ? "video" : "image";
@@ -179,10 +185,11 @@ export default function ProductsClient() {
       type ProductPayload = {
         title: string;
         body: string;
-        price: string;
+        price: number;
         mediaURL: string;
         mediaType: "image" | "video";
         originalFileName?: string;
+        taxIncluded: boolean;
       };
 
       const payload: ProductPayload = {
@@ -191,6 +198,7 @@ export default function ProductsClient() {
         price,
         mediaURL,
         mediaType,
+        taxIncluded,
       };
 
       // originalFileName があるときだけ追加
@@ -237,6 +245,7 @@ export default function ProductsClient() {
     setTitle(p.title);
     setBody(p.body);
     setPrice(p.price);
+    setTaxIncluded(p.taxIncluded ?? true);
     setFile(null);
     setFormMode("edit");
   };
@@ -370,7 +379,8 @@ export default function ProductsClient() {
                 </h2>
 
                 <p className={clsx("font-semibold", { "text-white": isDark })}>
-                  ¥{p.price.toLocaleString()}
+                  ¥{p.price.toLocaleString()}（{p.taxIncluded ? "税込" : "税抜"}
+                  ）
                 </p>
                 <p
                   className={clsx(
@@ -413,14 +423,37 @@ export default function ProductsClient() {
               disabled={uploading}
             />
             <input
-              type="text"
-              min={0}
+              type="number"
+              inputMode="numeric"
+              pattern="[0-9]*" // iOS向けの補助
               placeholder="価格 (円)"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setPrice(val === "" ? "" : Number(val)); // 空なら ""、それ以外は number
+              }}
               className="w-full border px-3 py-2 rounded"
               disabled={uploading}
             />
+
+            <div className="flex gap-4">
+              <label>
+                <input
+                  type="radio"
+                  checked={taxIncluded}
+                  onChange={() => setTaxIncluded(true)}
+                />
+                税込
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  checked={!taxIncluded}
+                  onChange={() => setTaxIncluded(false)}
+                />
+                税抜
+              </label>
+            </div>
             <textarea
               placeholder="紹介文"
               value={body}
