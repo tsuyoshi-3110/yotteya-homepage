@@ -416,7 +416,7 @@ export default function ProductsClient() {
 
             <input
               type="text"
-              placeholder="タイトル"
+              placeholder="商品名"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full border px-3 py-2 rounded"
@@ -462,7 +462,7 @@ export default function ProductsClient() {
               rows={4}
               disabled={uploading}
             />
-            
+
             <button
               onClick={async () => {
                 if (!title) return alert("タイトルを入力してください");
