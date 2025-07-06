@@ -149,6 +149,13 @@ export default function StoresClient() {
           },
           async () => {
             imageURL = await getDownloadURL(task.snapshot.ref);
+
+            // 🔽 ここでCORS用の置き換えを追加！
+            imageURL = imageURL.replace(
+              "crepe-shop-homepage.appspot.com",
+              "crepe-shop-homepage.firebasestorage.app"
+            );
+
             setProgress(null);
 
             if (formMode === "edit" && editingStore) {

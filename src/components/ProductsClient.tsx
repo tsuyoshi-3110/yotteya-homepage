@@ -40,7 +40,6 @@ type Product = {
   originalFileName?: string;
 };
 
-
 const SITE_KEY = "yotteya";
 
 export default function ProductsClient() {
@@ -55,8 +54,7 @@ export default function ProductsClient() {
   const [progress, setProgress] = useState<number | null>(null);
   const uploading = progress !== null;
   const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set());
-
-
+  const [aiLoading, setAiLoading] = useState(false);
 
   const gradient = useThemeGradient();
 
@@ -431,6 +429,60 @@ export default function ProductsClient() {
               rows={4}
               disabled={uploading}
             />
+            <button
+              onClick={async () => {
+                if (!title) return alert("タイトルを入力してください");
+                setAiLoading(true);
+                try {
+                  const res = await fetch("/api/generate-description", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title, price }),
+                  });
+
+                  const data = await res.json();
+                  if (data.body) {
+                    setBody(data.body);
+                  } else {
+                    alert("生成に失敗しました");
+                  }
+                } catch {
+                  alert("エラーが発生しました");
+                } finally {
+                  setAiLoading(false);
+                }
+              }}
+              disabled={uploading || aiLoading}
+              className="w-full mt-2 px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {aiLoading ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  <span>生成中…</span>
+                </>
+              ) : (
+                "AIで紹介文を生成"
+              )}
+            </button>
             <input
               type="file"
               accept="image/*,video/mp4"
