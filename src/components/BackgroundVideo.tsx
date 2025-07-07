@@ -41,10 +41,50 @@ export default function BackgroundMedia() {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [theme, setTheme] = useState<ThemeKey>("brandA");
+  const [setteisite, setSetteisite] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!url || url.trim() === "") {
+      setReady(false);
+      setSetteisite("トップメディアを設定してください");
+    } else {
+      setReady(true);
+      setSetteisite("");
+    }
+  }, [url]);
+
+  useEffect(() => {
+    (async () => {
+      const snap = await getDoc(META_REF);
+      if (!snap.exists()) {
+        setIsLoaded(true);
+        return;
+      }
+      const data = snap.data() as MetaDoc;
+
+      if (data.themeGradient && THEMES[data.themeGradient]) {
+        setTheme(data.themeGradient);
+      }
+
+      if (typeof data.url === "string" && data.url.trim() !== "") {
+        setUrl(data.url);
+      }
+
+      if (data.type) {
+        setType(data.type);
+        if (data.type === "video" && data.url) {
+          setPoster(data.url.replace(/\.mp4(\?.*)?$/, POSTER_EXT));
+        }
+      }
+
+      setIsLoaded(true); // ← 最後に必ず
+    })().catch((err) => console.error("背景データ取得失敗:", err));
+  }, []);
 
   const uploading = progress !== null;
   const loading = !!url && !ready;
-
+  
   useEffect(() => {
     onAuthStateChanged(auth, (user) => setIsAdmin(!!user));
   }, []);
@@ -157,7 +197,7 @@ export default function BackgroundMedia() {
           playsInline
           preload="auto"
           poster={poster ?? ""}
-          onCanPlay={() => setReady(true)}
+          onLoadedData={() => setReady(true)} // ← 修正
           className="absolute inset-0 w-full h-full object-contain"
         >
           <source src={url} type="video/mp4" />
@@ -168,7 +208,7 @@ export default function BackgroundMedia() {
     return (
       <NextImage
         src={url}
-        alt="背景"
+        alt=""
         fill
         className="absolute inset-0 w-full h-full object-contain"
         onLoad={() => setReady(true)}
@@ -260,7 +300,7 @@ export default function BackgroundMedia() {
 
   return (
     <div className="fixed inset-0 top-12">
-      {renderMedia()}
+      {url && renderMedia()}
 
       {loading && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
@@ -288,6 +328,11 @@ export default function BackgroundMedia() {
 
           {!editing && (
             <>
+              {isLoaded && !url && (
+                <div className=" inset-0 mt-20 flex items-center justify-center">
+                  <p className="text-white text-lg">{setteisite}</p>
+                </div>
+              )}
               {/* 編集ボタンなど他の管理機能 */}
               {!editing && (
                 <Button
@@ -296,7 +341,7 @@ export default function BackgroundMedia() {
                   size="sm"
                   className="absolute bottom-35 left-1/2 -translate-x-1/2  bg-blue-500 text-white rounded shadow"
                 >
-                  背景動画
+                  トップメディア
                 </Button>
               )}
 
