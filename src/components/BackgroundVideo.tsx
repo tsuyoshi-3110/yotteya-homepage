@@ -429,7 +429,7 @@ export default function BackgroundMedia() {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
               <div className="w-full max-w-sm bg-white p-6 rounded-lg">
                 <h2 className="text-lg font-bold text-center mb-4">
-                  背景を更新
+                  メディアを更新
                 </h2>
 
                 <div className="flex flex-col space-y-1">
