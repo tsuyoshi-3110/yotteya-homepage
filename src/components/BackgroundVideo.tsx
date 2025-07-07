@@ -56,12 +56,12 @@ export default function BackgroundMedia() {
   }, []);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setReady(true); // 5秒経過後に強制的に表示解除
-    }, 5000);
-
-    return () => clearTimeout(timeout);
-  }, []);
+    if (type === "image" && imageUrls.length > 0) {
+      setReady(false);
+      const timer = setTimeout(() => setReady(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [imageUrls, type]);
 
   useEffect(() => {
     (async () => {
@@ -137,11 +137,15 @@ export default function BackgroundMedia() {
           const downloadURL = await getDownloadURL(storageRef);
           const bust = `?ts=${Date.now()}`;
 
-          await setDoc(META_REF, {
-            url: downloadURL,
-            type: "video",
-            themeGradient: theme,
-          });
+          await setDoc(
+            META_REF,
+            {
+              url: downloadURL,
+              type: "video",
+              themeGradient: theme,
+            },
+            { merge: true }
+          );
 
           setUrl(downloadURL + bust);
           setType("video");
@@ -310,8 +314,9 @@ export default function BackgroundMedia() {
     const imageRef = ref(getStorage(), imagePath);
 
     const compressedFile = await imageCompression(file, {
-      maxWidthOrHeight: 96,
-      maxSizeMB: 0.3,
+      maxWidthOrHeight: 160, // ✅ 解像度を少し上げる（例：96 → 160）
+      maxSizeMB: 0.5, // ✅ 最大サイズを0.3MB → 0.5MBに増加
+      initialQuality: 0.9, // ✅ 明示的に高画質を指定（デフォルトは自動）
       useWebWorker: true,
     });
 
@@ -384,14 +389,14 @@ export default function BackgroundMedia() {
                   onClick={() => setEditing(true)}
                   disabled={uploading}
                   size="sm"
-                  className="absolute bottom-35 left-1/2 -translate-x-1/2  bg-blue-500 text-white rounded shadow"
+                  className="absolute bottom-43 left-1/2 -translate-x-1/2  bg-blue-500 text-white rounded shadow"
                 >
                   トップ画像・動画
                 </Button>
               )}
 
               {/* カラーセレクター（ログインユーザーのみ表示） */}
-              <div className="absolute bottom-50 left-1/2 -translate-x-1/2">
+              <div className="absolute bottom-60 left-1/2 -translate-x-1/2">
                 <ThemeSelector
                   currentTheme={theme}
                   onChange={handleThemeChange}
