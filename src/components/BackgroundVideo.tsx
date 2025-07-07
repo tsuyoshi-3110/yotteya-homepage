@@ -11,13 +11,14 @@ import {
 } from "firebase/storage";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { THEMES, ThemeKey } from "@/lib/themes";
+import { ThemeKey } from "@/lib/themes";
 import ThemeSelector from "./ThemeSelector";
 import { Button } from "@/components/ui/button";
 import imageCompression from "browser-image-compression";
 
 import ThemeWallpaper from "./ThemeWallpaper";
 import HeaderLogoPicker from "./HeaderLogoPicker";
+import Slideshow from "./Slideshow";
 
 const SITE_KEY = "yotteya";
 const META_REF = doc(db, "siteSettings", SITE_KEY);
@@ -29,6 +30,7 @@ type MetaDoc = {
   url?: string;
   type?: MediaType;
   themeGradient?: ThemeKey;
+  imageUrls?: string[];
 };
 
 export default function BackgroundMedia() {
@@ -38,55 +40,27 @@ export default function BackgroundMedia() {
   const [ready, setReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | File[] | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [theme, setTheme] = useState<ThemeKey>("brandA");
-  const [setteisite, setSetteisite] = useState("");
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!url || url.trim() === "") {
-      setReady(false);
-      setSetteisite("トップメディアを設定してください");
-    } else {
-      setReady(true);
-      setSetteisite("");
-    }
-  }, [url]);
-
-  useEffect(() => {
-    (async () => {
-      const snap = await getDoc(META_REF);
-      if (!snap.exists()) {
-        setIsLoaded(true);
-        return;
-      }
-      const data = snap.data() as MetaDoc;
-
-      if (data.themeGradient && THEMES[data.themeGradient]) {
-        setTheme(data.themeGradient);
-      }
-
-      if (typeof data.url === "string" && data.url.trim() !== "") {
-        setUrl(data.url);
-      }
-
-      if (data.type) {
-        setType(data.type);
-        if (data.type === "video" && data.url) {
-          setPoster(data.url.replace(/\.mp4(\?.*)?$/, POSTER_EXT));
-        }
-      }
-
-      setIsLoaded(true); // ← 最後に必ず
-    })().catch((err) => console.error("背景データ取得失敗:", err));
-  }, []);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const uploading = progress !== null;
-  const loading = !!url && !ready;
-  
+
+  const loading =
+    (type === "video" && !ready && !!url) ||
+    (type === "image" && !ready && imageUrls.length > 0);
+
   useEffect(() => {
     onAuthStateChanged(auth, (user) => setIsAdmin(!!user));
+  }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setReady(true); // 5秒経過後に強制的に表示解除
+    }, 5000);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
@@ -95,8 +69,8 @@ export default function BackgroundMedia() {
       if (!snap.exists()) return;
       const data = snap.data() as MetaDoc;
 
-      if (data.themeGradient && THEMES[data.themeGradient]) {
-        setTheme(data.themeGradient);
+      if (data.imageUrls) {
+        setImageUrls(data.imageUrls);
       }
 
       if (data.url) {
@@ -112,72 +86,136 @@ export default function BackgroundMedia() {
     })().catch((err) => console.error("背景データ取得失敗:", err));
   }, []);
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setReady(true); // ← 5秒後に読み込み強制解除
+    }, 5000);
+    return () => clearTimeout(timeout);
+  }, []);
+
   const upload = async () => {
     if (!file) return;
 
     const MAX_SIZE_MB = 200;
     const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
-    if (file.size > MAX_SIZE_BYTES) {
-      alert(`動画サイズが大きすぎます。最大 ${MAX_SIZE_MB}MB までです。`);
-      return;
-    }
-
-    const isVideo = file.type.startsWith("video/");
-    const ext = isVideo ? "mp4" : "jpg";
-    const path = `${
-      isVideo ? "videos" : "images"
-    }/public/${SITE_KEY}/homeBackground.${ext}`;
-    const storageRef = ref(getStorage(), path);
-
-    try {
-      await deleteObject(storageRef);
-    } catch {
-      // 無視
-    }
-
-    const task = uploadBytesResumable(storageRef, file, {
-      contentType: file.type,
-    });
-
-    setProgress(0);
-
-    task.on(
-      "state_changed",
-      (snapshot) => {
-        setProgress(
-          Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
-        );
-      },
-      (error) => {
-        console.error(error);
-        alert("アップロード失敗");
-        setProgress(null);
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(storageRef);
-        const bust = `?ts=${Date.now()}`;
-
-        await setDoc(META_REF, {
-          url: downloadURL,
-          type: isVideo ? "video" : "image",
-          themeGradient: theme,
-        });
-
-        setUrl(downloadURL + bust);
-        setType(isVideo ? "video" : "image");
-        setPoster(
-          isVideo
-            ? downloadURL.replace(/\.mp4(\?.*)?$/, POSTER_EXT) + bust
-            : null
-        );
-        setReady(false);
-        setProgress(null);
-        setFile(null);
-        setEditing(false);
-        alert("背景を更新しました！");
+    // ✅ 動画アップロード処理
+    if (file instanceof File && file.type.startsWith("video/")) {
+      if (file.size > MAX_SIZE_BYTES) {
+        alert(`動画サイズが大きすぎます。最大 ${MAX_SIZE_MB}MB までです。`);
+        return;
       }
-    );
+
+      const ext = "mp4";
+      const path = `videos/public/${SITE_KEY}/homeBackground.${ext}`;
+      const storageRef = ref(getStorage(), path);
+
+      try {
+        await deleteObject(storageRef);
+      } catch {}
+
+      const task = uploadBytesResumable(storageRef, file, {
+        contentType: file.type,
+      });
+
+      setProgress(0); // ✅ プログレスバー開始
+
+      task.on(
+        "state_changed",
+        (snapshot) => {
+          const percent = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          setProgress(percent);
+        },
+        (error) => {
+          console.error("動画アップロード失敗:", error);
+          alert("アップロード失敗");
+          setProgress(null);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(storageRef);
+          const bust = `?ts=${Date.now()}`;
+
+          await setDoc(META_REF, {
+            url: downloadURL,
+            type: "video",
+            themeGradient: theme,
+          });
+
+          setUrl(downloadURL + bust);
+          setType("video");
+          setPoster(downloadURL.replace(/\.mp4(\?.*)?$/, POSTER_EXT) + bust);
+          setReady(false);
+          setProgress(null);
+          setFile(null);
+          setEditing(false);
+          alert("メディアを更新しました！");
+        }
+      );
+    }
+
+    // ✅ 画像複数枚アップロード処理
+    else if (Array.isArray(file)) {
+      const validFiles = file.slice(0, 3);
+      const urls: string[] = [];
+
+      for (let i = 0; i < validFiles.length; i++) {
+        const image = validFiles[i];
+        const imagePath = `images/public/${SITE_KEY}/wallpaper_${i}.jpg`;
+        const imageRef = ref(getStorage(), imagePath);
+
+        try {
+          await deleteObject(imageRef);
+        } catch {}
+
+        // ✅ 枚数ベースで進捗表示（0〜100）
+        setProgress(Math.round(((i + 1) / validFiles.length) * 100));
+
+        const task = uploadBytesResumable(imageRef, image);
+        await new Promise<void>((resolve, reject) => {
+          task.on(
+            "state_changed",
+            null, // 個別の詳細progress追跡はしない（簡易モード）
+            (error) => {
+              console.error("画像アップロード失敗:", error);
+              reject(error);
+            },
+            async () => {
+              const url = await getDownloadURL(imageRef);
+              urls.push(url);
+              resolve();
+            }
+          );
+        });
+      }
+
+      setProgress(null); // ✅ アップロード完了で非表示
+
+      await setDoc(
+        META_REF,
+        {
+          imageUrls: urls,
+          type: "image",
+          themeGradient: theme,
+        },
+        { merge: true }
+      );
+
+      setImageUrls(urls);
+      setType("image");
+      setReady(false);
+      setFile(null);
+      setEditing(false);
+      alert("画像を更新しました！");
+    }
+
+    // ✅ その他：不正ファイル形式
+    else {
+      alert(
+        "不正なファイル形式です。画像は最大3枚、動画は1本のみ対応しています。"
+      );
+    }
   };
 
   const handleThemeChange = async (newTheme: ThemeKey) => {
@@ -186,8 +224,7 @@ export default function BackgroundMedia() {
   };
 
   const renderMedia = () => {
-    if (!url) return null;
-    if (type === "video") {
+    if (type === "video" && url) {
       return (
         <video
           key={url}
@@ -197,7 +234,7 @@ export default function BackgroundMedia() {
           playsInline
           preload="auto"
           poster={poster ?? ""}
-          onLoadedData={() => setReady(true)} // ← 修正
+          onCanPlay={() => setReady(true)}
           className="absolute inset-0 w-full h-full object-contain"
         >
           <source src={url} type="video/mp4" />
@@ -205,17 +242,30 @@ export default function BackgroundMedia() {
       );
     }
 
-    return (
-      <NextImage
-        src={url}
-        alt=""
-        fill
-        className="absolute inset-0 w-full h-full object-contain"
-        onLoad={() => setReady(true)}
-        priority
-        sizes="100vw"
-      />
-    );
+    if (type === "image" && imageUrls.length === 1) {
+      return (
+        <NextImage
+          src={imageUrls[0]}
+          alt="背景画像"
+          fill
+          className="absolute inset-0 w-full h-full object-contain"
+          onLoad={() => setReady(true)}
+          priority
+          sizes="100vw"
+        />
+      );
+    }
+
+    if (type === "image" && imageUrls.length > 1) {
+      return (
+        <Slideshow
+          urls={imageUrls}
+          onFirstLoad={() => setReady(true)} // スライドの最初の画像読み込み後にready
+        />
+      );
+    }
+
+    return null;
   };
 
   const uploadImage = async (imageFile: File) => {
@@ -300,7 +350,7 @@ export default function BackgroundMedia() {
 
   return (
     <div className="fixed inset-0 top-12">
-      {url && renderMedia()}
+      {renderMedia()}
 
       {loading && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
@@ -328,11 +378,6 @@ export default function BackgroundMedia() {
 
           {!editing && (
             <>
-              {isLoaded && !url && (
-                <div className=" inset-0 mt-20 flex items-center justify-center">
-                  <p className="text-white text-lg">{setteisite}</p>
-                </div>
-              )}
               {/* 編集ボタンなど他の管理機能 */}
               {!editing && (
                 <Button
@@ -341,7 +386,7 @@ export default function BackgroundMedia() {
                   size="sm"
                   className="absolute bottom-35 left-1/2 -translate-x-1/2  bg-blue-500 text-white rounded shadow"
                 >
-                  トップメディア
+                  トップ画像・動画
                 </Button>
               )}
 
@@ -382,10 +427,66 @@ export default function BackgroundMedia() {
                   背景を更新
                 </h2>
 
+                <div className="flex flex-col space-y-1">
+                  <label>・動画は1本</label>
+                  <label>・画像は1~3枚</label>
+                </div>
+
                 <input
                   type="file"
                   accept="image/*,video/*"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  multiple
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (!files || files.length === 0) return;
+
+                    const fileArray = Array.from(files);
+                    const videoFiles = fileArray.filter((f) =>
+                      f.type.startsWith("video/")
+                    );
+                    const imageFiles = fileArray.filter((f) =>
+                      f.type.startsWith("image/")
+                    );
+
+                    // ✅ 動画と画像が混在している場合 → NG
+                    if (videoFiles.length > 0 && imageFiles.length > 0) {
+                      alert(
+                        "動画と画像は同時に選択できません。どちらか一方のみ選んでください。"
+                      );
+                      e.target.value = ""; // 選択リセット
+                      return;
+                    }
+
+                    // ✅ 動画が2本以上ある場合 → NG
+                    if (videoFiles.length > 1) {
+                      alert("動画は1本だけ選択できます。");
+                      e.target.value = "";
+                      return;
+                    }
+
+                    // ✅ 画像が4枚以上ある場合 → NG
+                    if (imageFiles.length > 3) {
+                      alert("画像は最大3枚まで選択できます。");
+                      e.target.value = "";
+                      return;
+                    }
+
+                    // ✅ 動画1本のみ → OK
+                    if (videoFiles.length === 1 && imageFiles.length === 0) {
+                      setFile(videoFiles[0]);
+                      return;
+                    }
+
+                    // ✅ 画像のみ（1〜3枚） → OK
+                    if (imageFiles.length > 0 && videoFiles.length === 0) {
+                      setFile(imageFiles);
+                      return;
+                    }
+
+                    // ✅ それ以外（念のため） → NG
+                    alert("ファイルの形式が正しくありません。");
+                    e.target.value = "";
+                  }}
                   className="w-full bg-gray-100 border px-3 py-2 rounded text-sm mb-4"
                   disabled={uploading}
                 />
