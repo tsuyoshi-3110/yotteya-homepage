@@ -110,8 +110,8 @@ export default function TopFixedText() {
               className="border px-3 py-2 w-full text-black"
             />
             <div className="flex justify-center gap-2">
-              <Button onClick={handleSave}>保存</Button>
-              <Button variant="outline" onClick={handleCancel}>
+              <Button onClick={handleSave} className="bg-blue-500">保存</Button>
+              <Button variant="outline" onClick={handleCancel} className="bg-gray-300">
                 キャンセル
               </Button>
             </div>

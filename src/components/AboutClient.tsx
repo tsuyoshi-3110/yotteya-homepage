@@ -12,6 +12,13 @@ export default function AboutClient() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
   const [draft, setDraft] = useState<string>("");
+  const [submitFlag, setSubmitFlag] = useState(false);
+
+  const [showAIInput, setShowAIInput] = useState(false);
+  const [keywords, setKeywords] = useState(["", "", ""]);
+  const [loading, setLoading] = useState(false);
+
+  const nonEmptyKeywords = keywords.filter((k) => k.trim() !== "");
 
   /* ここだけ変えれば他サイトにも流用できます */
   const SITE_KEY = "yotteya";
@@ -33,30 +40,36 @@ export default function AboutClient() {
         setDraft(text);
       }
     });
-  }, [docRef]);
+  }, []);
 
   const handleSave = async () => {
+    setSubmitFlag(true);
     await setDoc(docRef, { text: draft });
     setContent(draft);
     setEditing(false);
+    setKeywords(["", "", ""]);
     alert("保存しました！");
+    setSubmitFlag(false);
   };
-
-
 
   return (
     <main className="max-w-3xl mx-auto ">
       <div className=" bg-white/50 p-5 ml-5 mr-5 rounded-lg shadow-2xs">
-
-
         <div className="bg-transparent p-4 rounded  leading-relaxed whitespace-pre-wrap bg-transparentt ">
           {content || "ただいま準備中です。"}
         </div>
+        {isAdmin && !editing && (
+          <Button onClick={() => setEditing(true)} className="mt-4 bg-blue-500">
+            編集する
+          </Button>
+        )}
       </div>
 
       <div className="max-w-3xl mx-auto p-4 space-y-6 ">
         <section>
-          <h3 className="text-xl font-semibold text-white/80 ">メディア掲載実績</h3>
+          <h3 className="text-xl font-semibold text-white/80 ">
+            メディア掲載実績
+          </h3>
           <ul className="mt-2 space-y-1 list-disc list-inside">
             <li>
               <a
@@ -82,12 +95,6 @@ export default function AboutClient() {
         </section>
       </div>
 
-      {isAdmin && !editing && (
-        <Button onClick={() => setEditing(true)} className="mt-4 bg-blue-500">
-          編集する
-        </Button>
-      )}
-
       {isAdmin && editing && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl space-y-4 shadow-xl relative">
@@ -101,9 +108,70 @@ export default function AboutClient() {
               placeholder="ここに文章を入力..."
             />
 
+            <div className="mt-4 space-y-2">
+              {!showAIInput && (
+                <Button
+                  className="bg-purple-500 w-full"
+                  onClick={() => setShowAIInput(true)}
+                >
+                  AIで作成
+                </Button>
+              )}
+
+              {showAIInput && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {keywords.map((word, i) => (
+                      <input
+                        key={i}
+                        type="text"
+                        className="border p-2 rounded text-black"
+                        placeholder={`キーワード${i + 1}`}
+                        value={word}
+                        onChange={(e) => {
+                          const newKeywords = [...keywords];
+                          newKeywords[i] = e.target.value;
+                          setKeywords(newKeywords);
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <Button
+                    className="bg-indigo-600 w-full disabled:opacity-50"
+                    disabled={nonEmptyKeywords.length === 0 || loading}
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const res = await fetch("/api/generate-about", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({ keywords: nonEmptyKeywords }), // ← 空欄は送らない
+                        });
+                        const data = await res.json();
+                        setDraft(data.text);
+                      } catch {
+                        alert("生成に失敗しました");
+                      } finally {
+                        setLoading(false);
+                        setKeywords(["", "", ""]);
+                      }
+                    }}
+                  >
+                    {loading ? "生成中..." : "作成"}
+                  </Button>
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-center gap-2">
-              <Button className="bg-green-500" onClick={handleSave}>
-                保存
+              <Button
+                className="bg-green-500"
+                onClick={handleSave}
+                disabled={submitFlag}
+              >
+                {submitFlag ? "保存中..." : "保存"}
               </Button>
               <Button
                 className="bg-gray-300"
@@ -111,6 +179,7 @@ export default function AboutClient() {
                 onClick={() => {
                   setDraft(content);
                   setEditing(false);
+                  setKeywords(["", "", ""]);
                 }}
               >
                 キャンセル

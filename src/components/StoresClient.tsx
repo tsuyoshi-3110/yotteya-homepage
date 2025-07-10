@@ -28,6 +28,7 @@ import { FieldValue } from "firebase/firestore";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import clsx from "clsx";
 import { ThemeKey, THEMES } from "@/lib/themes";
+import { Button } from "./ui/button";
 
 const SITE_KEY = "yotteya";
 const STORE_COL = `siteStores/${SITE_KEY}/items`;
@@ -57,6 +58,7 @@ export default function StoresClient() {
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiKeyword, setAiKeyword] = useState("");
   const [aiFeature, setAiFeature] = useState("");
+  const [submitFlag, setSubmitFlag] = useState(false);
 
   const gradient = useThemeGradient();
 
@@ -125,6 +127,8 @@ export default function StoresClient() {
     }
 
     try {
+      setSubmitFlag(true);
+
       const id = editingStore?.id ?? uuid();
       let imageURL = editingStore?.imageURL ?? "";
       const originalFileName =
@@ -137,51 +141,63 @@ export default function StoresClient() {
           alert("サポートされていない画像形式です");
           return;
         }
+
         const storageRef = ref(getStorage(), `${STORAGE_PATH}/${id}.${ext}`);
         const task = uploadBytesResumable(storageRef, file, {
           contentType: file.type,
         });
+
         setProgress(0);
-        task.on(
-          "state_changed",
-          (s) =>
-            setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100)),
-          (e) => {
-            console.error(e);
-            alert("画像アップロードに失敗しました");
-            setProgress(null);
-          },
-          async () => {
-            imageURL = await getDownloadURL(task.snapshot.ref);
 
-            // 🔽 ここでCORS用の置き換えを追加！
-            imageURL = imageURL.replace(
-              "crepe-shop-homepage.appspot.com",
-              "crepe-shop-homepage.firebasestorage.app"
-            );
+        return new Promise<void>((resolve, reject) => {
+          task.on(
+            "state_changed",
+            (s) =>
+              setProgress(
+                Math.round((s.bytesTransferred / s.totalBytes) * 100)
+              ),
+            (e) => {
+              console.error(e);
+              alert("画像アップロードに失敗しました");
+              setProgress(null);
+              reject(e);
+            },
+            async () => {
+              try {
+                imageURL = await getDownloadURL(task.snapshot.ref);
+                imageURL = imageURL.replace(
+                  "crepe-shop-homepage.appspot.com",
+                  "crepe-shop-homepage.firebasestorage.app"
+                );
+                setProgress(null);
 
-            setProgress(null);
+                if (formMode === "edit" && editingStore) {
+                  const oldExt =
+                    editingStore.imageURL.split(".").pop()?.toLowerCase() || "";
+                  if (oldExt && oldExt !== ext) {
+                    await deleteObject(
+                      ref(getStorage(), `${STORAGE_PATH}/${id}.${oldExt}`)
+                    ).catch(() => {});
+                  }
+                }
 
-            if (formMode === "edit" && editingStore) {
-              const oldExt =
-                editingStore.imageURL.split(".").pop()?.toLowerCase() || "";
-              if (oldExt && oldExt !== ext) {
-                await deleteObject(
-                  ref(getStorage(), `${STORAGE_PATH}/${id}.${oldExt}`)
-                ).catch(() => {});
+                await upsertFirestore(id, imageURL, originalFileName);
+                resolve();
+              } catch (err) {
+                reject(err);
               }
             }
-
-            upsertFirestore(id, imageURL, originalFileName);
-          }
-        );
+          );
+        });
       } else {
-        upsertFirestore(id, imageURL, originalFileName);
+        await upsertFirestore(id, imageURL, originalFileName);
       }
     } catch (e) {
       console.error(e);
       alert("保存に失敗しました");
       setProgress(null);
+    } finally {
+      setSubmitFlag(false);
     }
   };
 
@@ -559,16 +575,16 @@ export default function StoresClient() {
             )}
 
             <div className="flex justify-center gap-2">
-              <button
+              <Button
                 onClick={saveStore}
-                disabled={uploading}
+                disabled={submitFlag}
                 className="px-4 py-2 bg-green-600 text-white rounded"
               >
-                保存
-              </button>
+                {submitFlag ? "保存中..." : "保存"}
+              </Button>
               <button
                 onClick={closeForm}
-                disabled={uploading}
+                disabled={submitFlag}
                 className="px-4 py-2 bg-gray-500 text-white rounded"
               >
                 キャンセル
