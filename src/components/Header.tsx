@@ -35,14 +35,16 @@ export default function Header({ className = "" }: HeaderProps) {
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
 
-  if (!gradient) return null;
+  const gradientClass = gradient
+    ? `bg-gradient-to-b ${gradient}`
+    : "bg-gray-100";
 
   return (
     <header
       className={clsx(
         "fixed top-0 z-30 w-full",
         "flex items-center justify-between px-4 h-12 text-whit ",
-        `bg-gradient-to-b ${gradient}`,
+        `bg-gradient-to-b ${gradientClass}`,
         className
       )}
       style={{ "--header-h": "4rem" } as React.CSSProperties}
@@ -50,7 +52,7 @@ export default function Header({ className = "" }: HeaderProps) {
       {/* ロゴ */}
       <Link
         href="/"
-        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
+        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 text-black"
       >
         {logoUrl && logoUrl.trim() !== "" && (
           <Image

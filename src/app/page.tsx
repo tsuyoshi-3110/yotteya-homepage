@@ -47,7 +47,7 @@ export default function HomePage() {
           サクサク生地のクレープ
         </h1>
 
-        <p className="max-w-3xl mx-auto text-center leading-relaxed">
+        <p className="max-w-3xl mx-auto text-center leading-relaxed ">
           大阪市東淀川区で開業１年。独自ブレンドのオリジナル粉で焼き上げる
           “外サクサク・中モチモチ”クレープが評判です。下新庄店ではアイスクリーム、
           淡路店ではふわふわかき氷も提供。テイクアウト・イートインどちらも歓迎。

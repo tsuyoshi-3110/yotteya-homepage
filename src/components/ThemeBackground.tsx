@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { THEMES, ThemeKey } from "@/lib/themes";
 
 const SITE_KEY = "yotteya";
-const META_REF = doc(db, "siteSettings", SITE_KEY);
+const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 
 function isThemeKey(value: unknown): value is ThemeKey {
   return typeof value === "string" && Object.keys(THEMES).includes(value);

@@ -27,7 +27,7 @@ export default function WallpaperUploader() {
     const url = await getDownloadURL(imageRef);
 
     await setDoc(
-      doc(db, "siteSettings", SITE_KEY),
+      doc(db, "siteSettingsEditable", SITE_KEY),
       { wallpaperUrl: url },
       { merge: true }
     );

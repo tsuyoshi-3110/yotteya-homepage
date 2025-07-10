@@ -10,14 +10,17 @@ export function useHeaderLogoUrl(): string {
   const [url, setUrl] = useState("");
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, "siteSettings", SITE_KEY), (snap) => {
-      const data = snap.data();
-      if (data?.headerLogoUrl?.startsWith("http")) {
-        setUrl(data.headerLogoUrl);
-      } else {
-        setUrl("");
+    const unsub = onSnapshot(
+      doc(db, "siteSettingsEditable", SITE_KEY),
+      (snap) => {
+        const data = snap.data();
+        if (data?.headerLogoUrl?.startsWith("http")) {
+          setUrl(data.headerLogoUrl);
+        } else {
+          setUrl("");
+        }
       }
-    });
+    );
 
     return () => unsub();
   }, []);

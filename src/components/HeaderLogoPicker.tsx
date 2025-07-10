@@ -36,7 +36,7 @@ export default function HeaderLogoPicker({
 
     try {
       // Firestore の headerLogoUrl を削除
-      await updateDoc(doc(db, "siteSettings", SITE_KEY), {
+      await updateDoc(doc(db, "siteSettingsEditable", SITE_KEY), {
         headerLogoUrl: deleteField(),
       });
 

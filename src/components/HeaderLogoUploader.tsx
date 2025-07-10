@@ -26,7 +26,7 @@ export default function HeaderLogoUploader() {
     const url = await getDownloadURL(fileRef);
 
     await setDoc(
-      doc(db, "siteSettings", SITE_KEY),
+      doc(db, "siteSettingsEditable", SITE_KEY),
       { headerLogoUrl: url },
       { merge: true }
     );

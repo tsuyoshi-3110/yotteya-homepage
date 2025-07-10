@@ -7,13 +7,16 @@ import {
   signOut,
   User,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { FirebaseError } from "firebase/app";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { LucideLogIn, LogOut, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+const SITE_KEY = "yotteya"; // ← サイトごとに変更可
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -22,11 +25,35 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  // 現在のログイン状態を監視
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const snap = await getDoc(doc(db, "siteSettings", SITE_KEY));
+          if (!snap.exists()) {
+            setError("サイト情報が見つかりません。");
+            await signOut(auth);
+            return;
+          }
+
+          const data = snap.data();
+          if (data.ownerId !== firebaseUser.uid) {
+            setError("このアカウントには管理権限がありません。");
+            await signOut(auth);
+            return;
+          }
+
+          setUser(firebaseUser); // ownerId 一致したらログイン成功
+        } catch (e) {
+          console.error(e);
+          setError("権限確認中にエラーが発生しました。");
+          await signOut(auth);
+        }
+      } else {
+        setUser(null);
+      }
     });
+
     return () => unsub();
   }, []);
 
@@ -35,6 +62,7 @@ export default function LoginPage() {
     setError("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      // 成功後、onAuthStateChanged 内で ownerId チェックが走る
     } catch (err) {
       if (err instanceof FirebaseError) {
         switch (err.code) {
@@ -65,10 +93,9 @@ export default function LoginPage() {
     await signOut(auth);
   };
 
-  // ログイン済みならログアウト画面を表示
   if (user) {
     return (
-      <div className="flex min-h-screen items-center justify-center  px-4">
+      <div className="flex min-h-screen items-center justify-center px-4">
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -77,7 +104,7 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-center">
             <p>{user.email} としてログイン中です。</p>
-            <Button onClick={handleLogout} className="w-full  bg-blue-500">
+            <Button onClick={handleLogout} className="w-full bg-blue-500">
               ログアウト
             </Button>
           </CardContent>
@@ -86,7 +113,6 @@ export default function LoginPage() {
     );
   }
 
-  // 未ログインならログインフォームを表示
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md shadow-xl">

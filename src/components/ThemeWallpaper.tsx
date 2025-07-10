@@ -26,7 +26,7 @@ export default function ThemeWallpaper({
 
     try {
       // Firestore の imageUrl フィールド削除
-      const ref = doc(db, "siteSettings", SITE_KEY);
+      const ref = doc(db, "siteSettingsEditable", SITE_KEY);
       await updateDoc(ref, {
         imageUrl: deleteField(),
       });

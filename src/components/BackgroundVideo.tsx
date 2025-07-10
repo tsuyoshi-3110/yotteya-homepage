@@ -21,7 +21,7 @@ import HeaderLogoPicker from "./HeaderLogoPicker";
 import Slideshow from "./Slideshow";
 
 const SITE_KEY = "yotteya";
-const META_REF = doc(db, "siteSettings", SITE_KEY);
+const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 const POSTER_EXT = ".jpg";
 
 type MediaType = "video" | "image";
@@ -343,7 +343,7 @@ export default function BackgroundMedia() {
       async () => {
         const downloadURL = await getDownloadURL(imageRef);
         await setDoc(
-          doc(db, "siteSettings", SITE_KEY),
+          doc(db, "siteSettingsEditable", SITE_KEY),
           { headerLogoUrl: downloadURL },
           { merge: true }
         );

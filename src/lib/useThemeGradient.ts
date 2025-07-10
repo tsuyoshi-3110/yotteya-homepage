@@ -11,13 +11,10 @@ export function useThemeGradient(): ThemeValue | null {
   const [gradient, setGradient] = useState<ThemeValue | null>(null);
 
   useEffect(() => {
-    const ref = doc(db, "siteSettings", SITE_KEY);
+    const ref = doc(db, "siteSettingsEditable", SITE_KEY);
     const unsubscribe = onSnapshot(ref, (snap) => {
       const data = snap.data();
-      if (
-        data?.themeGradient &&
-        data.themeGradient in THEMES
-      ) {
+      if (data?.themeGradient && data.themeGradient in THEMES) {
         const key = data.themeGradient as ThemeKey;
         setGradient(THEMES[key]);
       }
