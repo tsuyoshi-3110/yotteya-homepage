@@ -444,13 +444,11 @@ export default function StoresClient() {
                     className="w-full border px-3 py-2 rounded"
                   />
 
-                  <div className="flex justify-center gap-2">
-                    <button
+                  <div className="space-y-2">
+                    <Button
+                      className="bg-indigo-600 w-full disabled:opacity-50"
+                      disabled={!aiKeyword || !aiFeature || aiLoading}
                       onClick={async () => {
-                        if (!aiKeyword || !aiFeature) {
-                          alert("すべての項目を入力してください");
-                          return;
-                        }
                         setAiLoading(true);
                         try {
                           const res = await fetch(
@@ -471,41 +469,8 @@ export default function StoresClient() {
                           if (data.description) {
                             setDescription(data.description);
                             setShowAIModal(false);
-                            setAiKeyword(""); // 🔽 リセット
-                            setAiFeature(""); // 🔽 リセット
-                          } else {
-                            alert("生成に失敗しました");
-                          }
-                        } catch (err) {
-                          alert("エラーが発生しました");
-                          console.error(err);
-                        } finally {
-                          setAiLoading(false);
-                        }
-                        if (!aiKeyword || !aiFeature) {
-                          alert("すべての項目を入力してください");
-                          return;
-                        }
-                        setAiLoading(true);
-                        try {
-                          const res = await fetch(
-                            "/api/generate-store-description",
-                            {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                name,
-                                address,
-                                keyword: aiKeyword,
-                                feature: aiFeature,
-                              }),
-                            }
-                          );
-
-                          const data = await res.json();
-                          if (data.description) {
-                            setDescription(data.description);
-                            setShowAIModal(false);
+                            setAiKeyword("");
+                            setAiFeature("");
                           } else {
                             alert("生成に失敗しました");
                           }
@@ -516,21 +481,21 @@ export default function StoresClient() {
                           setAiLoading(false);
                         }
                       }}
-                      disabled={aiLoading}
-                      className="px-4 py-2 bg-green-600 text-white rounded"
                     >
-                      {aiLoading ? "生成中…" : "生成する"}
-                    </button>
-                    <button
+                      {aiLoading ? "生成中..." : "生成する"}
+                    </Button>
+
+                    <Button
+                      className="bg-gray-300 w-full"
+                      variant="outline"
                       onClick={() => {
                         setShowAIModal(false);
-                        setAiKeyword(""); // 🔽 リセット
-                        setAiFeature(""); // 🔽 リセット
+                        setAiKeyword("");
+                        setAiFeature("");
                       }}
-                      className="px-4 py-2 bg-gray-400 text-white rounded"
                     >
-                      キャンセル
-                    </button>
+                      閉じる
+                    </Button>
                   </div>
                 </div>
               </div>

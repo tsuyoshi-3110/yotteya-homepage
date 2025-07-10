@@ -35,10 +35,11 @@ export default function NewsClient() {
   const [user, setUser] = useState<User | null>(null);
   const [uploading, setUploading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
-  const [showAIInput, setShowAIInput] = useState(false);
+
+  // AI用
+  const [showAIModal, setShowAIModal] = useState(false);
   const [keywords, setKeywords] = useState(["", "", ""]);
   const [loading, setLoading] = useState(false);
-
   const nonEmptyKeywords = keywords.filter((k) => k.trim() !== "");
 
   const SITE_KEY = "yotteya";
@@ -110,8 +111,6 @@ export default function NewsClient() {
 
     setUploading(false);
     closeModal();
-    setKeywords(["", "", ""]);
-    setAlertVisible(false); // 成功したらアラート非表示にする
   }, [editingId, title, body, user, colRef]);
 
   const handleDelete = useCallback(
@@ -130,7 +129,7 @@ export default function NewsClient() {
     <div>
       <ul className="space-y-4 p-4">
         {items.map((item) => (
-          <li key={item.id} className=" bg-white/50 p-10 rounded-lg shadow-2xs">
+          <li key={item.id} className="bg-white/50 p-10 rounded-lg shadow-2xs">
             <h2 className="font-bold">{item.title}</h2>
             <p className="mt-2 whitespace-pre-wrap">{item.body}</p>
 
@@ -178,81 +177,28 @@ export default function NewsClient() {
               onChange={(e) => setTitle(e.currentTarget.value)}
             />
             <textarea
-              className="w-full border px-3 py-2 rounded h-24"
+              className="w-full border px-3 py-2 rounded h-40"
               placeholder="本文"
               value={body}
               onChange={(e) => setBody(e.currentTarget.value)}
             />
-            <div className="space-y-2">
-              {!showAIInput && (
-                <button
-                  onClick={() => setShowAIInput(true)}
-                  className="bg-purple-600 text-white w-full py-2 rounded"
-                >AIで作成</button>
-              )}
+            <button
+              onClick={() => setShowAIModal(true)}
+              className="bg-purple-600 text-white w-full py-2 rounded"
+            >
+              AIで作成
+            </button>
 
-              {showAIInput && (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {keywords.map((word, i) => (
-                      <input
-                        key={i}
-                        type="text"
-                        className="border p-2 rounded"
-                        placeholder={`キーワード${i + 1}`}
-                        value={word}
-                        onChange={(e) => {
-                          const newKeywords = [...keywords];
-                          newKeywords[i] = e.target.value;
-                          setKeywords(newKeywords);
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    disabled={
-                      !title.trim() || nonEmptyKeywords.length === 0 || loading
-                    }
-                    onClick={async () => {
-                      setLoading(true);
-                      try {
-                        const res = await fetch("/api/generate-news", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            title,
-                            keywords: nonEmptyKeywords,
-                          }),
-                        });
-                        const data = await res.json();
-                        setBody(data.text);
-                      } catch {
-                        alert("AI生成に失敗しました");
-                      } finally {
-                        setLoading(false);
-                        setKeywords(["", "", ""]);
-                      }
-                    }}
-                    className="bg-indigo-600 text-white w-full py-2 rounded disabled:opacity-50"
-                  >
-                    {loading ? "生成中..." : "作成"}
-                  </button>
-                </div>
-              )}
-            </div>
+            {alertVisible && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle />
+                <AlertTitle>入力エラー</AlertTitle>
+                <AlertDescription>
+                  タイトルと本文を両方入力してください。
+                </AlertDescription>
+              </Alert>
+            )}
 
-            <div>
-              {alertVisible && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle />
-                  <AlertTitle>入力エラー</AlertTitle>
-                  <AlertDescription>
-                    タイトルと本文を両方入力してください。
-                  </AlertDescription>
-                </Alert>
-              )}
-              {/* 既存のモーダルやフォームなど */}
-            </div>
             <div className="flex justify-end gap-2">
               <button
                 onClick={handleSubmit}
@@ -268,6 +214,69 @@ export default function NewsClient() {
                 キャンセル
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* AIモーダル */}
+      {showAIModal && (
+        <div className="fixed inset-0 z-[999] bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md space-y-4 shadow-xl">
+            <h3 className="text-xl font-bold text-center">AIで本文を生成</h3>
+            <label>・最低1個以上必要。</label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {keywords.map((word, i) => (
+                <input
+                  key={i}
+                  type="text"
+                  className="border p-2 rounded"
+                  placeholder={`キーワード${i + 1}`}
+                  value={word}
+                  onChange={(e) => {
+                    const newKeywords = [...keywords];
+                    newKeywords[i] = e.target.value;
+                    setKeywords(newKeywords);
+                  }}
+                />
+              ))}
+            </div>
+
+            <button
+              disabled={
+                !title.trim() || nonEmptyKeywords.length === 0 || loading
+              }
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const res = await fetch("/api/generate-news", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      title,
+                      keywords: nonEmptyKeywords,
+                    }),
+                  });
+                  const data = await res.json();
+                  setBody(data.text);
+                  setShowAIModal(false); // 成功したらモーダル閉じる
+                } catch {
+                  alert("AI生成に失敗しました");
+                } finally {
+                  setLoading(false);
+                  setKeywords(["", "", ""]);
+                }
+              }}
+              className="bg-indigo-600 text-white w-full py-2 rounded disabled:opacity-50"
+            >
+              {loading ? "生成中..." : "作成"}
+            </button>
+
+            <button
+              onClick={() => setShowAIModal(false)}
+              className="bg-gray-300 w-full py-2 rounded"
+            >
+              閉じる
+            </button>
           </div>
         </div>
       )}

@@ -14,9 +14,9 @@ export default function AboutClient() {
   const [draft, setDraft] = useState<string>("");
   const [submitFlag, setSubmitFlag] = useState(false);
 
-  const [showAIInput, setShowAIInput] = useState(false);
   const [keywords, setKeywords] = useState(["", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
 
   const nonEmptyKeywords = keywords.filter((k) => k.trim() !== "");
 
@@ -50,6 +50,7 @@ export default function AboutClient() {
     setKeywords(["", "", ""]);
     alert("保存しました！");
     setSubmitFlag(false);
+
   };
 
   return (
@@ -109,60 +110,12 @@ export default function AboutClient() {
             />
 
             <div className="mt-4 space-y-2">
-              {!showAIInput && (
-                <Button
-                  className="bg-purple-500 w-full"
-                  onClick={() => setShowAIInput(true)}
-                >
-                  AIで作成
-                </Button>
-              )}
-
-              {showAIInput && (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    {keywords.map((word, i) => (
-                      <input
-                        key={i}
-                        type="text"
-                        className="border p-2 rounded text-black"
-                        placeholder={`キーワード${i + 1}`}
-                        value={word}
-                        onChange={(e) => {
-                          const newKeywords = [...keywords];
-                          newKeywords[i] = e.target.value;
-                          setKeywords(newKeywords);
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <Button
-                    className="bg-indigo-600 w-full disabled:opacity-50"
-                    disabled={nonEmptyKeywords.length === 0 || loading}
-                    onClick={async () => {
-                      setLoading(true);
-                      try {
-                        const res = await fetch("/api/generate-about", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({ keywords: nonEmptyKeywords }), // ← 空欄は送らない
-                        });
-                        const data = await res.json();
-                        setDraft(data.text);
-                      } catch {
-                        alert("生成に失敗しました");
-                      } finally {
-                        setLoading(false);
-                        setKeywords(["", "", ""]);
-                      }
-                    }}
-                  >
-                    {loading ? "生成中..." : "作成"}
-                  </Button>
-                </div>
-              )}
+              <Button
+                className="bg-purple-500 w-full"
+                onClick={() => setShowAIModal(true)}
+              >
+                AIで作成
+              </Button>
             </div>
 
             <div className="flex justify-center gap-2">
@@ -185,6 +138,63 @@ export default function AboutClient() {
                 キャンセル
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+      {showAIModal && (
+        <div className="fixed inset-0 bg-black/50 z-[999] flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md space-y-4 shadow-xl relative">
+            <h2 className="text-xl font-bold text-center">AIで文章を生成</h2>
+            <label>・最低1個以上必要。</label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {keywords.map((word, i) => (
+                <input
+                  key={i}
+                  type="text"
+                  className="border p-2 rounded text-black"
+                  placeholder={`キーワード${i + 1}`}
+                  value={word}
+                  onChange={(e) => {
+                    const newKeywords = [...keywords];
+                    newKeywords[i] = e.target.value;
+                    setKeywords(newKeywords);
+                  }}
+                />
+              ))}
+            </div>
+
+            <Button
+              className="bg-indigo-600 w-full disabled:opacity-50"
+              disabled={nonEmptyKeywords.length === 0 || loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const res = await fetch("/api/generate-about", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ keywords: nonEmptyKeywords }),
+                  });
+                  const data = await res.json();
+                  setDraft(data.text);
+                  setShowAIModal(false); // 成功後閉じる
+                } catch {
+                  alert("生成に失敗しました");
+                } finally {
+                  setLoading(false);
+                  setKeywords(["", "", ""]);
+                }
+              }}
+            >
+              {loading ? "生成中..." : "作成"}
+            </Button>
+
+            <Button
+              className="bg-gray-300 w-full"
+              variant="outline"
+              onClick={() => setShowAIModal(false)}
+            >
+              閉じる
+            </Button>
           </div>
         </div>
       )}
