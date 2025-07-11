@@ -19,6 +19,7 @@ import imageCompression from "browser-image-compression";
 import ThemeWallpaper from "./ThemeWallpaper";
 import HeaderLogoPicker from "./HeaderLogoPicker";
 import Slideshow from "./Slideshow";
+import CrepeLoader from "./CrepeLoader";
 
 const SITE_KEY = "yotteya";
 const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
@@ -357,11 +358,7 @@ export default function BackgroundMedia() {
     <div className="fixed inset-0 top-12">
       {renderMedia()}
 
-      {loading && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
-          <div className="text-white text-lg">読み込み中...</div>
-        </div>
-      )}
+      {loading && <CrepeLoader />}
 
       {isAdmin && (
         <>

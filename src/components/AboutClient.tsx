@@ -6,6 +6,8 @@ import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import CardSpinner from "./CardSpinner";
+import { useThemeGradient } from "@/lib/useThemeGradient";
 
 export default function AboutClient() {
   const [content, setContent] = useState<string>("");
@@ -20,6 +22,7 @@ export default function AboutClient() {
 
   const nonEmptyKeywords = keywords.filter((k) => k.trim() !== "");
 
+    const gradient = useThemeGradient()
   /* ここだけ変えれば他サイトにも流用できます */
   const SITE_KEY = "yotteya";
 
@@ -52,6 +55,8 @@ export default function AboutClient() {
     setSubmitFlag(false);
 
   };
+
+   if (!gradient) return <CardSpinner />;
 
   return (
     <main className="max-w-3xl mx-auto ">

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import StoresClient from "@/components/StoresClient";
+import { PhoneSection } from "@/components/PhoneSection";
 
 export const metadata: Metadata = {
   title: "店舗一覧｜甘味処 よって屋",
@@ -23,12 +24,10 @@ export const metadata: Metadata = {
   },
 };
 
-
 export default function StoresPage() {
   return (
     <main className="px-4 py-16">
       {/* 電話注文セクション */}
-
 
       {/* 店舗情報紹介 */}
       <section className="max-w-4xl mx-auto text-center mb-12">
@@ -45,14 +44,8 @@ export default function StoresPage() {
           お近くのお店でサクサク生地のクレープをお楽しみください。
         </p>
       </section>
-       <section className="max-w-4xl mx-auto text-center mb-12">
-        <h2 className="text-3xl font-bold text-white/80 mb-2">ご注文はこちら</h2>
-        <a
-          href="tel:07033321408"
-          className="text-2xl md:text-3xl font-extrabold text-white bg-gradient-to-br from-[rgba(245,75,202,0.7)] to-[rgba(250,219,159,0.7)] px-6 py-3 rounded-xl inline-block hover:bg-pink-700 transition"
-        >
-           070-3332-1408
-        </a>
+      <section className="max-w-4xl mx-auto text-center mb-12">
+        <PhoneSection />
       </section>
 
       {/* クライアント側店舗一覧表示 */}

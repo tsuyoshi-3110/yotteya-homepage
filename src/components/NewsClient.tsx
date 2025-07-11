@@ -16,6 +16,8 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 import { AlertCircle, Plus } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import CardSpinner from "./CardSpinner";
+import { useThemeGradient } from "@/lib/useThemeGradient";
 
 interface NewsItem {
   id: string;
@@ -41,6 +43,7 @@ export default function NewsClient() {
   const [keywords, setKeywords] = useState(["", "", ""]);
   const [loading, setLoading] = useState(false);
   const nonEmptyKeywords = keywords.filter((k) => k.trim() !== "");
+  const gradient = useThemeGradient();
 
   const SITE_KEY = "yotteya";
 
@@ -125,32 +128,43 @@ export default function NewsClient() {
     [user, colRef]
   );
 
+  if (!gradient) return <CardSpinner />;
+
   return (
     <div>
       <ul className="space-y-4 p-4">
-        {items.map((item) => (
-          <li key={item.id} className="bg-white/50 p-10 rounded-lg shadow-2xs">
-            <h2 className="font-bold">{item.title}</h2>
-            <p className="mt-2 whitespace-pre-wrap">{item.body}</p>
-
-            {user && (
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={() => openEdit(item)}
-                  className="px-3 py-1 bg-blue-600 text-white rounded"
-                >
-                  編集
-                </button>
-                <button
-                  onClick={() => handleDelete(item)}
-                  className="px-3 py-1 bg-red-600 text-white rounded"
-                >
-                  削除
-                </button>
-              </div>
-            )}
+        {items.length === 0 ? (
+          <li className="text-center text-white/80 text-lg py-12">
+            現在、お知らせはまだありません。
           </li>
-        ))}
+        ) : (
+          items.map((item) => (
+            <li
+              key={item.id}
+              className="bg-white/50 p-10 rounded-lg shadow-2xs"
+            >
+              <h2 className="font-bold">{item.title}</h2>
+              <p className="mt-2 whitespace-pre-wrap">{item.body}</p>
+
+              {user && (
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => openEdit(item)}
+                    className="px-3 py-1 bg-blue-600 text-white rounded"
+                  >
+                    編集
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item)}
+                    className="px-3 py-1 bg-red-600 text-white rounded"
+                  >
+                    削除
+                  </button>
+                </div>
+              )}
+            </li>
+          ))
+        )}
       </ul>
 
       {user && (

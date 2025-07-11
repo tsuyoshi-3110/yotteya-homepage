@@ -29,6 +29,7 @@ import { useThemeGradient } from "@/lib/useThemeGradient";
 import clsx from "clsx";
 import { ThemeKey, THEMES } from "@/lib/themes";
 import { Button } from "./ui/button";
+import CardSpinner from "./CardSpinner";
 
 const SITE_KEY = "yotteya";
 const STORE_COL = `siteStores/${SITE_KEY}/items`;
@@ -93,7 +94,9 @@ export default function StoresClient() {
           })
         );
       },
-      console.error
+      (error) => {
+        console.error(error);
+      }
     );
     return () => unsub();
   }, [colRef]);
@@ -261,7 +264,7 @@ export default function StoresClient() {
     }
   };
 
-  if (!gradient) return null;
+  if (!gradient) return <CardSpinner />;
 
   return (
     <main className="max-w-5xl mx-auto p-4 mt-20">
