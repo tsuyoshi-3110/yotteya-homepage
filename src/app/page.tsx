@@ -5,7 +5,7 @@ import BackgroundVideo from "@/components/BackgroundVideo";
 import TopFixedText from "@/components/TopFixedText";
 
 export const metadata: Metadata = {
-  title: "甘味処 よって屋｜サクサク生地のクレープ専門店",
+  title: "甘味処 よって屋｜サクサク生地のクレープ店",
   description:
     "大阪市東淀川区と北区に店舗を構えるクレープ専門店『甘味処 よって屋』。サクサク生地と北海道産生クリームが自慢です。季節限定クレープやかき氷も提供。",
   openGraph: {
