@@ -15,6 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import ForgotPassword from "@/components/ForgotPassword";
+import ChangePassword from "@/components/ChangePassword";
+import ForgotEmail from "@/components/ForgotEmail";
+import PasswordInput from "@/components/PasswordInput";
 
 const SITE_KEY = "yotteya"; // ← サイトごとに変更可
 
@@ -24,6 +28,10 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showForgotEmail, setShowForgotEmail] = useState(false);
+
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -93,7 +101,17 @@ export default function LoginPage() {
     await signOut(auth);
   };
 
+  // ユーザーがログイン中のときの表示を分岐する
   if (user) {
+    // パスワード変更画面が有効ならそちらを優先表示
+    if (showChangePassword) {
+      return (
+        <div className="flex min-h-screen items-center justify-center px-4">
+          <ChangePassword onClose={() => setShowChangePassword(false)} />
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <Card className="w-full max-w-md shadow-xl">
@@ -104,11 +122,40 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-center">
             <p>{user.email} としてログイン中です。</p>
+            <button
+              onClick={() => setShowChangePassword(true)}
+              className="text-blue-500 hover:underline"
+            >
+              パスワードを変更
+            </button>
+
             <Button onClick={handleLogout} className="w-full bg-blue-500">
               ログアウト
             </Button>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  if (showForgotEmail) {
+    return (
+      <ForgotEmail
+        onClose={() => setShowForgotEmail(false)}
+        onEmailFound={(found) => {
+          setEmail(found); // ✅ 自動入力
+          setShowForgotEmail(false); // ✅ 自動で閉じる
+        }}
+      />
+    );
+  }
+
+  if (showForgotPassword) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <ForgotPassword onClose={() => setShowForgotPassword(false)} />
+        </div>
       </div>
     );
   }
@@ -135,12 +182,27 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <Input
-            type="password"
-            placeholder="パスワード"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+
+          <div className="flex justify-between mt-2 text-sm">
+            <button
+              onClick={() => setShowForgotPassword(true)}
+              className="text-blue-500 hover:underline"
+            >
+              パスワードを忘れた方
+            </button>
+          </div>
+          <div className="flex justify-between mt-2 text-sm">
+            <button
+              onClick={() => setShowForgotEmail(true)}
+              className="text-blue-500 hover:underline"
+            >
+              メールアドレスを忘れた方
+            </button>
+          </div>
           <Button
             onClick={handleLogin}
             disabled={loading}
