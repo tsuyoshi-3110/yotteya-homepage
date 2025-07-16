@@ -336,16 +336,18 @@ export default function StoresClient() {
                     )}
                   >
                     {/* ドラッグハンドル */}
-                    <div
-                      {...attributes}
-                      {...listeners}
-                      onTouchStart={(e) => e.preventDefault()}
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 cursor-grab active:cursor-grabbing touch-none select-none"
-                    >
-                      <div className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full text-sm flex items-center justify-center shadow">
-                        ≡
+                    {auth.currentUser !== null && (
+                      <div
+                        {...attributes}
+                        {...listeners}
+                        onTouchStart={(e) => e.preventDefault()}
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 cursor-grab active:cursor-grabbing touch-none select-none"
+                      >
+                        <div className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full text-sm flex items-center justify-center shadow">
+                          ≡
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* カード中身 */}
                     {s.imageURL && (

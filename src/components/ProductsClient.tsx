@@ -45,7 +45,7 @@ import {
 } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
 
-import {type Product } from "@/types/Product";
+import { type Product } from "@/types/Product";
 
 type MediaType = "image" | "video";
 
@@ -342,17 +342,18 @@ export default function ProductsClient() {
                           : "bg-white"
                       )}
                     >
-                      {/* ≡ ドラッグハンドル */}
-                      <div
-                        {...attributes}
-                        {...listeners}
-                        onTouchStart={(e) => e.preventDefault()}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 cursor-grab active:cursor-grabbing touch-none select-none"
-                      >
-                        <div className="w-10 h-10 bg-gray-200 text-gray-700 rounded-full text-sm flex items-center justify-center shadow">
-                          ≡
+                      {auth.currentUser !== null && (
+                        <div
+                          {...attributes}
+                          {...listeners}
+                          onTouchStart={(e) => e.preventDefault()}
+                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 cursor-grab active:cursor-grabbing touch-none select-none"
+                        >
+                          <div className="w-10 h-10 bg-gray-200 text-gray-700 rounded-full text-sm flex items-center justify-center shadow">
+                            ≡
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* 編集・削除ボタン */}
                       {isAdmin && (
@@ -625,5 +626,3 @@ export default function ProductsClient() {
     </main>
   );
 }
-
-
