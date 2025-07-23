@@ -339,7 +339,7 @@ export default function ProductsClient() {
                       }}
                       className={clsx(
                         "flex flex-col h-full border rounded-lg overflow-hidden shadow relative transition-colors duration-200",
-                        "bg-gradient-to-b", // ← これを復活させる
+                        "bg-gradient-to-b",
                         gradient,
                         isDragging
                           ? "bg-yellow-100"
@@ -440,7 +440,7 @@ export default function ProductsClient() {
                       )}
 
                       {/* 商品情報 */}
-                      <div className="p-4 space-y-2">
+                      <div className="p-1 space-y-1">
                         <h2
                           className={clsx("text-sm font-bold", {
                             "text-white": isDark,
