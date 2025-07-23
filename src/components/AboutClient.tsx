@@ -65,7 +65,7 @@ export default function AboutClient() {
           {content || "ただいま準備中です。"}
         </div>
         {isAdmin && !editing && (
-          <Button onClick={() => setEditing(true)} className="mt-4 bg-blue-500">
+          <Button onClick={() => setEditing(true)} className="mt-4 bg-blue-500 cursor-pointer">
             編集する
           </Button>
         )}
@@ -116,7 +116,7 @@ export default function AboutClient() {
 
             <div className="mt-4 space-y-2">
               <Button
-                className="bg-purple-500 w-full"
+                className="bg-purple-500 w-full cursor-pointer"
                 onClick={() => setShowAIModal(true)}
               >
                 AIで作成
@@ -125,14 +125,14 @@ export default function AboutClient() {
 
             <div className="flex justify-center gap-2">
               <Button
-                className="bg-green-500"
+                className="bg-green-500 cursor-pointer"
                 onClick={handleSave}
                 disabled={submitFlag}
               >
                 {submitFlag ? "保存中..." : "保存"}
               </Button>
               <Button
-                className="bg-gray-300"
+                className="bg-gray-300 cursor-pointer"
                 variant="outline"
                 onClick={() => {
                   setDraft(content);

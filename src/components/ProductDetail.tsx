@@ -179,6 +179,7 @@ export default function ProductDetail({ product }: { product: Product }) {
           "bg-gradient-to-b", // ★ 方向を指定
           gradient, // ★ 2色グラデ（例: from-pink-500 to-red-500）
           isDark ? "text-white" : "text-black",
+          "cursor-pointer",
           "hover:opacity-80 backdrop-blur"
         )}
       >

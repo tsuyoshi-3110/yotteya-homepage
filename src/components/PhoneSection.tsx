@@ -113,14 +113,14 @@ export function PhoneSection() {
                   setInput(p ?? "");
                   setEditing(true);
                 }}
-                className="px-2 py-1 bg-blue-600 text-white rounded text-sm"
+                className="px-2 py-1 bg-blue-600 text-white rounded text-sm cursor-pointer"
               >
                 {phone ? "編集" : "登録する"}
               </button>
               {phone && (
                 <button
                   onClick={deletePhone}
-                  className="px-2 py-1 bg-red-600 text-white rounded text-sm"
+                  className="px-2 py-1 bg-red-600 text-white rounded text-sm cursor-pointer"
                 >
                   削除
                 </button>

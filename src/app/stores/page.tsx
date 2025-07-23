@@ -44,7 +44,7 @@ export default function StoresPage() {
           お近くのお店でサクサク生地のクレープをお楽しみください。
         </p>
       </section>
-      <section className="max-w-4xl mx-auto text-center mb-12">
+      <section className="max-w-4xl mx-auto text-center mb-12 ">
         <PhoneSection />
       </section>
 

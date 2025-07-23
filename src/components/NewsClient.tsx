@@ -150,13 +150,13 @@ export default function NewsClient() {
                 <div className="mt-4 flex gap-2">
                   <button
                     onClick={() => openEdit(item)}
-                    className="px-3 py-1 bg-blue-600 text-white rounded"
+                    className="px-3 py-1 bg-blue-600 text-white rounded cursor-pointer"
                   >
                     編集
                   </button>
                   <button
                     onClick={() => handleDelete(item)}
-                    className="px-3 py-1 bg-red-600 text-white rounded"
+                    className="px-3 py-1 bg-red-600 text-white rounded cursor-pointer"
                   >
                     削除
                   </button>
@@ -172,7 +172,7 @@ export default function NewsClient() {
           onClick={openAdd}
           aria-label="新規追加"
           disabled={uploading}
-          className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
+          className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50 cursor-pointer"
         >
           <Plus size={28} />
         </button>
@@ -198,7 +198,7 @@ export default function NewsClient() {
             />
             <button
               onClick={() => setShowAIModal(true)}
-              className="bg-purple-600 text-white w-full py-2 rounded"
+              className="bg-purple-600 text-white w-full py-2 rounded cursor-pointer"
             >
               AIで作成
             </button>
@@ -217,13 +217,13 @@ export default function NewsClient() {
               <button
                 onClick={handleSubmit}
                 disabled={uploading}
-                className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
+                className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50 cursor-pointer"
               >
                 {editingId ? "更新" : "追加"}
               </button>
               <button
                 onClick={closeModal}
-                className="px-4 py-2 bg-gray-300 rounded"
+                className="px-4 py-2 bg-gray-300 rounded cursor-pointer"
               >
                 キャンセル
               </button>

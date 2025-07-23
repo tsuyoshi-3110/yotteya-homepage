@@ -15,7 +15,7 @@ export default function ThemeSelector({
         <button
           key={key}
           onClick={() => onChange(key)}
-          className={`w-16 h-16 rounded-full bg-gradient-to-r ${
+          className={`w-16 h-16  cursor-pointer rounded-full bg-gradient-to-r ${
             THEMES[key]
           } border-4 ${
             currentTheme === key ? "border-black" : "border-transparent"

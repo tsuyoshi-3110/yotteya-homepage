@@ -338,6 +338,7 @@ export default function ProductsClient() {
                         router.push(`/products/${p.id}`);
                       }}
                       className={clsx(
+                        // --- 既存 ---
                         "flex flex-col h-full border rounded-lg overflow-hidden shadow relative transition-colors duration-200",
                         "bg-gradient-to-b",
                         gradient,
@@ -345,7 +346,13 @@ export default function ProductsClient() {
                           ? "bg-yellow-100"
                           : isDark
                           ? "bg-black/40 text-white"
-                          : "bg-white"
+                          : "bg-white",
+                        // --- ★ 追加ここだけ ★ ---
+                        // 管理者（ドラッグできる人）は常に grab カーソル。
+                        // それ以外の閲覧者には pointer カーソルを表示。
+                        "cursor-pointer",
+                        // hover で軽く陰影を強調（任意）
+                        !isDragging && "hover:shadow-lg"
                       )}
                     >
                       {auth.currentUser !== null && (
@@ -481,7 +488,7 @@ export default function ProductsClient() {
           onClick={openAdd}
           aria-label="新規追加"
           disabled={uploading}
-          className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50"
+          className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-pink-700 active:scale-95 transition disabled:opacity-50 cursor-pointer"
         >
           <Plus size={28} />
         </button>
