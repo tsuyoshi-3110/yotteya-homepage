@@ -171,7 +171,16 @@ export default function ProductDetail({ product }: { product: Product }) {
       <button
         onClick={() => router.back()}
         aria-label="戻る"
-        className="fixed top-15 left-3 z-40 p-2 rounded bg-gray-100/80 hover:bg-gray-200 backdrop-blur"
+        className={clsx(
+          // 固定配置
+          "fixed top-[60px] left-3 z-40",
+          // 見た目
+          "p-2 rounded shadow transition-opacity",
+          "bg-gradient-to-b", // ★ 方向を指定
+          gradient, // ★ 2色グラデ（例: from-pink-500 to-red-500）
+          isDark ? "text-white" : "text-black",
+          "hover:opacity-80 backdrop-blur"
+        )}
       >
         <ChevronLeft size={20} />
       </button>
@@ -198,7 +207,7 @@ export default function ProductDetail({ product }: { product: Product }) {
             </button>
             <button
               onClick={handleDelete}
-             className="px-2 py-1 bg-red-600 text-white text-md rounded shadow disabled:opacity-50"
+              className="px-2 py-1 bg-red-600 text-white text-md rounded shadow disabled:opacity-50"
             >
               削除
             </button>

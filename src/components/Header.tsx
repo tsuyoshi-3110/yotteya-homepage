@@ -66,7 +66,7 @@ export default function Header({ className = "" }: HeaderProps) {
         甘味処 よって屋
       </Link>
 
-      <nav className="flex gap-4 ml-auto mr-6">
+      <nav className="flex gap-4 ml-auto mr-4">
         {SNS.map(({ name, href, icon: Icon }) => (
           <a
             key={name}
@@ -80,6 +80,21 @@ export default function Header({ className = "" }: HeaderProps) {
           </a>
         ))}
       </nav>
+
+      <Link
+        href="https://tayotteya.com/"
+        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 text-black"
+      >
+        {logoUrl && logoUrl.trim() !== "" && (
+          <Image
+            src={"/images/tayotteya_circle_image.png"}
+            alt="ロゴ"
+            width={32}
+            height={32}
+            className="w-7 h-7 object-contain transition-opacity duration-200 mr-4"
+          />
+        )}
+      </Link>
 
       {/* スマホハンバーガー */}
       <div>
