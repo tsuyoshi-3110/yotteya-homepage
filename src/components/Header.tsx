@@ -148,6 +148,12 @@ export default function Header({ className = "" }: HeaderProps) {
               >
                 取材はこちら
               </Link>
+              <Link
+                href="https://tayotteya.com/"
+                className="hover:underline text-white"
+              >
+                お掃除処はこちら
+              </Link>
             </div>
             {/* ▼ ログインだけ下に固定 */}
             <div className="p-4">

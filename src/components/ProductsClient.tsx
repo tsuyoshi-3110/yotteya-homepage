@@ -10,7 +10,6 @@ import {
   doc,
   addDoc,
   updateDoc,
-  deleteDoc,
   serverTimestamp,
   onSnapshot,
   CollectionReference,
@@ -44,6 +43,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
+import { useRouter } from "next/navigation";
 
 import { type Product } from "@/types/Product";
 
@@ -67,6 +67,7 @@ export default function ProductsClient() {
   const [aiLoading, setAiLoading] = useState(false);
 
   const gradient = useThemeGradient();
+  const router = useRouter();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -238,34 +239,34 @@ export default function ProductsClient() {
     }
   };
 
-  const remove = async (p: Product) => {
-    if (uploading) return;
-    if (!confirm(`「${p.title}」を削除しますか？`)) return;
+  // const remove = async (p: Product) => {
+  //   if (uploading) return;
+  //   if (!confirm(`「${p.title}」を削除しますか？`)) return;
 
-    await deleteDoc(doc(colRef, p.id));
-    if (p.mediaURL) {
-      const ext = p.mediaType === "video" ? "mp4" : "jpg";
-      await deleteObject(
-        ref(getStorage(), `products/public/${SITE_KEY}/${p.id}.${ext}`)
-      ).catch(() => {});
-    }
-  };
+  //   await deleteDoc(doc(colRef, p.id));
+  //   if (p.mediaURL) {
+  //     const ext = p.mediaType === "video" ? "mp4" : "jpg";
+  //     await deleteObject(
+  //       ref(getStorage(), `products/public/${SITE_KEY}/${p.id}.${ext}`)
+  //     ).catch(() => {});
+  //   }
+  // };
 
   const openAdd = () => {
     if (uploading) return;
     resetFields();
     setFormMode("add");
   };
-  const openEdit = (p: Product) => {
-    if (uploading) return;
-    setEditing(p);
-    setTitle(p.title);
-    setBody(p.body);
-    setPrice(p.price);
-    setTaxIncluded(p.taxIncluded ?? true);
-    setFile(null);
-    setFormMode("edit");
-  };
+  // const openEdit = (p: Product) => {
+  //   if (uploading) return;
+  //   setEditing(p);
+  //   setTitle(p.title);
+  //   setBody(p.body);
+  //   setPrice(p.price);
+  //   setTaxIncluded(p.taxIncluded ?? true);
+  //   setFile(null);
+  //   setFormMode("edit");
+  // };
 
   const closeForm = () => {
     if (uploading) return;
@@ -324,16 +325,21 @@ export default function ProductsClient() {
           items={list.map((p) => p.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {list.map((p) => {
               const isLoaded = loadedIds.has(p.id);
               return (
                 <SortableItem key={p.id} product={p}>
                   {({ listeners, attributes, isDragging }) => (
                     <div
+                      onClick={() => {
+                        // 管理者編集中やドラッグ中は遷移させない
+                        if (isDragging) return;
+                        router.push(`/products/${p.id}`);
+                      }}
                       className={clsx(
-                        "border rounded-lg overflow-hidden shadow relative transition-colors duration-200",
-                        "bg-gradient-to-b",
+                        "flex flex-col h-full border rounded-lg overflow-hidden shadow relative transition-colors duration-200",
+                        "bg-gradient-to-b", // ← これを復活させる
                         gradient,
                         isDragging
                           ? "bg-yellow-100"
@@ -356,7 +362,7 @@ export default function ProductsClient() {
                       )}
 
                       {/* 編集・削除ボタン */}
-                      {isAdmin && (
+                      {/* {isAdmin && (
                         <div className="absolute top-2 right-2 z-20 flex gap-2">
                           <button
                             onClick={(e) => {
@@ -376,7 +382,7 @@ export default function ProductsClient() {
                             削除
                           </button>
                         </div>
-                      )}
+                      )} */}
 
                       {!isLoaded && (
                         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/10">
@@ -436,7 +442,7 @@ export default function ProductsClient() {
                       {/* 商品情報 */}
                       <div className="p-4 space-y-2">
                         <h2
-                          className={clsx("text-lg font-bold", {
+                          className={clsx("text-sm font-bold", {
                             "text-white": isDark,
                           })}
                         >
@@ -452,14 +458,14 @@ export default function ProductsClient() {
                           {p.taxIncluded ? "税込" : "税抜"}）
                         </p>
 
-                        <p
+                        {/* <p
                           className={clsx(
                             "text-sm whitespace-pre-wrap",
                             isDark && "text-white"
                           )}
                         >
                           {p.body}
-                        </p>
+                        </p> */}
                       </div>
                     </div>
                   )}
