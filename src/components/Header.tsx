@@ -52,7 +52,7 @@ export default function Header({ className = "" }: HeaderProps) {
       {/* ロゴ */}
       <Link
         href="/"
-        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 text-black"
+        className="text-md text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 text-black"
       >
         {logoUrl && logoUrl.trim() !== "" && (
           <Image
@@ -63,7 +63,7 @@ export default function Header({ className = "" }: HeaderProps) {
             className="w-12 h-12 object-contain transition-opacity duration-200"
           />
         )}
-        甘味処 よって屋
+        甘味処 くれーぷよって屋
       </Link>
 
       <nav className="flex gap-4 ml-auto mr-4">
@@ -83,7 +83,7 @@ export default function Header({ className = "" }: HeaderProps) {
 
       <Link
         href="https://tayotteya.com/"
-        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 text-black"
+        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 "
       >
         {logoUrl && logoUrl.trim() !== "" && (
           <Image
