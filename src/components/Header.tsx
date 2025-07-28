@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import clsx from "clsx";
 import { Instagram } from "lucide-react";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { useHeaderLogoUrl } from "../hooks/useHeaderLogoUrl";
+import { auth } from "@/lib/firebase";
 
 type HeaderProps = {
   className?: string;
@@ -24,7 +25,7 @@ type HeaderProps = {
 const SNS = [
   {
     name: "Instagram",
-    href: "https://www.instagram.com/yotteya.crape/",
+    href: "https://www.instagram.com/crepeTest01.crape/",
     icon: Instagram,
   },
 ];
@@ -34,6 +35,14 @@ export default function Header({ className = "" }: HeaderProps) {
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const gradientClass = gradient
     ? `bg-gradient-to-b ${gradient}`
@@ -52,7 +61,7 @@ export default function Header({ className = "" }: HeaderProps) {
       {/* ロゴ */}
       <Link
         href="/"
-        className="text-md text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 text-black"
+        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
       >
         {logoUrl && logoUrl.trim() !== "" && (
           <Image
@@ -63,10 +72,10 @@ export default function Header({ className = "" }: HeaderProps) {
             className="w-12 h-12 object-contain transition-opacity duration-200"
           />
         )}
-        甘味処 くれーぷよって屋
+        甘味処 crepeTest01屋
       </Link>
 
-      <nav className="flex gap-4 ml-auto mr-4">
+      <nav className="flex gap-4 ml-auto mr-6">
         {SNS.map(({ name, href, icon: Icon }) => (
           <a
             key={name}
@@ -80,21 +89,6 @@ export default function Header({ className = "" }: HeaderProps) {
           </a>
         ))}
       </nav>
-
-      <Link
-        href="https://tayotteya.com/"
-        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 "
-      >
-        {logoUrl && logoUrl.trim() !== "" && (
-          <Image
-            src={"/images/tayotteya_circle_image.png"}
-            alt="ロゴ"
-            width={32}
-            height={32}
-            className="w-7 h-7 object-contain transition-opacity duration-200 mr-4"
-          />
-        )}
-      </Link>
 
       {/* スマホハンバーガー */}
       <div>
@@ -114,8 +108,9 @@ export default function Header({ className = "" }: HeaderProps) {
             side="right"
             className={clsx(
               "flex flex-col",
-              "bg-gradient-to-b",
-              gradient,
+              "bg-gray-100", // ← まずデフォルト背景
+              gradient && "bg-gradient-to-b", // gradient があれば方向クラス
+              gradient, // 実際の gradient 色クラス
               "[&_[data-radix-sheet-close]]:w-10 [&_[data-radix-sheet-close]]:h-10",
               "[&_[data-radix-sheet-close]_svg]:w-6 [&_[data-radix-sheet-close]_svg]:h-6"
             )}
@@ -163,30 +158,29 @@ export default function Header({ className = "" }: HeaderProps) {
               >
                 取材はこちら
               </Link>
-              <Link
-                href="https://tayotteya.com/"
-                className="hover:underline text-white"
-              >
-                お掃除処はこちら
-              </Link>
             </div>
             {/* ▼ ログインだけ下に固定 */}
+            <div className="p-4 space-y-2">
+              {isLoggedIn && (
+                <Link
+                  href="/community"
+                  onClick={() => setOpen(false)}
+                  className={clsx(
+                    "block text-center text-lg",
+                    gradient ? "text-white" : "text-black"
+                  )}
+                >
+                  コミュニティ
+                </Link>
+              )}
 
-             <div className="p-4">
-              <Link
-                href="/community"
-                onClick={() => setOpen(false)}
-                className="block text-center text-white text-lg"
-              >
-                コミュニティ
-              </Link>
-            </div>
-
-            <div className="p-4">
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className="block text-center text-white text-lg"
+                className={clsx(
+                  "block text-center text-lg",
+                  gradient ? "text-white" : "text-black"
+                )}
               >
                 管理者ログイン
               </Link>
