@@ -171,6 +171,17 @@ export default function Header({ className = "" }: HeaderProps) {
               </Link>
             </div>
             {/* ▼ ログインだけ下に固定 */}
+
+             <div className="p-4">
+              <Link
+                href="/community"
+                onClick={() => setOpen(false)}
+                className="block text-center text-white text-lg"
+              >
+                コミュニティ
+              </Link>
+            </div>
+
             <div className="p-4">
               <Link
                 href="/login"
