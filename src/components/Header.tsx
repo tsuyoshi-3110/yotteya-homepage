@@ -30,6 +30,8 @@ const SNS = [
   },
 ];
 
+const HEADER_H = '3rem';
+
 export default function Header({ className = "" }: HeaderProps) {
   /* ▼ 追加：Sheet の開閉を管理するステート */
   const [open, setOpen] = useState(false);
@@ -51,12 +53,13 @@ export default function Header({ className = "" }: HeaderProps) {
   return (
     <header
       className={clsx(
-        "fixed top-0 z-30 w-full",
-        "flex items-center justify-between px-4 h-12 text-whit ",
-        `bg-gradient-to-b ${gradientClass}`,
+        'sticky top-0 z-30',                // ← ここを sticky に
+        'flex items-center justify-between px-4',
+        'h-12',                             // 高さは Tailwind の h-12
+        gradientClass,
         className
       )}
-      style={{ "--header-h": "4rem" } as React.CSSProperties}
+      style={{ '--header-h': HEADER_H } as React.CSSProperties}
     >
       {/* ロゴ */}
       <Link

@@ -78,7 +78,7 @@ export default function InboxPage() {
 
   /* ---------- UI ---------- */
   return (
-    <main className="max-w-xl mx-auto pt-20">
+    <main className="max-w-xl mx-auto mt-10">
       <h1 className="text-2xl font-bold mb-6 text-center">チャット一覧</h1>
 
       {rows.length === 0 ? (
