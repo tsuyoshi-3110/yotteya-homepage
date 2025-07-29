@@ -12,6 +12,7 @@ import {
   setDoc,
   doc,
   getDoc,
+  limit,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAtomValue } from "jotai";
@@ -78,7 +79,8 @@ export default function MessagePage() {
     const convId = [MY_SITE_KEY, partnerSiteKey].sort().join("__");
     const q = query(
       collection(db, "siteMessages", convId, "messages"),
-      orderBy("createdAt", "asc")
+      orderBy("createdAt", "asc"),
+      limit(50)
     );
 
     const unsub = onSnapshot(q, async (snap) => {

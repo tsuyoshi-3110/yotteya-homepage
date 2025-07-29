@@ -1,27 +1,60 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  where,
+  limit,
+} from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import PostCard, { Post } from "@/components/PostCard";
 import PostForm from "@/components/PastForm";
+import clsx from "clsx";
+
+
+const LIMIT = 20;
+
 export default function PostList() {
+  /* ---------- state ---------- */
   const [posts, setPosts] = useState<Post[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [mineOnly, setMineOnly] = useState(false); // ★ 追加
+  const [uid, setUid] = useState<string | null>(null);
 
-  /* ----- タイムライン購読 ----- */
-  useEffect(() => {
-    const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, snap =>
-      setPosts(
-        snap.docs
-          .map(d => ({ id: d.id, ...(d.data() as Omit<Post, "id">) }))
-          .filter(p => p && p.id)
+  /* ---------- ログイン監視 ---------- */
+  useEffect(() => auth.onAuthStateChanged((u) => setUid(u?.uid ?? null)), []);
+
+  /* ---------- タイムライン購読 ---------- */
+ useEffect(() => {
+  if (mineOnly && !uid) return;  // ログイン前に mineOnly を押した場合ガード
+
+  const base = collection(db, "posts");
+  const q = mineOnly
+    ? query(
+        base,
+        where("authorUid", "==", uid),
+        orderBy("createdAt", "desc"),
+        limit(LIMIT)              // ★ ここに追加
       )
-    );
-    return () => unsub();
-  }, []);
+    : query(
+        base,
+        orderBy("createdAt", "desc"),
+        limit(LIMIT)              // ★ ここに追加
+      );
 
-  /* ----- ページ末尾へのスクロール ----- */
+  const unsub = onSnapshot(q, snap =>
+    setPosts(
+      snap.docs
+        .map(d => ({ id: d.id, ...(d.data() as Omit<Post, "id">) }))
+        .filter(p => p && p.id)
+    )
+  );
+  return () => unsub();
+}, [mineOnly, uid]);
+
+  /* ---------- モーダル開閉時スクロール ---------- */
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (showForm && bottomRef.current) {
@@ -31,12 +64,33 @@ export default function PostList() {
 
   /* ---------- JSX ---------- */
   return (
-    <div className="w-full max-w-xl mx-auto px-4 pt-8 pb-28">
+    <div className="mx-auto w-full max-w-xl px-4 pt-8 pb-28">
+      {/* フィルタボタン */}
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={() => setMineOnly(!mineOnly)}
+          disabled={!uid}
+          className={clsx(
+            "rounded-full px-4 py-2 text-sm font-semibold transition",
+            mineOnly
+              ? "bg-purple-600 text-white hover:bg-purple-700"
+              : "bg-gray-300 text-gray-800 hover:bg-gray-400",
+            !uid && "opacity-40 cursor-not-allowed"
+          )}
+        >
+          {mineOnly ? "全ての投稿を表示" : "自分の投稿だけ"}
+        </button>
+      </div>
+
       {/* 投稿カード一覧 */}
       <div className="grid grid-cols-1 gap-6">
-        {posts.map(p => (
-          <PostCard key={p.id} post={p} />
-        ))}
+        {posts.length === 0 ? (
+          <p className="text-center text-sm text-gray-500">
+            表示できる投稿がありません
+          </p>
+        ) : (
+          posts.map((p) => <PostCard key={p.id} post={p} />)
+        )}
       </div>
 
       {/* スクロールアンカー */}
@@ -45,26 +99,18 @@ export default function PostList() {
       {/* ───── モーダル ───── */}
       {showForm && (
         <div
-          className="
-            fixed inset-0 z-50 flex items-center justify-center
-            bg-black/50 backdrop-blur-sm
-          "
-          onClick={() => setShowForm(false)}        /* 背景クリックで閉じる */
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowForm(false)}
         >
           <div
-            className="w-full max-w-lg bg-white rounded-xl p-6 shadow-xl"
-            onClick={e => e.stopPropagation()}      /* モーダル内クリック無効 */
+            className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-bold mb-4 text-center">新規投稿</h2>
+            <h2 className="mb-4 text-center text-lg font-bold">新規投稿</h2>
             <PostForm />
             <button
               onClick={() => setShowForm(false)}
-              className="
-                mt-4 mx-auto block
-                rounded-full bg-gray-500
-                px-6 py-2 text-white text-sm
-                hover:bg-gray-600 transition
-              "
+              className="mx-auto mt-4 block rounded-full bg-gray-500 px-6 py-2 text-sm text-white hover:bg-gray-600"
             >
               閉じる
             </button>
@@ -75,13 +121,7 @@ export default function PostList() {
       {/* 画面下部固定ボタン */}
       <button
         onClick={() => setShowForm(true)}
-        className="
-          fixed bottom-4 left-1/2 -translate-x-1/2
-          rounded-full bg-green-500
-          px-8 py-3 text-base font-semibold text-white
-          shadow-lg hover:bg-green-600 transition
-          z-40
-        "
+        className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full bg-green-500 px-8 py-3 text-base font-semibold text-white shadow-lg transition hover:bg-green-600"
       >
         ＋ 新しい投稿
       </button>
