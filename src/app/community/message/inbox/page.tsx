@@ -8,7 +8,7 @@ import {
   orderBy,
   Timestamp,
   doc,
-  getDoc, // ★ 追加：ロゴ取得用
+  getDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Link from "next/link";
@@ -18,55 +18,53 @@ import { partnerSiteKeyAtom } from "@/lib/atoms/siteKeyAtom";
 
 /* ───────── 自店舗 ID ───────── */
 const MY_SITE_KEY = "yotteya";
-const DUMMY_IMG = "/noImage.png";
+const DUMMY_IMG  = "/noImage.png";
 
 /* ---------- 型 ---------- */
 type MetaRow = {
   partnerSiteKey: string;
-  lastMessage: string;
-  updatedAt?: Timestamp;
-  iconUrl?: string; // ← headerLogoUrl をここに格納
+  lastMessage:    string;
+  updatedAt?:     Timestamp;
+  iconUrl?:       string;
+  hasUnread?:     boolean;
 };
 
 export default function InboxPage() {
   const [, setPartnerSiteKey] = useAtom(partnerSiteKeyAtom);
-  const [rows, setRows] = useState<MetaRow[]>([]);
+  const [rows, setRows]      = useState<MetaRow[]>([]);
 
-  /* メタ購読 */
+  /* ────────── メタ購読 ────────── */
   useEffect(() => {
     const q = query(
       collection(db, `siteMessageMeta/${MY_SITE_KEY}/conversations`),
       orderBy("updatedAt", "desc")
     );
 
-    const unsub = onSnapshot(q, async (snap) => {
-      /* 各行ごとに headerLogoUrl を補完してから配列を作る */
+    const unsub = onSnapshot(q, async snap => {
       const next = await Promise.all(
-        snap.docs.map(async (d) => {
+        snap.docs.map(async d => {
           const {
             partnerSiteKey = d.id,
             lastMessage,
             updatedAt,
-            iconUrl, // メタに既にある場合
+            iconUrl,
+            hasUnread = false,
           } = d.data() as MetaRow;
 
-          /* メタに無ければ siteSettingsEditable へフォールバック */
-          let logoUrl = iconUrl;
-          if (!logoUrl) {
-            const setSnap = await getDoc(
-              doc(db, "siteSettingsEditable", partnerSiteKey)
-            );
-            logoUrl = setSnap.exists()
-              ? (setSnap.data().headerLogoUrl as string | undefined)
-              : undefined;
+          /* ロゴが無ければ編集可能設定から取得 */
+          let logo = iconUrl;
+          if (!logo) {
+            const s = await getDoc(doc(db, "siteSettingsEditable", partnerSiteKey));
+            logo = s.exists() ? (s.data().headerLogoUrl as string) : undefined;
           }
 
           return {
             partnerSiteKey,
             lastMessage,
             updatedAt,
-            iconUrl: logoUrl ?? DUMMY_IMG,
-          };
+            iconUrl:  logo ?? DUMMY_IMG,
+            hasUnread,
+          } as MetaRow;
         })
       );
 
@@ -76,23 +74,23 @@ export default function InboxPage() {
     return () => unsub();
   }, []);
 
-  /* ---------- UI ---------- */
+  /* ────────── UI ────────── */
   return (
     <main className="max-w-xl mx-auto mt-10">
-      <h1 className="text-2xl font-bold mb-6 text-center">チャット一覧</h1>
+      <h1 className="mb-6 text-center text-2xl font-bold">チャット一覧</h1>
 
       {rows.length === 0 ? (
-        <p className="text-gray-500 text-sm text-center">
+        <p className="text-center text-sm text-gray-500">
           メッセージ履歴がありません。
         </p>
       ) : (
         <ul className="divide-y divide-gray-300">
-          {rows.map(({ partnerSiteKey, lastMessage, updatedAt, iconUrl }) => (
+          {rows.map(({ partnerSiteKey, lastMessage, updatedAt, iconUrl, hasUnread }) => (
             <li key={partnerSiteKey}>
               <Link
                 href={`/community/message/${partnerSiteKey}`}
                 onClick={() => setPartnerSiteKey(partnerSiteKey)}
-                className="flex items-center gap-4 px-4 py-3 hover:bg-gray-100 transition"
+                className="flex items-center gap-4 px-4 py-3 transition hover:bg-gray-100"
               >
                 {/* アイコン */}
                 <Image
@@ -103,19 +101,24 @@ export default function InboxPage() {
                   className="rounded-full object-cover"
                 />
 
-                {/* テキスト部分 */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{partnerSiteKey}</p>
-                  <p className="text-sm text-gray-600 truncate">
-                    {lastMessage}
+                {/* 相手名・最終メッセージ・未読バッジ */}
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 truncate font-semibold">
+                    {partnerSiteKey}
+                    {hasUnread && (
+                      <span className="rounded bg-red-500 px-2 py-0.5 text-xs text-white">
+                        未読
+                      </span>
+                    )}
                   </p>
+                  <p className="truncate text-sm text-gray-600">{lastMessage}</p>
                 </div>
 
-                {/* 送信時刻 */}
+                {/* 最終更新時刻 */}
                 {updatedAt && (
-                  <span className="text-xs text-gray-400 whitespace-nowrap">
+                  <span className="whitespace-nowrap text-xs text-gray-400">
                     {updatedAt.toDate().toLocaleTimeString([], {
-                      hour: "2-digit",
+                      hour:   "2-digit",
                       minute: "2-digit",
                     })}
                   </span>

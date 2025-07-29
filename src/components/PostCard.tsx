@@ -11,14 +11,18 @@ import {
   doc,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
-import LikeButton from "@/components/LikeButton";
-import ReplyForm from "@/components/ReplyForm";
+import LikeButton from "./LikeButton";
+import ReplyForm from "./ReplyForm";
+import { useRouter } from "next/navigation";
+import { useSetAtom } from "jotai";
+import { partnerSiteKeyAtom } from "@/lib/atoms/siteKeyAtom";
 
 export type Post = {
   id: string;
   authorUid: string;
   authorName: string;
   authorIconUrl: string;
+  authorSiteKey: string;
   content: string;
   imageUrl?: string;
   createdAt?: any;
@@ -40,6 +44,8 @@ export default function PostCard({ post }: { post: Post }) {
   const [advice, setAdvice] = useState("");
   const [loadingAdvice, setLoadingAdvice] = useState(false);
   const [myUid, setMyUid] = useState<string | null>(null);
+  const router = useRouter();
+  const setPartnerSiteKey = useSetAtom(partnerSiteKeyAtom);
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((u) => setMyUid(u?.uid ?? null));
@@ -178,10 +184,22 @@ export default function PostCard({ post }: { post: Post }) {
 
       <button
         onClick={() => setReplying(!replying)}
-        className="mt-4 mx-auto rounded-full bg-blue-500 px-6 py-3 text-base font-semibold text-white shadow-lg hover:bg-blue-600 transition"
+        className="mt-4 mx-auto rounded-full bg-blue-500 px-6 py-3 text-base font-semibold text-white shadow-lg hover:bg-blue-600 transition mr-5"
       >
         {replying ? "投稿を閉じる" : "↩ 投稿"}
       </button>
+
+      {!isMine && (
+        <button
+          onClick={() => {
+            router.push(`/community/message/${post.authorSiteKey}`);
+            setPartnerSiteKey(post.authorSiteKey)
+          }}
+          className="mt-4 mx-auto rounded-full bg-blue-500 px-6 py-3 text-base font-semibold text-white shadow-lg hover:bg-blue-600 transition"
+        >
+          ✉ DMする
+        </button>
+      )}
 
       {isMine && (
         <>
@@ -204,16 +222,14 @@ export default function PostCard({ post }: { post: Post }) {
           <button
             onClick={handleAdvice}
             disabled={loadingAdvice}
-            className="mt-3 w-full rounded-full bg-purple-500 px-4 py-2 text-white font-semibold hover:bg-purple-600 transition disabled:opacity-50"
+            className="mt-3 w-full rounded-full bg-amber-500 px-4 py-2 text-white font-semibold hover:bg-amber-600 transition disabled:opacity-50"
           >
             {loadingAdvice ? "助言を取得中..." : "AIに助言を求める"}
           </button>
           {advice && (
-            <>
-              <div className="mt-2 bg-amber-100 text-amber-800 p-4 rounded-lg whitespace-pre-wrap text-sm">
-                {advice}
-              </div>
-            </>
+            <div className="mt-2 bg-amber-100 text-amber-800 p-4 rounded-lg whitespace-pre-wrap text-sm">
+              {advice}
+            </div>
           )}
         </>
       )}

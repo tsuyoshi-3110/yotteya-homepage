@@ -157,6 +157,13 @@ export default function Header({ className = "" }: HeaderProps) {
                 アクセス
               </Link>
               <Link
+                href="https://www.ubereats.com/store/%E3%81%97%E3%82%85%E3%82%8F%E3%81%A3%E3%81%A8%E8%B4%85%E6%B2%A2%E3%83%8F%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%84%E3%81%BF%E3%81%A4%E3%81%8D%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%95-%E3%82%88%E3%81%A3%E3%81%A6%E5%B1%8B/zExE2DL3RWKAKVNt6quINA?utm_source=menu-maker"
+                onClick={() => setOpen(false)}
+                className="text-lg text-white"
+              >
+                デリバリー
+              </Link>
+              <Link
                 href="/about"
                 onClick={() => setOpen(false)}
                 className="text-lg text-white"
