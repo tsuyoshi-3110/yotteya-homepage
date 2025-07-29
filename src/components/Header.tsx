@@ -30,7 +30,7 @@ const SNS = [
   },
 ];
 
-const HEADER_H = '3rem';
+const HEADER_H = "3rem";
 
 export default function Header({ className = "" }: HeaderProps) {
   /* ▼ 追加：Sheet の開閉を管理するステート */
@@ -53,13 +53,13 @@ export default function Header({ className = "" }: HeaderProps) {
   return (
     <header
       className={clsx(
-        'sticky top-0 z-30',                // ← ここを sticky に
-        'flex items-center justify-between px-4',
-        'h-12',                             // 高さは Tailwind の h-12
+        "sticky top-0 z-30", // ← ここを sticky に
+        "flex items-center justify-between px-4",
+        "h-12", // 高さは Tailwind の h-12
         gradientClass,
         className
       )}
-      style={{ '--header-h': HEADER_H } as React.CSSProperties}
+      style={{ "--header-h": HEADER_H } as React.CSSProperties}
     >
       {/* ロゴ */}
       <Link
@@ -93,7 +93,7 @@ export default function Header({ className = "" }: HeaderProps) {
         ))}
       </nav>
 
-       <Link
+      <Link
         href="https://tayotteya.com/"
         className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 "
       >
@@ -179,6 +179,19 @@ export default function Header({ className = "" }: HeaderProps) {
             </div>
             {/* ▼ ログインだけ下に固定 */}
             <div className="p-4 space-y-2">
+              {isLoggedIn && (
+                <Link
+                  href="/postList"
+                  onClick={() => setOpen(false)}
+                  className={clsx(
+                    "block text-center text-lg",
+                    gradient ? "text-white" : "text-black"
+                  )}
+                >
+                  タイムライン
+                </Link>
+              )}
+
               {isLoggedIn && (
                 <Link
                   href="/community"
