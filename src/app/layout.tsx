@@ -16,12 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
   description:
-    "大阪市〇〇区のクレープ専門店『甘味処 よって屋』。ふんわり生地とこだわりクリームが自慢です。",
+    "大阪市東淀川区のクレープ専門店『甘味処 よって屋』。ふんわり生地とこだわりクリームが自慢です。",
   openGraph: {
     title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
     description:
-      "ふんわり生地とこだわりクリームが自慢のクレープ屋さん。大阪市〇〇区で営業中。",
-    url: "https://yotteya-homepage.vercel.app/",
+      "ふんわり生地とこだわりクリームが自慢のクレープ屋さん。大阪市東淀川区で営業中。",
+    url: "https://www.yotteya.shop/",
     siteName: "甘味処 よって屋",
     images: [
       {
@@ -46,6 +46,21 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
       <head>
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-3D6Q54FJMV"
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-3D6Q54FJMV');
+          `}
+        </Script>
+
+        {/* その他のmeta */}
         <link
           rel="preload"
           as="image"
@@ -64,17 +79,15 @@ export default function RootLayout({
       </head>
 
       <body className="relative min-h-screen">
-        {/* === 背景レイヤー（Firestoreの画像） === */}
+        {/* 背景 */}
         <WallpaperBackground />
-
-        {/* === パステルグラデーション（上） === */}
         <ThemeBackground />
 
-        {/* === 常設ヘッダー & ページ内容 === */}
+        {/* ヘッダー・コンテンツ */}
         <Header />
         {children}
 
-        {/* ✅ 構造化データは body末尾でScriptで出力 */}
+        {/* 構造化データ */}
         <Script
           id="ld-json"
           type="application/ld+json"

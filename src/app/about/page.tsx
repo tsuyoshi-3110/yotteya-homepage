@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: "当店の思い｜甘味処 よって屋",
     description:
-      "ふんわり生地とこだわりクリームで皆様に笑顔を。大阪市〇〇区で営業中。",
-    url: "https://yotteya-homepage.vercel.app/about",
+      "ふんわり生地とこだわりクリームで皆様に笑顔を。大阪市東淀川区で営業中。",
+    url: "https://www.yotteya.shop/about",
     siteName: "甘味処 よって屋",
     images: [
       {

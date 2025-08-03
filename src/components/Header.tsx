@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/sheet";
 import Image from "next/image";
 import clsx from "clsx";
-import { Instagram } from "lucide-react";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { useHeaderLogoUrl } from "../hooks/useHeaderLogoUrl";
 import { auth } from "@/lib/firebase";
+import { sendGAEvent } from "./gtag";
 
 type HeaderProps = {
   className?: string;
@@ -33,7 +33,6 @@ const SNS = [
 const HEADER_H = "3rem";
 
 export default function Header({ className = "" }: HeaderProps) {
-  /* ▼ 追加：Sheet の開閉を管理するステート */
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
@@ -46,6 +45,30 @@ export default function Header({ className = "" }: HeaderProps) {
     return () => unsubscribe();
   }, []);
 
+  const handleInterviewClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+
+    sendGAEvent({
+      action: "interview_click",
+      category: "engagement",
+      label: "取材メールリンク",
+    });
+
+    setTimeout(() => {
+      window.location.href = "mailto:tsreform.yukisaito@gmail.com";
+    }, 800);
+  };
+
+  const handleAccessClick = () => {
+    sendGAEvent({
+      action: "access_click",
+      category: "engagement",
+      label: "アクセスリンク（Googleマップ）",
+    });
+
+    setOpen(false);
+  };
+
   const gradientClass = gradient
     ? `bg-gradient-to-b ${gradient}`
     : "bg-gray-100";
@@ -53,15 +76,12 @@ export default function Header({ className = "" }: HeaderProps) {
   return (
     <header
       className={clsx(
-        "sticky top-0 z-30", // ← ここを sticky に
-        "flex items-center justify-between px-4",
-        "h-12", // 高さは Tailwind の h-12
+        "sticky top-0 z-30 flex items-center justify-between px-4 h-12",
         gradientClass,
         className
       )}
       style={{ "--header-h": HEADER_H } as React.CSSProperties}
     >
-      {/* ロゴ */}
       <Link
         href="/"
         className="text-[18px] text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
@@ -95,11 +115,11 @@ export default function Header({ className = "" }: HeaderProps) {
 
       <Link
         href="https://tayotteya.com/"
-        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50 "
+        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
       >
         {logoUrl && logoUrl.trim() !== "" && (
           <Image
-            src={"/images/tayotteya_circle_image.png"}
+            src="/images/tayotteya_circle_image.png"
             alt="ロゴ"
             width={32}
             height={32}
@@ -108,15 +128,13 @@ export default function Header({ className = "" }: HeaderProps) {
         )}
       </Link>
 
-      {/* スマホハンバーガー */}
       <div>
-        {/* open / onOpenChange を指定 */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="w-7 h-7 text-white border-2 border-white " // ← 48 × 48 px
+              className="w-7 h-7 text-white border-2 border-white"
             >
               <Menu size={26} />
             </Button>
@@ -125,10 +143,9 @@ export default function Header({ className = "" }: HeaderProps) {
           <SheetContent
             side="right"
             className={clsx(
-              "flex flex-col",
-              "bg-gray-100", // ← まずデフォルト背景
-              gradient && "bg-gradient-to-b", // gradient があれば方向クラス
-              gradient, // 実際の gradient 色クラス
+              "flex flex-col bg-gray-100",
+              gradient && "bg-gradient-to-b",
+              gradient,
               "[&_[data-radix-sheet-close]]:w-10 [&_[data-radix-sheet-close]]:h-10",
               "[&_[data-radix-sheet-close]_svg]:w-6 [&_[data-radix-sheet-close]_svg]:h-6"
             )}
@@ -140,86 +157,46 @@ export default function Header({ className = "" }: HeaderProps) {
             </SheetHeader>
 
             <div className="flex-1 flex flex-col justify-center items-center space-y-4 text-center">
-              {/* onClick で setOpen(false) */}
-
-              <Link
-                href="/products"
-                onClick={() => setOpen(false)}
-                className="text-lg text-white"
-              >
+              <Link href="/products" onClick={() => setOpen(false)} className="text-lg text-white">
                 商品一覧
               </Link>
-              <Link
-                href="/stores"
-                onClick={() => setOpen(false)}
-                className="text-lg text-white"
-              >
+              <Link href="/stores" onClick={handleAccessClick} className="text-lg text-white">
                 アクセス
               </Link>
               <Link
-                href="https://www.ubereats.com/store/%E3%81%97%E3%82%85%E3%82%8F%E3%81%A3%E3%81%A8%E8%B4%85%E6%B2%A2%E3%83%8F%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%84%E3%81%BF%E3%81%A4%E3%81%8D%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%95-%E3%82%88%E3%81%A3%E3%81%A6%E5%B1%8B/zExE2DL3RWKAKVNt6quINA?utm_source=menu-maker"
+                href="https://www.ubereats.com/store/..."
                 onClick={() => setOpen(false)}
                 className="text-lg text-white"
               >
                 デリバリー
               </Link>
-              <Link
-                href="/about"
-                onClick={() => setOpen(false)}
-                className="text-lg text-white"
-              >
+              <Link href="/about" onClick={() => setOpen(false)} className="text-lg text-white">
                 当店の思い
               </Link>
-              <Link
-                href="/news"
-                onClick={() => setOpen(false)}
-                className="text-lg text-white"
-              >
+              <Link href="/news" onClick={() => setOpen(false)} className="text-lg text-white">
                 お知らせ
               </Link>
-              <Link
+              <a
                 href="mailto:tsreform.yukisaito@gmail.com"
+                onClick={handleInterviewClick}
                 className="hover:underline text-white"
               >
                 取材はこちら
-              </Link>
+              </a>
             </div>
-            {/* ▼ ログインだけ下に固定 */}
+
             <div className="p-4 space-y-2">
               {isLoggedIn && (
-                <Link
-                  href="/postList"
-                  onClick={() => setOpen(false)}
-                  className={clsx(
-                    "block text-center text-lg",
-                    gradient ? "text-white" : "text-black"
-                  )}
-                >
-                  タイムライン
-                </Link>
+                <>
+                  <Link href="/postList" onClick={() => setOpen(false)} className="block text-center text-lg text-white">
+                    タイムライン
+                  </Link>
+                  <Link href="/community" onClick={() => setOpen(false)} className="block text-center text-lg text-white">
+                    コミュニティ
+                  </Link>
+                </>
               )}
-
-              {isLoggedIn && (
-                <Link
-                  href="/community"
-                  onClick={() => setOpen(false)}
-                  className={clsx(
-                    "block text-center text-lg",
-                    gradient ? "text-white" : "text-black"
-                  )}
-                >
-                  コミュニティ
-                </Link>
-              )}
-
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className={clsx(
-                  "block text-center text-lg",
-                  gradient ? "text-white" : "text-black"
-                )}
-              >
+              <Link href="/login" onClick={() => setOpen(false)} className="block text-center text-lg text-white">
                 管理者ログイン
               </Link>
             </div>
