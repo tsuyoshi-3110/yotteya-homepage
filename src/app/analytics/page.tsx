@@ -13,7 +13,18 @@ import {
   BarElement,
   Tooltip,
 } from "chart.js";
-import { saveAs } from "file-saver";
+
+import DailyAccessChart from "@/components/DailyAccessChart";
+import ReferrerChart from "@/components/ReferrerChart";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 Chart.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
@@ -62,6 +73,120 @@ export default function AnalyticsPage() {
   const [hourlyData, setHourlyData] = useState<any | null>(null);
   const [hourlyLoading, setHourlyLoading] = useState(false);
   const [hourlyRawCounts, setHourlyRawCounts] = useState<number[]>([]);
+  const [dailyData, setDailyData] = useState<any | null>(null);
+  const [referrerData, setReferrerData] = useState({
+    sns: 0,
+    search: 0,
+    direct: 0,
+  });
+  const [weekdayData, setWeekdayData] = useState<any | null>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchWeekdayAccessData = async () => {
+      try {
+        const ref = collection(db, "analytics", siteKey, "weekdayLogs");
+        const snap = await getDocs(ref);
+
+        const countsByWeekday = Array(7).fill(0); // 0: Sunday ～ 6: Saturday
+
+        snap.docs.forEach((doc) => {
+          const data = doc.data();
+          const weekday = data.weekday; // 0〜6
+          const count = data.count ?? 0;
+          if (typeof weekday === "number" && weekday >= 0 && weekday <= 6) {
+            countsByWeekday[weekday] += count;
+          }
+        });
+
+        setWeekdayData({
+          labels: ["日", "月", "火", "水", "木", "金", "土"],
+          datasets: [
+            {
+              label: "曜日別アクセス数",
+              data: countsByWeekday,
+              backgroundColor: "rgba(139, 92, 246, 0.6)", // violet
+            },
+          ],
+        });
+      } catch (err) {
+        console.error("曜日別アクセスデータ取得エラー:", err);
+      }
+    };
+
+    fetchWeekdayAccessData();
+  }, [siteKey]);
+
+  useEffect(() => {
+    const fetchReferrerData = async () => {
+      const ref = collection(db, "analytics", "yourSiteKey", "referrerStats");
+      const snap = await getDocs(ref);
+      const total = { sns: 0, search: 0, direct: 0 };
+
+      snap.docs.forEach((doc) => {
+        const data = doc.data();
+        total.sns += data.sns ?? 0;
+        total.search += data.search ?? 0;
+        total.direct += data.direct ?? 0;
+      });
+
+      setReferrerData(total);
+    };
+
+    fetchReferrerData();
+  }, []);
+
+  useEffect(() => {
+    const fetchDailyData = async () => {
+      try {
+        const start = new Date(startDate);
+        const end = new Date(new Date(endDate).setHours(23, 59, 59, 999));
+        const ref = collection(db, "analytics", siteKey, "dailyLogs");
+        const snap = await getDocs(ref);
+
+        type DailyLog = {
+          updatedAt?: Timestamp;
+          count?: number;
+        };
+
+        const raw = snap.docs
+          .map((doc) => {
+            const data = doc.data() as DailyLog;
+            return {
+              id: doc.id,
+              count: data.count ?? 0,
+              updatedAt: data.updatedAt?.toDate?.(),
+            };
+          })
+          .filter((doc) => {
+            return (
+              doc.updatedAt && doc.updatedAt >= start && doc.updatedAt <= end
+            );
+          });
+
+        const sorted = raw.sort((a, b) => (a.id < b.id ? -1 : 1));
+        const labels = sorted.map((d) => d.id);
+        const counts = sorted.map((d) => d.count);
+
+        setDailyData({
+          labels,
+          datasets: [
+            {
+              label: "日別アクセス数",
+              data: counts,
+              fill: false,
+              borderColor: "rgba(75,192,192,1)",
+              tension: 0.3,
+            },
+          ],
+        });
+      } catch (err) {
+        console.error("日別データ取得エラー:", err);
+      }
+    };
+
+    fetchDailyData();
+  }, [siteKey, startDate, endDate]);
 
   function groupByHour(
     logs: { hour: number; accessedAt?: any }[],
@@ -187,37 +312,27 @@ export default function AnalyticsPage() {
     }
   }, []);
 
-  const handleCSVExport = () => {
-    const csv = ["ページ,アクセス数"];
-    pageData.forEach((d) => {
-      csv.push(`${PAGE_LABELS[d.id] || d.id},${d.count}`);
-    });
-
-    csv.push("", "イベント,合計秒数,回数,平均秒数");
-    eventData.forEach((d) => {
-      csv.push(
-        `${EVENT_LABELS[d.id] || d.id},${d.total},${d.count},${d.average}`
-      );
-    });
-
-    const blob = new Blob([csv.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    saveAs(blob, `analytics_${today}.csv`);
-  };
-
   const handleAnalysis = async () => {
+    console.log("referrerData:", referrerData);
+
     setAnalyzing(true);
     try {
       const res = await fetch("/api/analyze-insights", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           period: startDate && endDate ? `${startDate}〜${endDate}` : "全期間",
           pageData,
           eventData,
           hourlyData: hourlyRawCounts,
+          dailyData,
+          referrerData,
+          weekdayData,
         }),
       });
+
       const data = await res.json();
       setAdvice(data.advice);
     } catch (err) {
@@ -267,21 +382,44 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="flex gap-3">
-        <button
-          onClick={handleAnalysis}
-          disabled={analyzing}
-          className={`px-3 py-1 rounded text-sm text-white w-50 ${
-            analyzing ? "bg-purple-300 cursor-not-allowed" : "bg-purple-600"
-          }`}
-        >
-          {analyzing ? "分析中..." : "AI による改善提案"}
-        </button>
-        <button
+        {!advice && (
+          <button
+            onClick={handleAnalysis}
+            disabled={analyzing}
+            className={`px-3 py-1 rounded text-sm text-white w-50 ${
+              analyzing ? "bg-purple-300 cursor-not-allowed" : "bg-purple-600"
+            }`}
+          >
+            {analyzing ? "分析中..." : "AI による改善提案"}
+          </button>
+        )}
+
+        {advice && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="">AIの改善提案を見る</Button>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-md sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>AIによる改善提案</DialogTitle>
+                <DialogDescription>
+                  この期間のアクセスデータをもとに、ホームページの改善案を表示しています。
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-2 text-sm whitespace-pre-wrap leading-relaxed">
+                {advice}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+        {/* <button
           onClick={handleCSVExport}
           className="bg-gray-700 text-white px-3 py-1 rounded text-sm"
         >
           CSV 出力
-        </button>
+        </button> */}
       </div>
 
       {loading ? (
@@ -401,14 +539,39 @@ export default function AnalyticsPage() {
               />
             </div>
           ) : null}
-        </>
-      )}
 
-      {advice && (
-        <div className="bg-white rounded p-4 text-sm leading-relaxed space-y-2">
-          <h3 className="font-semibold mb-2">AIによる改善提案</h3>
-          <pre className="whitespace-pre-wrap">{advice}</pre>
-        </div>
+          {weekdayData && (
+            <div className="bg-white rounded p-4 shadow mt-6">
+              <h3 className="font-semibold text-sm mb-2">曜日別アクセス数</h3>
+              <Bar
+                data={weekdayData}
+                options={{
+                  responsive: true,
+                  plugins: { tooltip: { enabled: true } },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: { display: true, text: "アクセス数" },
+                    },
+                  },
+                }}
+              />
+            </div>
+          )}
+
+          {dailyData && (
+            <div className="mt-8">
+              <DailyAccessChart data={dailyData} />
+            </div>
+          )}
+
+          {referrerData && (
+            <div className="p-6">
+              <h2 className="text-lg font-bold mb-4">アクセス分析</h2>
+              <ReferrerChart data={referrerData} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

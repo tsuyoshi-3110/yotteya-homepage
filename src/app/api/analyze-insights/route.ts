@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OpenAI } from "openai";
 
-// 分析対象のページとイベントのラベル
+// ページとイベントのラベル
 const PAGE_PATH_LABELS: Record<string, string> = {
   home: "ホームページ",
   about: "当店の思い",
@@ -23,7 +23,6 @@ const EVENT_LABELS: Record<string, string> = {
   home_stay_seconds_map_click: "Googleマップ",
 };
 
-// 除外対象ID
 const IGNORED_PAGE_IDS = ["postList", "community", "login", "analytics"];
 const IGNORED_EVENT_IDS = [
   "home_stay_seconds_postList",
@@ -38,17 +37,45 @@ const openai = new OpenAI({
 
 export async function POST(req: NextRequest) {
   try {
-    const { period, pageData, eventData, hourlyData } = await req.json();
+    const { period, pageData, eventData, hourlyData, dailyData, referrerData, weekdayData } =
+      await req.json();
+
+        /* ------------ ② 曜日別サマリーを作成 ------------ */
+    const weekdayLabelsJP = ["日", "月", "火", "水", "木", "金", "土"];
+
+    // weekdayData は 0(日)～6(土) のカウント配列 or オブジェクトを想定
+    const counts =
+      Array.isArray(weekdayData) && weekdayData.length === 7
+        ? weekdayData
+        : typeof weekdayData === "object"
+        ? weekdayLabelsJP.map((_, idx) => Number(weekdayData[idx] ?? 0))
+        : Array(7).fill(0);
+
+    const weekdaySummaries = counts
+      .map((cnt, idx) => `・${weekdayLabelsJP[idx]}：${cnt}回`)
+      .join("\n");
+
 
     const hourlySummaries = (hourlyData || [])
       .sort((a: { hour: number }, b: { hour: number }) => a.hour - b.hour)
-      .map((h: { hour: number; count: number }) => {
-        const label = `${h.hour}時台`;
-        return `・${label}：${h.count}回`;
-      })
+      .map(
+        (h: { hour: number; count: number }) => `・${h.hour}時台：${h.count}回`
+      )
       .join("\n");
 
-    // 型アノテーション明示
+    const dailyEntries =
+      dailyData && typeof dailyData === "object" && !Array.isArray(dailyData)
+        ? Object.entries(dailyData).map(([id, count]) => ({
+            id,
+            count: typeof count === "number" ? count : 0,
+          }))
+        : [];
+
+    const dailySummaries = dailyEntries
+      .sort((a, b) => (a.id < b.id ? -1 : 1))
+      .map((d) => `・${d.id}：${d.count}回`)
+      .join("\n");
+
     const filteredPages = pageData.filter(
       (p: { id: string; count: number }) =>
         !IGNORED_PAGE_IDS.includes(p.id) && PAGE_PATH_LABELS[p.id]
@@ -64,6 +91,20 @@ export async function POST(req: NextRequest) {
       0
     );
     const totalEventCount = filteredEvents.length;
+
+    const referrer = referrerData ?? { sns: 0, search: 0, direct: 0 };
+
+    // 合計がゼロなら空扱い
+    const totalReferrerCount = referrer.sns + referrer.search + referrer.direct;
+
+    const referrerSummaries =
+      totalReferrerCount > 0
+        ? [
+            `・SNS：${referrer.sns}回`,
+            `・検索：${referrer.search}回`,
+            `・直接アクセス：${referrer.direct}回`,
+          ].join("\n")
+        : "データがありません";
 
     if (totalPageCount < 5 && totalEventCount < 3) {
       return NextResponse.json({
@@ -90,6 +131,12 @@ export async function POST(req: NextRequest) {
     const prompt = `
 以下はホームページの分析データです（期間：${period}）。
 
+【アクセス元の割合】
+${referrerSummaries}
+
+【曜日別アクセス数】
+${weekdaySummaries || "データがありません"}
+
 【ページ別アクセス数】
 ${pageSummaries || "データがありません"}
 
@@ -98,6 +145,9 @@ ${eventSummaries || "データがありません"}
 
 【時間帯別アクセス数】
 ${hourlySummaries || "データがありません"}
+
+【日別アクセス数の推移】
+${dailySummaries || "データがありません"}
 
 この情報をもとに、**ホームページのオーナーが管理画面から簡単にできる改善内容**を3つ提案してください。
 
@@ -111,11 +161,6 @@ ${hourlySummaries || "データがありません"}
 - データが少ないときは「まだデータが少ないため、現時点で分析は難しい」と正直に伝えてください。
 - 無理に提案をひねり出さないでください。
 - 文章はやさしく、誰でも「自分でもできそう！」と思えるように書いてください。
-
-例としてふさわしい改善内容：
-- 写真を明るいものに変えてみる
-- ページの冒頭に「お店のこだわり」を一文だけ加えてみる
-- 見出しをもう少しわかりやすい表現に変えてみる
 
 では、改善提案を3つ出してください。
 `;

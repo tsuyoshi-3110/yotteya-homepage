@@ -1,5 +1,14 @@
-import { addDoc, collection, doc, runTransaction, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  increment,
+  runTransaction,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "./firebase";
+import { format } from "date-fns";
 
 // 除外対象のページID
 const EXCLUDE_PAGES = ["login", "analytics", "community", "postList"];
@@ -114,5 +123,78 @@ export async function logHourlyAccess(siteKey: string, pageId: string) {
     });
   } catch (error) {
     console.error("アクセスログ保存失敗:", error);
+  }
+}
+
+
+export async function logDailyAccess(siteKey: string) {
+  try {
+    const todayId = format(new Date(), "yyyy-MM-dd");
+    const dailyRef = doc(db, "analytics", siteKey, "dailyLogs", todayId);
+
+    await runTransaction(db, async (transaction) => {
+      const dailySnap = await transaction.get(dailyRef);
+      if (dailySnap.exists()) {
+        transaction.update(dailyRef, {
+          count: (dailySnap.data().count || 0) + 1,
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        transaction.set(dailyRef, {
+          count: 1,
+          updatedAt: serverTimestamp(),
+          accessedAt: serverTimestamp(),
+        });
+      }
+    });
+  } catch (error) {
+    console.error("日別アクセスログ保存失敗:", error);
+  }
+}
+
+
+export const logReferrer = async (siteKey: string) => {
+  try {
+    let referrer = document.referrer;
+
+    if (!referrer) {
+      referrer = "direct";
+    } else {
+      const url = new URL(referrer);
+      referrer = url.hostname.replace(/^www\./, "");
+    }
+
+    const docRef = doc(db, "analytics", siteKey, "referrers", referrer);
+    await setDoc(docRef, { count: increment(1) }, { merge: true });
+  } catch (e) {
+    console.error("リファラー記録エラー:", e);
+  }
+};
+
+
+export async function logWeekdayAccess(siteKey: string) {
+  try {
+    const dayOfWeek = new Date().getDay(); // 0:日曜〜6:土曜
+    const weekdayLabels = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    const weekdayId = weekdayLabels[dayOfWeek];
+
+    const ref = doc(db, "analytics", siteKey, "weekdayLogs", weekdayId);
+
+    await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      if (snap.exists()) {
+        transaction.update(ref, {
+          count: (snap.data().count || 0) + 1,
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        transaction.set(ref, {
+          count: 1,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    });
+  } catch (error) {
+    console.error("曜日別アクセスログ保存失敗:", error);
   }
 }
