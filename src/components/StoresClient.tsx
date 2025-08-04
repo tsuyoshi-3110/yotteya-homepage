@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { v4 as uuid } from "uuid";
@@ -30,7 +30,7 @@ import clsx from "clsx";
 import { ThemeKey, THEMES } from "@/lib/themes";
 import { Button } from "./ui/button";
 import CardSpinner from "./CardSpinner";
-import { logPageView } from "@/lib/logAnalytics";
+
 
 import {
   DndContext,
@@ -49,6 +49,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { writeBatch } from "firebase/firestore";
+import { motion, useInView } from "framer-motion";
 
 const SITE_KEY = "yotteya";
 const STORE_COL = `siteStores/${SITE_KEY}/items`;
@@ -64,7 +65,7 @@ type Store = {
 };
 
 export default function StoresClient() {
-  const siteKey = "yotteya";
+
   const [stores, setStores] = useState<Store[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit" | null>(null);
@@ -325,84 +326,17 @@ export default function StoresClient() {
             {stores.map((s) => (
               <SortableStoreItem key={s.id} store={s}>
                 {({ attributes, listeners, isDragging }) => (
-                  <div
-                    className={clsx(
-                      "rounded-lg overflow-hidden shadow relative transition-colors",
-                      "bg-gradient-to-b",
-                      gradient,
-                      isDragging
-                        ? "bg-yellow-100"
-                        : isDark
-                        ? "bg-black/40 text-white"
-                        : "bg-white"
-                    )}
-                  >
-                    {/* ドラッグハンドル */}
-                    {auth.currentUser !== null && (
-                      <div
-                        {...attributes}
-                        {...listeners}
-                        onTouchStart={(e) => e.preventDefault()}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 cursor-grab active:cursor-grabbing touch-none select-none"
-                      >
-                        <div className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full text-sm flex items-center justify-center shadow">
-                          ≡
-                        </div>
-                      </div>
-                    )}
-
-                    {/* カード中身 */}
-                    {s.imageURL && (
-                      <div className="relative w-full aspect-[1/1]">
-                        <Image
-                          src={s.imageURL}
-                          alt={s.name}
-                          fill
-                          className="object-cover rounded-t-lg"
-                        />
-                      </div>
-                    )}
-                    <div
-                      className={clsx("p-4 space-y-2", isDark && "text-white")}
-                    >
-                      <h2 className="text-xl font-semibold">{s.name}</h2>
-                      <p>
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                            s.address
-                          )}`}
-                          onClick={() => logPageView("map_click", siteKey)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline text-blue-700 hover:text-blue-900"
-                        >
-                          {s.address}
-                        </a>
-                      </p>
-                      {s.description && (
-                        <p className="text-sm whitespace-pre-wrap">
-                          {s.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {isAdmin && (
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <button
-                          className="px-2 py-1 bg-blue-600 text-white rounded text-sm"
-                          onClick={() => openEdit(s)}
-                        >
-                          編集
-                        </button>
-                        <button
-                          className="px-2 py-1 bg-red-600 text-white rounded text-sm"
-                          onClick={() => removeStore(s)}
-                        >
-                          削除
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <StoreCard
+                    store={s}
+                    isAdmin={isAdmin}
+                    isDragging={isDragging}
+                    isDark={isDark}
+                    gradient={gradient!}
+                    listeners={listeners}
+                    attributes={attributes}
+                    onEdit={openEdit}
+                    onRemove={removeStore}
+                  />
                 )}
               </SortableStoreItem>
             ))}
@@ -670,5 +604,115 @@ function SortableStoreItem({
     <div ref={setNodeRef} style={style}>
       {children({ attributes, listeners, isDragging })}
     </div>
+  );
+}
+
+
+
+
+interface StoreCardProps {
+  store: Store;
+  isAdmin: boolean;
+  isDragging: boolean;
+  isDark: boolean;
+  gradient: string;
+  listeners: any;
+  attributes: any;
+  onEdit: (store: Store) => void;
+  onRemove: (store: Store) => void;
+}
+
+function StoreCard({
+  store: s,
+  isAdmin,
+  isDragging,
+  isDark,
+  gradient,
+  listeners,
+  attributes,
+  onEdit,
+  onRemove,
+}: StoreCardProps) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -150px 0px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      layout
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className={clsx(
+        "rounded-lg overflow-hidden shadow relative transition-colors",
+        "bg-gradient-to-b",
+        gradient,
+        isDragging
+          ? "bg-yellow-100"
+          : isDark
+          ? "bg-black/40 text-white"
+          : "bg-white"
+      )}
+    >
+      {/* ドラッグハンドル */}
+      {auth.currentUser !== null && (
+        <div
+          {...attributes}
+          {...listeners}
+          onTouchStart={(e) => e.preventDefault()}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 cursor-grab active:cursor-grabbing touch-none select-none"
+        >
+          <div className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full text-sm flex items-center justify-center shadow">
+            ≡
+          </div>
+        </div>
+      )}
+
+      {/* カード中身 */}
+      {s.imageURL && (
+        <div className="relative w-full aspect-[1/1]">
+          <Image
+            src={s.imageURL}
+            alt={s.name}
+            fill
+            className="object-cover rounded-t-lg"
+          />
+        </div>
+      )}
+      <div className={clsx("p-4 space-y-2", isDark && "text-white")}>
+        <h2 className="text-xl font-semibold">{s.name}</h2>
+        <p>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              s.address
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-blue-700 hover:text-blue-900"
+          >
+            {s.address}
+          </a>
+        </p>
+        {s.description && (
+          <p className="text-sm whitespace-pre-wrap">{s.description}</p>
+        )}
+      </div>
+      {isAdmin && (
+        <div className="absolute top-2 right-2 flex gap-2">
+          <button
+            className="px-2 py-1 bg-blue-600 text-white rounded text-sm"
+            onClick={() => onEdit(s)}
+          >
+            編集
+          </button>
+          <button
+            className="px-2 py-1 bg-red-600 text-white rounded text-sm"
+            onClick={() => onRemove(s)}
+          >
+            削除
+          </button>
+        </div>
+      )}
+    </motion.div>
   );
 }
