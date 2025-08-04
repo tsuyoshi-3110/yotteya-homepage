@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import StoresClient from "@/components/StoresClient";
 import { PhoneSection } from "@/components/PhoneSection";
 
+
 export const metadata: Metadata = {
   title: "店舗一覧｜甘味処 よって屋",
   description:

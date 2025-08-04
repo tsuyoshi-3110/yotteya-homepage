@@ -4,8 +4,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Script from "next/script";
 import ThemeBackground from "@/components/ThemeBackground"; // 新規追加
-
 import WallpaperBackground from "@/components/WallpaperBackground"; // ← 追加
+import AnalyticsLogger from "@/components/AnalyticsLogger";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({
@@ -48,16 +48,18 @@ export default function RootLayout({
       <head>
         {/* Google Analytics */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-3D6Q54FJMV"
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
           strategy="afterInteractive"
         />
         <Script id="gtag-init" strategy="afterInteractive">
           {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-3D6Q54FJMV');
-          `}
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+      page_path: window.location.pathname,
+    });
+  `}
         </Script>
 
         {/* その他のmeta */}
@@ -79,10 +81,9 @@ export default function RootLayout({
       </head>
 
       <body className="relative min-h-screen">
-        {/* 背景 */}
+        <AnalyticsLogger />
         <WallpaperBackground />
         <ThemeBackground />
-
         {/* ヘッダー・コンテンツ */}
         <Header />
         {children}

@@ -30,6 +30,7 @@ import clsx from "clsx";
 import { ThemeKey, THEMES } from "@/lib/themes";
 import { Button } from "./ui/button";
 import CardSpinner from "./CardSpinner";
+import { logPageView } from "@/lib/logAnalytics";
 
 import {
   DndContext,
@@ -63,6 +64,7 @@ type Store = {
 };
 
 export default function StoresClient() {
+  const siteKey = "yotteya";
   const [stores, setStores] = useState<Store[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit" | null>(null);
@@ -369,6 +371,7 @@ export default function StoresClient() {
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                             s.address
                           )}`}
+                          onClick={() => logPageView("map_click", siteKey)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="underline text-blue-700 hover:text-blue-900"

@@ -16,11 +16,6 @@ import clsx from "clsx";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { useHeaderLogoUrl } from "../hooks/useHeaderLogoUrl";
 import { auth } from "@/lib/firebase";
-import { sendGAEvent } from "./gtag";
-
-type HeaderProps = {
-  className?: string;
-};
 
 const SNS = [
   {
@@ -32,7 +27,7 @@ const SNS = [
 
 const HEADER_H = "3rem";
 
-export default function Header({ className = "" }: HeaderProps) {
+export default function Header({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
@@ -45,27 +40,7 @@ export default function Header({ className = "" }: HeaderProps) {
     return () => unsubscribe();
   }, []);
 
-  const handleInterviewClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-
-    sendGAEvent({
-      action: "interview_click",
-      category: "engagement",
-      label: "取材メールリンク",
-    });
-
-    setTimeout(() => {
-      window.location.href = "mailto:tsreform.yukisaito@gmail.com";
-    }, 800);
-  };
-
-  const handleAccessClick = () => {
-    sendGAEvent({
-      action: "access_click",
-      category: "engagement",
-      label: "アクセスリンク（Googleマップ）",
-    });
-
+  const handleMenuClose = () => {
     setOpen(false);
   };
 
@@ -85,6 +60,7 @@ export default function Header({ className = "" }: HeaderProps) {
       <Link
         href="/"
         className="text-[18px] text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
+        onClick={handleMenuClose}
       >
         {logoUrl && logoUrl.trim() !== "" && (
           <Image
@@ -107,6 +83,7 @@ export default function Header({ className = "" }: HeaderProps) {
             rel="noopener noreferrer"
             aria-label={name}
             className="text-white hover:text-pink-600 transition"
+            onClick={handleMenuClose}
           >
             <Icon size={26} strokeWidth={1.8} />
           </a>
@@ -116,16 +93,15 @@ export default function Header({ className = "" }: HeaderProps) {
       <Link
         href="https://tayotteya.com/"
         className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
+        onClick={handleMenuClose}
       >
-        {logoUrl && logoUrl.trim() !== "" && (
-          <Image
-            src="/images/tayotteya_circle_image.png"
-            alt="ロゴ"
-            width={32}
-            height={32}
-            className="w-7 h-7 object-contain transition-opacity duration-200 mr-2"
-          />
-        )}
+        <Image
+          src="/images/tayotteya_circle_image.png"
+          alt="ロゴ"
+          width={32}
+          height={32}
+          className="w-7 h-7 object-contain transition-opacity duration-200 mr-2"
+        />
       </Link>
 
       <div>
@@ -157,29 +133,29 @@ export default function Header({ className = "" }: HeaderProps) {
             </SheetHeader>
 
             <div className="flex-1 flex flex-col justify-center items-center space-y-4 text-center">
-              <Link href="/products" onClick={() => setOpen(false)} className="text-lg text-white">
+              <Link href="/products" onClick={handleMenuClose} className="text-lg text-white">
                 商品一覧
               </Link>
-              <Link href="/stores" onClick={handleAccessClick} className="text-lg text-white">
+              <Link href="/stores" onClick={handleMenuClose} className="text-lg text-white">
                 アクセス
               </Link>
               <Link
                 href="https://www.ubereats.com/store/..."
-                onClick={() => setOpen(false)}
+                onClick={handleMenuClose}
                 className="text-lg text-white"
               >
                 デリバリー
               </Link>
-              <Link href="/about" onClick={() => setOpen(false)} className="text-lg text-white">
+              <Link href="/about" onClick={handleMenuClose} className="text-lg text-white">
                 当店の思い
               </Link>
-              <Link href="/news" onClick={() => setOpen(false)} className="text-lg text-white">
+              <Link href="/news" onClick={handleMenuClose} className="text-lg text-white">
                 お知らせ
               </Link>
               <a
-                href="mailto:tsreform.yukisaito@gmail.com"
-                onClick={handleInterviewClick}
-                className="hover:underline text-white"
+                href="mailto:tsreform.yokisaito@gmail.com"
+                onClick={handleMenuClose}
+                className="text-white hover:underline bg-transparent hover:bg-white/10 transition inline-block px-4 py-2 rounded"
               >
                 取材はこちら
               </a>
@@ -188,15 +164,18 @@ export default function Header({ className = "" }: HeaderProps) {
             <div className="p-4 space-y-2">
               {isLoggedIn && (
                 <>
-                  <Link href="/postList" onClick={() => setOpen(false)} className="block text-center text-lg text-white">
+                  <Link href="/postList" onClick={handleMenuClose} className="block text-center text-lg text-white">
                     タイムライン
                   </Link>
-                  <Link href="/community" onClick={() => setOpen(false)} className="block text-center text-lg text-white">
+                  <Link href="/community" onClick={handleMenuClose} className="block text-center text-lg text-white">
                     コミュニティ
+                  </Link>
+                  <Link href="/analytics" onClick={handleMenuClose} className="block text-center text-lg text-white">
+                    分析
                   </Link>
                 </>
               )}
-              <Link href="/login" onClick={() => setOpen(false)} className="block text-center text-lg text-white">
+              <Link href="/login" onClick={handleMenuClose} className="block text-center text-lg text-white">
                 管理者ログイン
               </Link>
             </div>

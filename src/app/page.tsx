@@ -28,6 +28,9 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
+
+ 
+
   return (
     <main className="w-full overflow-x-hidden">
       {/* ① ファーストビュー：背景動画のみ */}

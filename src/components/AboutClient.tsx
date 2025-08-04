@@ -43,7 +43,7 @@ export default function AboutClient() {
         setDraft(text);
       }
     });
-  }, []);
+  }, [docRef]);
 
   const handleSave = async () => {
     setSubmitFlag(true);

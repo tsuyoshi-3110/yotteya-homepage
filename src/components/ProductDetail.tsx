@@ -22,7 +22,6 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { ChevronLeft } from "lucide-react";
 
 /* あなたの siteKey に合わせてください */
 const SITE_KEY = "yotteya";
@@ -168,7 +167,7 @@ export default function ProductDetail({ product }: { product: Product }) {
   return (
     <main className="min-h-screen flex items-start justify-center p-4 pt-24">
       {/* 戻る */}
-      <button
+      {/* <button
         onClick={() => router.back()}
         aria-label="戻る"
         className={clsx(
@@ -184,7 +183,7 @@ export default function ProductDetail({ product }: { product: Product }) {
         )}
       >
         <ChevronLeft size={20} />
-      </button>
+      </button> */}
 
       {/* カード外枠 */}
       <div
