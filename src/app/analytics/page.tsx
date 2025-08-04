@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { format } from "date-fns";
@@ -60,7 +60,7 @@ export default function AnalyticsPage() {
   const [advice, setAdvice] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const start = startDate ? new Date(startDate) : null;
@@ -127,7 +127,7 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleCSVExport = () => {
     const csv = ["ページ,アクセス数"];
@@ -177,7 +177,7 @@ export default function AnalyticsPage() {
     <div className="max-w-3xl mx-auto p-4 space-y-6">
       <h2 className="text-xl font-bold text-white">アクセス解析</h2>
 
-      <div className="flex gap-4 text-white text-sm items-end mb-2">
+      <div className="flex gap-4 text-white text-sm items-end mb-4">
         <div>
           <label>開始日:</label>
           <input
@@ -185,7 +185,7 @@ export default function AnalyticsPage() {
             value={startDate}
             max={today}
             onChange={(e) => setStartDate(e.target.value)}
-            className="text-black"
+            className="text-black bg-gray-100 rounded"
           />
         </div>
         <div>
@@ -196,12 +196,12 @@ export default function AnalyticsPage() {
             min={startDate || "1970-01-01"}
             max={today}
             onChange={(e) => setEndDate(e.target.value)}
-            className="text-black"
+            className="text-black bg-gray-100 rounded"
           />
         </div>
         <button
           onClick={fetchData}
-          className="bg-blue-600 text-white px-3 py-1 rounded"
+          className="bg-blue-600 text-white px-2 py-1 rounded"
         >
           更新
         </button>
@@ -211,11 +211,11 @@ export default function AnalyticsPage() {
         <button
           onClick={handleAnalysis}
           disabled={analyzing}
-          className={`px-3 py-1 rounded text-sm text-white ${
+          className={`px-3 py-1 rounded text-sm text-white w-50 ${
             analyzing ? "bg-purple-300 cursor-not-allowed" : "bg-purple-600"
           }`}
         >
-          {analyzing ? "分析中..." : "AI による改善提案（ChatGPT分析）"}
+          {analyzing ? "分析中..." : "AI による改善提案"}
         </button>
         <button
           onClick={handleCSVExport}
@@ -239,12 +239,35 @@ export default function AnalyticsPage() {
             <tbody>
               {pageData.map((row) => (
                 <tr key={row.id}>
-                  <td className="p-2 border">{PAGE_LABELS[row.id] || row.id}</td>
+                  <td className="p-2 border">
+                    {PAGE_LABELS[row.id] || row.id}
+                  </td>
                   <td className="p-2 border text-right">{row.count}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {pageData.length > 0 && (
+            <div className="bg-white rounded p-4 shadow">
+              <Bar
+                data={{
+                  labels: pageData.map((d) => PAGE_LABELS[d.id] || d.id),
+                  datasets: [
+                    {
+                      label: "アクセス数",
+                      data: pageData.map((d) => d.count),
+                      backgroundColor: "rgba(59, 130, 246, 0.6)",
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  plugins: { tooltip: { enabled: true } },
+                }}
+              />
+            </div>
+          )}
 
           <table className="w-full bg-gray-100/50 border text-sm table-fixed mt-6">
             <thead>
@@ -258,7 +281,9 @@ export default function AnalyticsPage() {
             <tbody>
               {eventData.map((row) => (
                 <tr key={row.id}>
-                  <td className="p-2 border">{EVENT_LABELS[row.id] || row.id}</td>
+                  <td className="p-2 border">
+                    {EVENT_LABELS[row.id] || row.id}
+                  </td>
                   <td className="p-2 border text-right">{row.total}</td>
                   <td className="p-2 border text-right">{row.count}</td>
                   <td className="p-2 border text-right">{row.average}</td>
@@ -266,28 +291,37 @@ export default function AnalyticsPage() {
               ))}
             </tbody>
           </table>
-        </>
-      )}
 
-      {pageData.length > 0 && (
-        <div className="bg-white rounded p-4 shadow">
-          <Bar
-            data={{
-              labels: pageData.map((d) => PAGE_LABELS[d.id] || d.id),
-              datasets: [
-                {
-                  label: "アクセス数",
-                  data: pageData.map((d) => d.count),
-                  backgroundColor: "rgba(59, 130, 246, 0.6)",
-                },
-              ],
-            }}
-            options={{
-              responsive: true,
-              plugins: { tooltip: { enabled: true } },
-            }}
-          />
-        </div>
+          {eventData.length > 0 && (
+            <div className="bg-white rounded p-4 shadow mt-6">
+              <Bar
+                data={{
+                  labels: eventData.map((d) => EVENT_LABELS[d.id] || d.id),
+                  datasets: [
+                    {
+                      label: "平均滞在秒数",
+                      data: eventData.map((d) => d.average),
+                      backgroundColor: "rgba(16, 185, 129, 0.6)", // teal系
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  plugins: { tooltip: { enabled: true } },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: "秒",
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {advice && (

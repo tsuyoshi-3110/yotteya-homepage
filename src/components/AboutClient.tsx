@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import CardSpinner from "./CardSpinner";
 import { useThemeGradient } from "@/lib/useThemeGradient";
+import { useMemo } from "react";
 
 export default function AboutClient() {
   const [content, setContent] = useState<string>("");
@@ -22,13 +23,16 @@ export default function AboutClient() {
 
   const nonEmptyKeywords = keywords.filter((k) => k.trim() !== "");
 
-    const gradient = useThemeGradient()
+  const gradient = useThemeGradient();
   /* ここだけ変えれば他サイトにも流用できます */
   const SITE_KEY = "yotteya";
 
   /* 4 セグメント = ドキュメント参照
    sitePages / {siteId} / pages / about */
-  const docRef = doc(db, "sitePages", SITE_KEY, "pages", "about");
+  const docRef = useMemo(
+    () => doc(db, "sitePages", SITE_KEY, "pages", "about"),
+    [SITE_KEY]
+  );
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => setIsAdmin(!!user));
@@ -53,10 +57,9 @@ export default function AboutClient() {
     setKeywords(["", "", ""]);
     alert("保存しました！");
     setSubmitFlag(false);
-
   };
 
-   if (!gradient) return <CardSpinner />;
+  if (!gradient) return <CardSpinner />;
 
   return (
     <main className="max-w-3xl mx-auto ">
@@ -65,7 +68,10 @@ export default function AboutClient() {
           {content || "ただいま準備中です。"}
         </div>
         {isAdmin && !editing && (
-          <Button onClick={() => setEditing(true)} className="mt-4 bg-blue-500 cursor-pointer">
+          <Button
+            onClick={() => setEditing(true)}
+            className="mt-4 bg-blue-500 cursor-pointer"
+          >
             編集する
           </Button>
         )}

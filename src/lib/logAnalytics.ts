@@ -91,9 +91,13 @@ export const logStayTime = async (
  * ページIDの正規化（スラッシュ削除、クエリ・ハッシュ除去、スラッシュをアンダースコアに変換）
  */
 function normalizePageId(path: string): string {
-  return path
-    .replace(/^\/+/, "") // 先頭のスラッシュを削除
-    .split("?")[0]       // クエリパラメータを削除
-    .split("#")[0]       // ハッシュを削除
-    .replaceAll("/", "_"); // スラッシュをアンダースコアに置換
+  const cleanPath = path
+    .replace(/^\/+/, "") // 先頭スラッシュ除去
+    .split("?")[0]
+    .split("#")[0];
+
+  // 特定のプレフィックスにマッチしたら共通化
+  if (cleanPath.startsWith("products/")) return "products";
+
+  return cleanPath.replaceAll("/", "_"); // それ以外は通常変換
 }
