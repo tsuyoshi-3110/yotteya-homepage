@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-const siteKey = "kikaikintots";
+const siteKey = "yotteya";
 
 // 利用可能なフォント一覧（表示名と保存キー）
 const fonts = [
