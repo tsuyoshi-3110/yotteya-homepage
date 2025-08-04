@@ -37,10 +37,17 @@ const openai = new OpenAI({
 
 export async function POST(req: NextRequest) {
   try {
-    const { period, pageData, eventData, hourlyData, dailyData, referrerData, weekdayData } =
-      await req.json();
+    const {
+      period,
+      pageData,
+      eventData,
+      hourlyData,
+      dailyData,
+      referrerData,
+      weekdayData,
+    } = await req.json();
 
-        /* ------------ ② 曜日別サマリーを作成 ------------ */
+    /* ------------ ② 曜日別サマリーを作成 ------------ */
     const weekdayLabelsJP = ["日", "月", "火", "水", "木", "金", "土"];
 
     // weekdayData は 0(日)～6(土) のカウント配列 or オブジェクトを想定
@@ -54,7 +61,6 @@ export async function POST(req: NextRequest) {
     const weekdaySummaries = counts
       .map((cnt, idx) => `・${weekdayLabelsJP[idx]}：${cnt}回`)
       .join("\n");
-
 
     const hourlySummaries = (hourlyData || [])
       .sort((a: { hour: number }, b: { hour: number }) => a.hour - b.hour)
@@ -153,14 +159,20 @@ ${dailySummaries || "データがありません"}
 
 【必ず守るルール】
 - HTMLやCSS、プログラミングの話は禁止です。
-- 専門用語（SEO、インデックス、メタタグなど）も禁止です。
+- 専門用語（例：SEO、インデックス、メタタグなど）も禁止です。
 - 「コードを修正する」「システムを変更する」などの指示は絶対にしないでください。
-- 「新しい機能を追加する」「デザインの構造を変える」などの提案は禁止です。
-- 「◯◯ページに○○を追加する」など、管理画面からできないことは禁止です。
-- 写真を変える、文章の順番を変える、など管理画面で完結するものに限定してください。
-- データが少ないときは「まだデータが少ないため、現時点で分析は難しい」と正直に伝えてください。
+- 「新しい機能を追加する」「デザインの構造を変える」といったことも禁止です。
+- 「◯◯ページに○○を追加する」などの提案も、オーナー自身が管理画面からできない内容は避けてください。
+- 「写真を変える」「文章の順番を変える」など、**ページットの管理画面上で完結できる作業**だけに限定してください。
+- アクセス数や滞在時間などのデータが明らかに少ない場合は、「まだデータが少ないため、現時点で分析は難しい」と**正直に伝えてください**。
 - 無理に提案をひねり出さないでください。
 - 文章はやさしく、誰でも「自分でもできそう！」と思えるように書いてください。
+- 技術的・専門的な表現は一切使わないでください。
+
+例としてふさわしい改善内容：
+- 写真を明るいものに変えてみる
+- ページの冒頭に「お店のこだわり」を一文だけ加えてみる
+- 見出しをもう少しわかりやすい表現に変えてみる
 
 では、改善提案を3つ出してください。
 `;
