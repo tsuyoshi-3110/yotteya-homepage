@@ -11,7 +11,7 @@ export default function FontLoader() {
     const fetchFont = async () => {
       if (!siteKey) return;
 
-      const docRef = doc(db, "siteSettings", siteKey);
+      const docRef = doc(db, "assets", siteKey);
       const snap = await getDoc(docRef);
 
       if (snap.exists()) {
@@ -31,7 +31,7 @@ export default function FontLoader() {
           console.warn("[FontLoader] fontFamily is not set in Firestore.");
         }
       } else {
-        console.warn("[FontLoader] siteSettings document does not exist.");
+        console.warn("[FontLoader] assets document does not exist.");
       }
     };
 
