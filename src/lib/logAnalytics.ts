@@ -1,4 +1,4 @@
-import { doc, runTransaction, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, doc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
 // 除外対象のページID
@@ -100,4 +100,19 @@ function normalizePageId(path: string): string {
   if (cleanPath.startsWith("products/")) return "products";
 
   return cleanPath.replaceAll("/", "_"); // それ以外は通常変換
+}
+
+export async function logHourlyAccess(siteKey: string, pageId: string) {
+  try {
+    const hour = new Date().getHours();
+
+    await addDoc(collection(db, "analytics", siteKey, "hourlyLogs"), {
+      siteKey,
+      pageId,
+      accessedAt: serverTimestamp(),
+      hour,
+    });
+  } catch (error) {
+    console.error("アクセスログ保存失敗:", error);
+  }
 }

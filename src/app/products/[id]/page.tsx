@@ -22,7 +22,7 @@ export default function ProductPage() {
     })();
   }, [id]);
 
-  if (!product) return <p className="text-center pt-20">Loading...</p>;
+  if (!product) return 
 
   return <ProductDetail product={product} />;
 }

@@ -59,6 +59,64 @@ export default function AnalyticsPage() {
   const [endDate, setEndDate] = useState(today);
   const [advice, setAdvice] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [hourlyData, setHourlyData] = useState<any | null>(null);
+  const [hourlyLoading, setHourlyLoading] = useState(false);
+  const [hourlyRawCounts, setHourlyRawCounts] = useState<number[]>([]);
+
+  function groupByHour(
+    logs: { hour: number; accessedAt?: any }[],
+    start: Date,
+    end: Date
+  ): number[] {
+    const hourlyCounts = Array(24).fill(0);
+
+    for (const log of logs) {
+      const ts = log.accessedAt?.toDate?.();
+      if (!ts) continue;
+      if (ts >= start && ts <= end && typeof log.hour === "number") {
+        hourlyCounts[log.hour]++;
+      }
+    }
+
+    return hourlyCounts;
+  }
+
+  function getHourlyChartData(counts: number[]) {
+    return {
+      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+      datasets: [
+        {
+          label: "アクセス数",
+          data: counts,
+          backgroundColor: "rgba(255, 159, 64, 0.6)", // orange
+        },
+      ],
+    };
+  }
+
+  useEffect(() => {
+    const fetchHourlyData = async () => {
+      setHourlyLoading(true);
+      try {
+        const start = new Date(startDate);
+        const end = new Date(new Date(endDate).setHours(23, 59, 59, 999));
+        const logsRef = collection(db, "analytics", siteKey, "hourlyLogs");
+        const snap = await getDocs(logsRef);
+        const logs = snap.docs.map(
+          (doc) => doc.data() as { hour: number; accessedAt?: Timestamp }
+        );
+        const hourlyCounts = groupByHour(logs, start, end);
+        setHourlyRawCounts(hourlyCounts); // ← これをAIへ渡す
+        setHourlyData(getHourlyChartData(hourlyCounts)); // ← これはChart用
+      } catch (err) {
+        console.error("時間帯データ取得エラー:", err);
+      } finally {
+        setHourlyLoading(false);
+      }
+    };
+
+    fetchHourlyData();
+  }, [siteKey, startDate, endDate]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -157,6 +215,7 @@ export default function AnalyticsPage() {
           period: startDate && endDate ? `${startDate}〜${endDate}` : "全期間",
           pageData,
           eventData,
+          hourlyData: hourlyRawCounts,
         }),
       });
       const data = await res.json();
@@ -321,6 +380,27 @@ export default function AnalyticsPage() {
               />
             </div>
           )}
+
+          {hourlyLoading ? (
+            <CardSpinner />
+          ) : hourlyData ? (
+            <div className="bg-white rounded p-4 shadow mt-6">
+              <h3 className="font-semibold text-sm mb-2">時間帯別アクセス数</h3>
+              <Bar
+                data={hourlyData}
+                options={{
+                  responsive: true,
+                  plugins: { tooltip: { enabled: true } },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: { display: true, text: "アクセス数" },
+                    },
+                  },
+                }}
+              />
+            </div>
+          ) : null}
         </>
       )}
 

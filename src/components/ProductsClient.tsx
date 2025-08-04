@@ -44,6 +44,7 @@ import {
 } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 import { type Product } from "@/types/Product";
 
@@ -331,14 +332,16 @@ export default function ProductsClient() {
               return (
                 <SortableItem key={p.id} product={p}>
                   {({ listeners, attributes, isDragging }) => (
-                    <div
+                   <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                      transition={{ duration: 0.3 }}
                       onClick={() => {
-                        // 管理者編集中やドラッグ中は遷移させない
                         if (isDragging) return;
                         router.push(`/products/${p.id}`);
                       }}
                       className={clsx(
-                        // --- 既存 ---
                         "flex flex-col h-full border rounded-lg overflow-hidden shadow relative transition-colors duration-200",
                         "bg-gradient-to-b",
                         gradient,
@@ -347,11 +350,7 @@ export default function ProductsClient() {
                           : isDark
                           ? "bg-black/40 text-white"
                           : "bg-white",
-                        // --- ★ 追加ここだけ ★ ---
-                        // 管理者（ドラッグできる人）は常に grab カーソル。
-                        // それ以外の閲覧者には pointer カーソルを表示。
                         "cursor-pointer",
-                        // hover で軽く陰影を強調（任意）
                         !isDragging && "hover:shadow-lg"
                       )}
                     >
@@ -474,7 +473,7 @@ export default function ProductsClient() {
                           {p.body}
                         </p> */}
                       </div>
-                    </div>
+                    </motion.div>
                   )}
                 </SortableItem>
               );

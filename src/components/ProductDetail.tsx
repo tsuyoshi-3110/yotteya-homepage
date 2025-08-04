@@ -22,9 +22,12 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
+import CardSpinner from "./CardSpinner";
 
 /* あなたの siteKey に合わせてください */
 const SITE_KEY = "yotteya";
+
+import { motion } from "framer-motion";
 
 type MediaType = "image" | "video";
 
@@ -59,6 +62,11 @@ export default function ProductDetail({ product }: { product: Product }) {
   const uploading = progress !== null;
 
   /* ---------- ハンドラ ---------- */
+
+  useEffect(() => {
+  setDisplayProduct(product);
+}, [product]);
+
 
   // 編集保存
   const handleSave = async () => {
@@ -151,6 +159,7 @@ export default function ProductDetail({ product }: { product: Product }) {
 
   // 削除
   const handleDelete = async () => {
+    console.log("!sadf")
     if (!confirm(`「${displayProduct.title}」を削除しますか？`)) return;
 
     await deleteDoc(doc(db, "siteProducts", SITE_KEY, "items", product.id));
@@ -163,30 +172,23 @@ export default function ProductDetail({ product }: { product: Product }) {
     router.back();
   };
 
+  if (!displayProduct) {
+  return (
+    <main className="min-h-screen flex items-center justify-center pt-24">
+      <CardSpinner />
+    </main>
+  );
+}
+
   /* ---------- JSX ---------- */
   return (
     <main className="min-h-screen flex items-start justify-center p-4 pt-24">
-      {/* 戻る */}
-      {/* <button
-        onClick={() => router.back()}
-        aria-label="戻る"
-        className={clsx(
-          // 固定配置
-          "fixed top-[60px] left-3 z-40",
-          // 見た目
-          "p-2 rounded shadow transition-opacity",
-          "bg-gradient-to-b", // ★ 方向を指定
-          gradient, // ★ 2色グラデ（例: from-pink-500 to-red-500）
-          isDark ? "text-white" : "text-black",
-          "cursor-pointer",
-          "hover:opacity-80 backdrop-blur"
-        )}
-      >
-        <ChevronLeft size={20} />
-      </button> */}
-
       {/* カード外枠 */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.3 }}
         className={clsx(
           "border rounded-lg overflow-hidden shadow relative transition-colors duration-200",
           "w-full max-w-md",
@@ -257,7 +259,7 @@ export default function ProductDetail({ product }: { product: Product }) {
             </p>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* ---------- 編集モーダル ---------- */}
       {isAdmin && showEdit && (

@@ -38,7 +38,15 @@ const openai = new OpenAI({
 
 export async function POST(req: NextRequest) {
   try {
-    const { period, pageData, eventData } = await req.json();
+    const { period, pageData, eventData, hourlyData } = await req.json();
+
+    const hourlySummaries = (hourlyData || [])
+      .sort((a: { hour: number }, b: { hour: number }) => a.hour - b.hour)
+      .map((h: { hour: number; count: number }) => {
+        const label = `${h.hour}時台`;
+        return `・${label}：${h.count}回`;
+      })
+      .join("\n");
 
     // 型アノテーション明示
     const filteredPages = pageData.filter(
@@ -65,7 +73,10 @@ export async function POST(req: NextRequest) {
     }
 
     const pageSummaries = filteredPages
-      .map((p: { id: string; count: number }) => `・${PAGE_PATH_LABELS[p.id]}：${p.count}回`)
+      .map(
+        (p: { id: string; count: number }) =>
+          `・${PAGE_PATH_LABELS[p.id]}：${p.count}回`
+      )
       .join("\n");
 
     const eventSummaries = filteredEvents
@@ -84,6 +95,9 @@ ${pageSummaries || "データがありません"}
 
 【ページ別滞在時間】
 ${eventSummaries || "データがありません"}
+
+【時間帯別アクセス数】
+${hourlySummaries || "データがありません"}
 
 この情報をもとに、**ホームページのオーナーが管理画面から簡単にできる改善内容**を3つ提案してください。
 
@@ -111,7 +125,8 @@ ${eventSummaries || "データがありません"}
       messages: [{ role: "user", content: prompt }],
     });
 
-    const advice = chat.choices[0].message.content?.trim() ?? "提案が見つかりませんでした。";
+    const advice =
+      chat.choices[0].message.content?.trim() ?? "提案が見つかりませんでした。";
 
     return NextResponse.json({ advice });
   } catch (error) {

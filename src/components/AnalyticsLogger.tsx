@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { logPageView, logStayTime } from "@/lib/logAnalytics";
+import { logPageView, logStayTime, logHourlyAccess } from "@/lib/logAnalytics";
 
 const SITE_KEY = "yotteya";
 
@@ -14,17 +14,17 @@ export default function AnalyticsLogger() {
     const prev = prevPathRef.current;
     const now = Date.now();
 
-    const prevClean =
-      prev && prev !== "/" ? prev.slice(1) : "home"; // 🔧 空文字対策
-    const currClean =
-      pathname && pathname !== "/" ? pathname.slice(1) : "home";
+    const prevClean = prev && prev !== "/" ? prev.slice(1) : "home";
+    const currClean = pathname && pathname !== "/" ? pathname.slice(1) : "home";
 
     const sec = Math.floor((now - startTsRef.current) / 1000);
     if (sec > 0 && sec <= 60) {
       logStayTime(SITE_KEY, sec, prevClean);
     }
+    console.log("currClean", currClean);
 
     logPageView(currClean, SITE_KEY);
+    logHourlyAccess(SITE_KEY, currClean);
     prevPathRef.current = pathname;
     startTsRef.current = now;
   }, [pathname]);
