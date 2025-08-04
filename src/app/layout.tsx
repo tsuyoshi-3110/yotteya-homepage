@@ -6,6 +6,15 @@ import Script from "next/script";
 import ThemeBackground from "@/components/ThemeBackground"; // 新規追加
 import WallpaperBackground from "@/components/WallpaperBackground"; // ← 追加
 import AnalyticsLogger from "@/components/AnalyticsLogger";
+import FontLoader from "@/components/FontLoader";
+import {
+  kosugiMaru,
+  notoSansJP,
+  shipporiMincho,
+  reggaeOne,
+  yomogi,
+  hachiMaruPop,
+} from "@/lib/font";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({
@@ -43,7 +52,12 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      className={`
+        ${geistSans.variable} ${geistMono.variable}
+        ${kosugiMaru.variable} ${notoSansJP.variable}
+        ${yomogi.variable} ${hachiMaruPop.variable} ${reggaeOne.variable} ${shipporiMincho.variable}
+        antialiased
+      `}
     >
       <head>
         {/* Google Analytics */}
@@ -86,6 +100,7 @@ export default function RootLayout({
         <ThemeBackground />
         {/* ヘッダー・コンテンツ */}
         <Header />
+        <FontLoader />
         {children}
 
         {/* 構造化データ */}

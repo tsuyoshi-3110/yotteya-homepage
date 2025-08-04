@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ProductDetail from "@/components/ProductDetail";
+import CardSpinner from "@/components/CardSpinner";
 
 const SITE_KEY = "yotteya";
 
@@ -22,7 +23,7 @@ export default function ProductPage() {
     })();
   }, [id]);
 
-  if (!product) return 
+  if (!product) return <CardSpinner />
 
   return <ProductDetail product={product} />;
 }

@@ -19,6 +19,7 @@ import ForgotPassword from "@/components/ForgotPassword";
 import ChangePassword from "@/components/ChangePassword";
 import ForgotEmail from "@/components/ForgotEmail";
 import PasswordInput from "@/components/PasswordInput";
+import FontSwitcher from "@/components/FontSwitcher";
 
 const SITE_KEY = "yotteya"; // ← サイトごとに変更可
 
@@ -31,7 +32,6 @@ export default function LoginPage() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showForgotEmail, setShowForgotEmail] = useState(false);
-
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -113,7 +113,9 @@ export default function LoginPage() {
     }
 
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 gap-y-6">
+        <FontSwitcher />
+
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg font-semibold">
