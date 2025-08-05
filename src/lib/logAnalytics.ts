@@ -96,19 +96,29 @@ export const logStayTime = async (
   });
 };
 
+function safeDecode(str: string) {
+  try {
+    return decodeURIComponent(str);
+  } catch {
+    return str;
+  }
+}
+
 /**
  * ページIDの正規化（スラッシュ削除、クエリ・ハッシュ除去、スラッシュをアンダースコアに変換）
  */
 function normalizePageId(path: string): string {
-  const cleanPath = path
-    .replace(/^\/+/, "") // 先頭スラッシュ除去
-    .split("?")[0]
-    .split("#")[0];
+  // ① 余分な部分を除去
+  const raw = path.replace(/^\/+/, "").split("?")[0].split("#")[0];
 
-  // 特定のプレフィックスにマッチしたら共通化
-  if (cleanPath.startsWith("products/")) return "products";
+  // ② パーセントエンコード → 生文字列に
+  const decoded = safeDecode(raw);
 
-  return cleanPath.replaceAll("/", "_"); // それ以外は通常変換
+  // ③ 動的プレフィックスはまとめる
+  if (decoded.startsWith("products/")) return "products";
+
+  // ④ 残りはスラッシュをアンダースコアへ
+  return decoded.replaceAll("/", "_");
 }
 
 export async function logHourlyAccess(siteKey: string, pageId: string) {
@@ -125,7 +135,6 @@ export async function logHourlyAccess(siteKey: string, pageId: string) {
     console.error("アクセスログ保存失敗:", error);
   }
 }
-
 
 export async function logDailyAccess(siteKey: string) {
   try {
@@ -152,7 +161,6 @@ export async function logDailyAccess(siteKey: string) {
   }
 }
 
-
 export const logReferrer = async (siteKey: string) => {
   try {
     let referrer = document.referrer;
@@ -170,7 +178,6 @@ export const logReferrer = async (siteKey: string) => {
     console.error("リファラー記録エラー:", e);
   }
 };
-
 
 export async function logWeekdayAccess(siteKey: string) {
   try {
