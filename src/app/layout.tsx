@@ -7,6 +7,8 @@ import ThemeBackground from "@/components/ThemeBackground"; // 新規追加
 import WallpaperBackground from "@/components/WallpaperBackground"; // ← 追加
 import AnalyticsLogger from "@/components/AnalyticsLogger";
 import FontLoader from "@/components/FontLoader";
+import SubscriptionOverlay from "@/components/SubscriptionOverlay";
+
 import {
   kosugiMaru,
   notoSansJP,
@@ -49,6 +51,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const siteKey = "yotteya";
+
   return (
     <html
       lang="ja"
@@ -95,6 +99,7 @@ export default function RootLayout({
       </head>
 
       <body className="relative min-h-screen">
+        <SubscriptionOverlay siteKey={siteKey} />
         <AnalyticsLogger />
         <WallpaperBackground />
         <ThemeBackground />
