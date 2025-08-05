@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import Image from "next/image";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Plus } from "lucide-react";
 import { v4 as uuid } from "uuid";
 import imageCompression from "browser-image-compression";
@@ -15,6 +14,11 @@ import {
   CollectionReference,
   DocumentData,
   writeBatch,
+  query,
+  orderBy,
+  limit,
+  startAfter,
+  getDocs,
 } from "firebase/firestore";
 import {
   getStorage,
@@ -45,12 +49,34 @@ import {
 import SortableItem from "./SortableItem";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import ProductMedia from "./ProductMedia";
 
 import { type Product } from "@/types/Product";
+import { QueryDocumentSnapshot } from "firebase/firestore";
 
 type MediaType = "image" | "video";
 
 const SITE_KEY = "yotteya";
+const PAGE_SIZE = 20;
+const MAX_VIDEO_SEC = 30;
+const VIDEO_MIME_TYPES: string[] = [
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+  "video/ogg",
+  "video/x-m4v",
+  "video/x-msvideo",
+  "video/x-ms-wmv",
+  "video/mpeg",
+  "video/3gpp",
+  "video/3gpp2",
+];
+const IMAGE_MIME_TYPES: string[] = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
 
 export default function ProductsClient() {
   const [list, setList] = useState<Product[]>([]);
@@ -64,8 +90,14 @@ export default function ProductsClient() {
   const [taxIncluded, setTaxIncluded] = useState(true); // デフォルト税込
   const [progress, setProgress] = useState<number | null>(null);
   const uploading = progress !== null;
-  const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set());
   const [aiLoading, setAiLoading] = useState(false);
+
+  // 1ページあたり
+  const [lastDoc, setLastDoc] = useState<
+    QueryDocumentSnapshot<DocumentData> | null | undefined
+  >(null);
+  const [hasMore, setHasMore] = useState(true);
+  const isFetchingMore = useRef(false);
 
   const gradient = useThemeGradient();
   const router = useRouter();
@@ -96,6 +128,72 @@ export default function ProductsClient() {
   );
 
   useEffect(() => onAuthStateChanged(auth, (u) => setIsAdmin(!!u)), []);
+
+  useEffect(() => {
+    // すでに読み込み中ならスキップ
+    if (isFetchingMore.current) return;
+    isFetchingMore.current = true;
+
+    const firstQuery = query(
+      colRef,
+      orderBy("createdAt", "desc"),
+      limit(PAGE_SIZE)
+    );
+
+    // ─── リアルタイム購読 ───
+    const unsub = onSnapshot(firstQuery, (snap) => {
+      const firstPage: Product[] = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<Product, "id">),
+      }));
+
+      setList(firstPage);
+      setLastDoc(snap.docs.at(-1) ?? null);
+      setHasMore(snap.docs.length === PAGE_SIZE);
+      isFetchingMore.current = false;
+    });
+
+    // アンマウント時に解除
+    return () => unsub();
+  }, [colRef]);
+
+  const fetchNextPage = useCallback(async () => {
+    if (isFetchingMore.current || !hasMore || !lastDoc) return;
+    isFetchingMore.current = true;
+
+    const nextQuery = query(
+      colRef,
+      orderBy("createdAt", "desc"),
+      startAfter(lastDoc),
+      limit(PAGE_SIZE)
+    );
+
+    const snap = await getDocs(nextQuery);
+    const nextPage: Product[] = snap.docs.map((d) => ({
+      id: d.id,
+      ...(d.data() as Omit<Product, "id">),
+    }));
+
+    setList((prev) => [...prev, ...nextPage]);
+    setLastDoc(snap.docs.at(-1) ?? null);
+    setHasMore(snap.docs.length === PAGE_SIZE);
+    isFetchingMore.current = false;
+  }, [colRef, lastDoc, hasMore]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        hasMore &&
+        !uploading &&
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 150
+      ) {
+        fetchNextPage();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [fetchNextPage, hasMore, uploading]);
 
   useEffect(() => {
     const unsub = onSnapshot(colRef, (snap) => {
@@ -137,18 +235,11 @@ export default function ProductsClient() {
         const isVideo = file.type.startsWith("video/");
         mediaType = isVideo ? "video" : "image";
 
-        const isValidImage =
-          file.type === "image/jpeg" || file.type === "image/png";
-        const isValidVideo =
-          file.type === "video/mp4" || file.type === "video/quicktime";
+        const isValidVideo = VIDEO_MIME_TYPES.includes(file.type);
+        const isValidImage = IMAGE_MIME_TYPES.includes(file.type);
 
         if (!isValidImage && !isValidVideo) {
           alert("対応形式：画像（JPEG, PNG）／動画（MP4, MOV）");
-          return;
-        }
-
-        if (isVideo && file.size > 50 * 1024 * 1024) {
-          alert("動画サイズは50MB未満にしてください");
           return;
         }
 
@@ -328,11 +419,10 @@ export default function ProductsClient() {
         >
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {list.map((p) => {
-              const isLoaded = loadedIds.has(p.id);
               return (
                 <SortableItem key={p.id} product={p}>
                   {({ listeners, attributes, isDragging }) => (
-                   <motion.div
+                    <motion.div
                       initial={{ opacity: 0, scale: 0.9, y: 20 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -390,60 +480,13 @@ export default function ProductsClient() {
                         </div>
                       )} */}
 
-                      {!isLoaded && (
-                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/10">
-                          <svg
-                            className="w-8 h-8 animate-spin text-pink-600"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            />
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                            />
-                          </svg>
-                        </div>
-                      )}
-
                       {/* メディア表示 */}
-                      {p.mediaType === "image" ? (
-                        <div className="relative w-full aspect-[1/1] sm:aspect-square">
-                          <Image
-                            src={p.mediaURL}
-                            alt={p.title}
-                            fill
-                            className="object-cover"
-                            sizes="(min-width:1024px) 320px, (min-width:640px) 45vw, 90vw"
-                            onLoad={() =>
-                              setLoadedIds((prev) => new Set(prev).add(p.id))
-                            }
-                          />
-                        </div>
-                      ) : (
-                        <div className="relative w-full aspect-[1/1] sm:aspect-square">
-                          <video
-                            src={p.mediaURL}
-                            muted
-                            playsInline
-                            autoPlay
-                            loop
-                            preload="auto"
-                            className="w-full h-full object-cover absolute top-0 left-0"
-                            onLoadedData={() =>
-                              setLoadedIds((prev) => new Set(prev).add(p.id))
-                            }
-                          />
-                        </div>
-                      )}
+                      <ProductMedia
+                        src={p.mediaURL}
+                        type={p.mediaType}
+                        className="shadow-lg" /* 追加スタイルがあれば */
+                        /* autoPlay / loop / muted はデフォルト true。変更する場合だけ渡す */
+                      />
 
                       {/* 商品情報 */}
                       <div className="p-1 space-y-1">
@@ -605,8 +648,34 @@ export default function ProductsClient() {
             </button>
             <input
               type="file"
-              accept="image/*,video/mp4"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              accept={[...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES].join(",")}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+
+                /* --- 動画かどうか判定 --- */
+                const isVideo = f.type.startsWith("video/");
+                if (!isVideo) {
+                  setFile(f);
+                  return;
+                }
+
+                /* --- <video> でメタデータだけ読む --- */
+                const blobURL = URL.createObjectURL(f);
+                const vid = document.createElement("video");
+                vid.preload = "metadata";
+                vid.src = blobURL;
+
+                vid.onloadedmetadata = () => {
+                  URL.revokeObjectURL(blobURL); // もう不要
+                  if (vid.duration > MAX_VIDEO_SEC) {
+                    alert(`動画は ${MAX_VIDEO_SEC} 秒以内にしてください`);
+                    e.target.value = ""; // input をリセット
+                    return;
+                  }
+                  setFile(f); // 30 秒以内なら state へ
+                };
+              }}
               className="bg-gray-500 text-white w-full h-10 px-3 py-1 rounded"
               disabled={uploading}
             />

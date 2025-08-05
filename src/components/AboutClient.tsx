@@ -68,31 +68,18 @@ export default function AboutClient() {
   return (
     <main className="relative max-w-3xl mx-auto px-4 py-10">
       {/* 背景の淡いグラデーション（控えめ） */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/10 via-white/30 to-rose-50 rounded-md" />
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-indigo-200/20 blur-3xl" />
         <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-rose-200/20 blur-3xl" />
       </div>
-
-      {/* タイトル */}
-      {/* <motion.h1
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="text-2xl font-bold tracking-tight text-gray-900 mb-4"
-      >
-        当店の思い
-      </motion.h1> */}
 
       {/* 本文カード（グラス・モーフィズム風） */}
       <motion.div
         initial={{ opacity: 0, y: 10, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4 }}
-        className="rounded-2xl border border-white/30 bg-white/30 backdrop-blur-md shadow-lg"
+        className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md shadow-lg"
       >
         <div className="p-5">
           {contentLoading ? (
@@ -238,9 +225,7 @@ export default function AboutClient() {
               exit={{ opacity: 0, y: 10, scale: 0.98 }}
               transition={{ type: "spring", stiffness: 260, damping: 22 }}
             >
-              <h2 className="text-xl font-bold text-center">
-                AIで文章を生成
-              </h2>
+              <h2 className="text-xl font-bold text-center">AIで文章を生成</h2>
               <p className="text-sm text-gray-500 text-center">
                 ・最低1個以上のキーワードを入力してください
               </p>
@@ -289,7 +274,7 @@ export default function AboutClient() {
                     const data = await res.json();
                     setDraft(data.text);
                     setShowAIModal(false); // 成功後閉じる
-                  } catch  {
+                  } catch {
                     alert("生成に失敗しました");
                   } finally {
                     setLoading(false);
