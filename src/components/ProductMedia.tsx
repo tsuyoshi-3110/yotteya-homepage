@@ -38,7 +38,6 @@ export default function ProductMedia({
   const [loaded, setLoaded] = useState(false);
   /* 画面内判定（動画の省エネ再生制御） */
   const [ref, visible] = useOnScreen<HTMLDivElement>("120px");
-  const [portrait, setPortrait] = useState(false);
 
   /* =======================================================
      VIDEO  (正方形 & 遅延再生)
@@ -81,9 +80,9 @@ export default function ProductMedia({
 
   return (
     <div
-      ref={ref /* ← 画像では visible を今は使わないが付けておいて OK */}
+      ref={ref}
       className={clsx(
-        "relative w-full aspect-square overflow-hidden", // ★ 常に 1:1
+        "relative w-full aspect-square overflow-hidden",
         className
       )}
     >
@@ -97,16 +96,12 @@ export default function ProductMedia({
         src={src}
         alt={alt}
         fill
-        sizes="(min-width:1024px) 320px, (min-width:640px) 45vw, 90vw"
         className={clsx(
-          portrait ? "object-contain" : "object-cover",
-          "transition-opacity rounded",
+          "object-cover transition-opacity duration-500",
           loaded ? "opacity-100" : "opacity-0"
         )}
-        onLoadingComplete={({ naturalWidth: w, naturalHeight: h }) => {
-          setPortrait(h > w); // 縦長なら contain
-          setLoaded(true);
-        }}
+        sizes="(min-width:1024px) 320px, (min-width:640px) 45vw, 90vw"
+        onLoadingComplete={() => setLoaded(true)}
         priority={false}
       />
     </div>
