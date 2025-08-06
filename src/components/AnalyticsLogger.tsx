@@ -7,7 +7,10 @@ import {
   logHourlyAccess,
   logDailyAccess,
   logReferrer,
-  logWeekdayAccess
+  logWeekdayAccess,
+  logVisitorType,
+  logBounce,
+  logGeo,
 } from "@/lib/logAnalytics";
 
 const SITE_KEY = "yotteya";
@@ -16,6 +19,42 @@ export default function AnalyticsLogger() {
   const pathname = usePathname() || "/";
   const startTsRef = useRef(Date.now());
   const prevPathRef = useRef(pathname);
+  const pageCountRef = useRef(0);
+
+  // ── 一度だけ IP ベースの地域取得 ＋ ログ
+  useEffect(() => {
+    if (sessionStorage.getItem("geoLogged")) return;
+    sessionStorage.setItem("geoLogged", "1");
+
+    // IP geolocation の例（無料の ipapi.co を利用）
+    fetch("https://ipapi.co/json")
+      .then((res) => res.json())
+      .then((data) => {
+        const region = data.region || data.country_name || "Unknown";
+        logGeo("yotteya", region);
+      })
+      .catch((e) => console.error("地域取得失敗:", e));
+  }, []);
+
+  // ── セッション中のページ数をカウントし、
+  //    1ページのみで離脱したらバウンスとしてログ
+  useEffect(() => {
+    pageCountRef.current++;
+
+    const handleBounce = () => {
+      if (pageCountRef.current === 1) {
+        const pageId = pathname === "/" ? "home" : pathname.slice(1);
+        logBounce(SITE_KEY, pageId);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBounce);
+    window.addEventListener("pagehide", handleBounce);
+    return () => {
+      window.removeEventListener("beforeunload", handleBounce);
+      window.removeEventListener("pagehide", handleBounce);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     const prev = prevPathRef.current;
@@ -32,8 +71,9 @@ export default function AnalyticsLogger() {
     logPageView(currClean, SITE_KEY);
     logHourlyAccess(SITE_KEY, currClean);
     logDailyAccess(SITE_KEY);
-    logReferrer(SITE_KEY)
-    logWeekdayAccess(SITE_KEY)
+    logReferrer(SITE_KEY);
+    logWeekdayAccess(SITE_KEY);
+    logVisitorType(SITE_KEY);
 
     prevPathRef.current = pathname;
     startTsRef.current = now;

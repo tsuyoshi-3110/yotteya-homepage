@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns"; // ★ subDays を追加
 import CardSpinner from "@/components/CardSpinner";
 import { Bar } from "react-chartjs-2";
 import {
@@ -28,13 +28,14 @@ import { Button } from "@/components/ui/button";
 
 Chart.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
-const todayDate = new Date();
-const oneMonthAgo = new Date();
-oneMonthAgo.setDate(todayDate.getDate() - 30);
+/* ───────── 期間計算用ヘルパー ───────── */
+const calcStart = (daysAgo: number) =>
+  format(subDays(new Date(), daysAgo), "yyyy-MM-dd");
 
-const today = format(todayDate, "yyyy-MM-dd");
-const defaultStart = format(oneMonthAgo, "yyyy-MM-dd");
+const TODAY = format(new Date(), "yyyy-MM-dd"); // 例: 2025-08-06
+const DEFAULT_START = calcStart(30); // デフォルト = 過去 30 日
 
+/* ───────── ラベル定義 ───────── */
 const PAGE_LABELS: Record<string, string> = {
   home: "ホーム",
   about: "当店の思い",
@@ -44,6 +45,7 @@ const PAGE_LABELS: Record<string, string> = {
   news: "お知らせページ",
   email: "メールアクセス",
   map_click: "マップアクセス",
+  analytics: "アクセス解析",
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -66,8 +68,8 @@ export default function AnalyticsPage() {
     { id: string; total: number; count: number; average: number }[]
   >([]);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState(defaultStart);
-  const [endDate, setEndDate] = useState(today);
+  const [startDate, setStartDate] = useState(DEFAULT_START);
+  const [endDate, setEndDate] = useState(TODAY);
   const [advice, setAdvice] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [hourlyData, setHourlyData] = useState<any | null>(null);
@@ -81,21 +83,110 @@ export default function AnalyticsPage() {
   });
   const [weekdayData, setWeekdayData] = useState<any | null>(null);
   const [open, setOpen] = useState(false);
+  const [visitorStats, setVisitorStats] = useState<{
+    new: number;
+    returning: number;
+  } | null>(null);
+  const [bounceRates, setBounceRates] = useState<
+    { page: string; rate: number }[]
+  >([]);
+  const [geoData, setGeoData] = useState<{ region: string; count: number }[]>(
+    []
+  );
+
+  const presets = [
+    { label: "過去 1 週間", days: 7 },
+    { label: "過去 1 か月", days: 30 },
+    { label: "過去 3 か月", days: 90 },
+  ];
+
+  const handlePreset = (days: number) => {
+    setStartDate(calcStart(days));
+    setEndDate(TODAY); // 常に今日まで
+    setAdvice("");
+  };
+
+  useEffect(() => {
+    const fetchGeo = async () => {
+      const ref = collection(db, "analytics", "yotteya", "geoStats");
+      const snap = await getDocs(ref);
+      const arr = snap.docs.map((d) => ({
+        region: d.id,
+        count: d.data().count as number,
+      }));
+      setGeoData(arr);
+    };
+    fetchGeo();
+  }, []);
+
+  // 期間が変わるたび自動で AI 提案をリセットしておきたい場合
+  useEffect(() => {
+    setAdvice("");
+  }, [startDate, endDate]);
+
+  // AnalyticsPage.tsx で集計
+  useEffect(() => {
+    const fetchBounce = async () => {
+      const statsRef = collection(db, "analytics", siteKey, "bounceStats");
+      const snap = await getDocs(statsRef);
+      const bounceRates = snap.docs.map((d) => {
+        const { count, totalViews } = d.data();
+        return {
+          page: d.id,
+          rate: totalViews > 0 ? (count / totalViews) * 100 : 0,
+        };
+      });
+      setBounceRates(bounceRates);
+    };
+    fetchBounce();
+  }, [siteKey]);
+
+  useEffect(() => {
+    const fetchVisitorStats = async () => {
+      const ref = collection(db, "analytics", siteKey, "visitorStats");
+      const snap = await getDocs(ref);
+
+      let newTotal = 0;
+      let returningTotal = 0;
+
+      snap.docs.forEach((d) => {
+        const data = d.data() as { new?: number; returning?: number };
+        newTotal += data.new ?? 0;
+        returningTotal += data.returning ?? 0;
+      });
+
+      setVisitorStats({ new: newTotal, returning: returningTotal });
+    };
+
+    fetchVisitorStats();
+  }, [siteKey]);
+
+  /* ───────── fetchData (依存配列を追加済) ───────── */
 
   useEffect(() => {
     const fetchWeekdayAccessData = async () => {
       try {
+        // ── analytics/{siteKey}/weekdayLogs/{sun|mon|tue|…} ──
         const ref = collection(db, "analytics", siteKey, "weekdayLogs");
         const snap = await getDocs(ref);
 
-        const countsByWeekday = Array(7).fill(0); // 0: Sunday ～ 6: Saturday
+        // Firestore の doc.id ➜ 0‒6 に変換する対応表
+        const weekdayIndex: Record<string, number> = {
+          sun: 0,
+          mon: 1,
+          tue: 2,
+          wed: 3,
+          thu: 4,
+          fri: 5,
+          sat: 6,
+        };
+
+        const countsByWeekday = Array(7).fill(0); // 0:日〜6:土
 
         snap.docs.forEach((doc) => {
-          const data = doc.data();
-          const weekday = data.weekday; // 0〜6
-          const count = data.count ?? 0;
-          if (typeof weekday === "number" && weekday >= 0 && weekday <= 6) {
-            countsByWeekday[weekday] += count;
+          const idx = weekdayIndex[doc.id]; // ← doc.id を見る
+          if (idx !== undefined) {
+            countsByWeekday[idx] += doc.data().count ?? 0;
           }
         });
 
@@ -119,22 +210,33 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     const fetchReferrerData = async () => {
-      const ref = collection(db, "analytics", "yourSiteKey", "referrerStats");
+      const ref = collection(db, "analytics", siteKey, "referrers"); // ★ 修正
       const snap = await getDocs(ref);
+
       const total = { sns: 0, search: 0, direct: 0 };
 
       snap.docs.forEach((doc) => {
-        const data = doc.data();
-        total.sns += data.sns ?? 0;
-        total.search += data.search ?? 0;
-        total.direct += data.direct ?? 0;
+        const host = doc.id; // 例: "instagram.com" or "direct"
+        const cnt = doc.data().count ?? 0; // 例: {count: 12}
+
+        if (host === "direct") {
+          total.direct += cnt;
+        } else if (
+          /google\./.test(host) ||
+          /bing\.com/.test(host) ||
+          /yahoo\./.test(host)
+        ) {
+          total.search += cnt;
+        } else {
+          total.sns += cnt; // その他は SNS 扱い
+        }
       });
 
       setReferrerData(total);
     };
 
     fetchReferrerData();
-  }, []);
+  }, [siteKey]);
 
   useEffect(() => {
     const fetchDailyData = async () => {
@@ -310,7 +412,7 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [siteKey, startDate, endDate]);
 
   const handleAnalysis = async () => {
     console.log("referrerData:", referrerData);
@@ -330,6 +432,9 @@ export default function AnalyticsPage() {
           dailyData,
           referrerData,
           weekdayData,
+          visitorStats,
+          bounceRates,
+          geoData,
         }),
       });
 
@@ -351,34 +456,24 @@ export default function AnalyticsPage() {
     <div className="max-w-3xl mx-auto p-4 space-y-6">
       <h2 className="text-xl font-bold text-white">アクセス解析</h2>
 
-      <div className="flex gap-4 text-white text-sm items-end mb-4">
-        <div>
-          <label>開始日:</label>
-          <input
-            type="date"
-            value={startDate}
-            max={today}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="text-black bg-gray-100 rounded"
-          />
-        </div>
-        <div>
-          <label>終了日:</label>
-          <input
-            type="date"
-            value={endDate}
-            min={startDate || "1970-01-01"}
-            max={today}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="text-black bg-gray-100 rounded"
-          />
-        </div>
-        <button
-          onClick={fetchData}
-          className="bg-blue-600 text-white px-2 py-1 rounded"
-        >
-          更新
-        </button>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {presets.map((p) => {
+          // 現在の startDate / endDate と一致するか判定
+          const isActive = startDate === calcStart(p.days) && endDate === TODAY;
+
+          return (
+            <Button
+              key={p.days}
+              onClick={() => handlePreset(p.days)}
+              // ── 選択中は濃い色、未選択は淡い色 ──
+              variant={isActive ? "default" : "secondary"}
+              className={`text-xs ${isActive ? "pointer-events-none" : ""}`}
+            >
+              {p.label}
+            </Button>
+          );
+        })}
+        {/* カスタム日付入力を残す場合はここに追加 */}
       </div>
 
       <div className="flex gap-3">
@@ -426,103 +521,122 @@ export default function AnalyticsPage() {
         <CardSpinner />
       ) : (
         <>
-          <table className="w-full bg-gray-100/50 border text-sm table-fixed">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="p-2 border w-3/4">ページ名</th>
-                <th className="p-2 border text-right w-1/4">アクセス数</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageData.map((row) => (
-                <tr key={row.id}>
-                  <td className="p-2 border">
-                    {PAGE_LABELS[row.id] || row.id}
-                  </td>
-                  <td className="p-2 border text-right">{row.count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="bg-white/50 rounded p-4 shadow mt-6">
+            <h3 className="font-semibold text-lg mb-4">ページ別アクセス数</h3>
 
-          {pageData.length > 0 && (
-            <div className="bg-white rounded p-4 shadow">
-              <Bar
-                data={{
-                  labels: pageData.map((d) => PAGE_LABELS[d.id] || d.id),
-                  datasets: [
-                    {
-                      label: "アクセス数",
-                      data: pageData.map((d) => d.count),
-                      backgroundColor: "rgba(59, 130, 246, 0.6)",
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  plugins: { tooltip: { enabled: true } },
-                }}
-              />
-            </div>
-          )}
-
-          <table className="w-full bg-gray-100/50 border text-sm table-fixed mt-6">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="p-2 border w-2/5">イベント名</th>
-                <th className="p-2 border text-right w-1/5">合計秒数</th>
-                <th className="p-2 border text-right w-1/5">回数</th>
-                <th className="p-2 border text-right w-1/5">平均秒数</th>
-              </tr>
-            </thead>
-            <tbody>
-              {eventData.map((row) => (
-                <tr key={row.id}>
-                  <td className="p-2 border">
-                    {EVENT_LABELS[row.id] || row.id}
-                  </td>
-                  <td className="p-2 border text-right">{row.total}</td>
-                  <td className="p-2 border text-right">{row.count}</td>
-                  <td className="p-2 border text-right">{row.average}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {eventData.length > 0 && (
-            <div className="bg-white rounded p-4 shadow mt-6">
-              <Bar
-                data={{
-                  labels: eventData.map((d) => EVENT_LABELS[d.id] || d.id),
-                  datasets: [
-                    {
-                      label: "平均滞在秒数",
-                      data: eventData.map((d) => d.average),
-                      backgroundColor: "rgba(16, 185, 129, 0.6)", // teal系
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  plugins: { tooltip: { enabled: true } },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      title: {
-                        display: true,
-                        text: "秒",
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* グラフ */}
+              <div className="w-full h-64">
+                <Bar
+                  data={{
+                    labels: pageData.map((d) => PAGE_LABELS[d.id] || d.id),
+                    datasets: [
+                      {
+                        label: "アクセス数",
+                        data: pageData.map((d) => d.count),
+                        backgroundColor: "rgba(59, 130, 246, 0.6)",
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: { tooltip: { enabled: true } },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: { display: true, text: "件数" },
                       },
                     },
-                  },
-                }}
-              />
+                  }}
+                />
+              </div>
+
+              {/* テーブル */}
+              <div className="overflow-auto">
+                <table className="w-full bg-gray-100/50 border text-sm table-fixed">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="p-2 border">ページ名</th>
+                      <th className="p-2 border text-right">アクセス数</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageData.map((row) => (
+                      <tr key={row.id}>
+                        <td className="p-2 border">
+                          {PAGE_LABELS[row.id] || row.id}
+                        </td>
+                        <td className="p-2 border text-right">{row.count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          )}
+          </div>
+
+          <div className="bg-white/50 rounded p-4 shadow mt-6">
+            <h3 className="font-semibold text-lg mb-4">ページ別平均滞在時間</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 棒グラフ */}
+              <div className="w-full h-64">
+                <Bar
+                  data={{
+                    labels: eventData.map((d) => EVENT_LABELS[d.id] || d.id),
+                    datasets: [
+                      {
+                        label: "平均滞在秒数",
+                        data: eventData.map((d) => d.average),
+                        backgroundColor: "rgba(16, 185, 129, 0.6)", // teal系
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: { tooltip: { enabled: true } },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: { display: true, text: "秒" },
+                      },
+                    },
+                  }}
+                />
+              </div>
+
+              {/* テーブル */}
+              <div className="overflow-auto">
+                <table className="w-full bg-gray-100/50 border text-sm table-fixed">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="p-2 border w-2/5">イベント名</th>
+                      <th className="p-2 border text-right w-1/5">合計秒数</th>
+                      <th className="p-2 border text-right w-1/5">回数</th>
+                      <th className="p-2 border text-right w-1/5">平均秒数</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {eventData.map((row) => (
+                      <tr key={row.id}>
+                        <td className="p-2 border">
+                          {EVENT_LABELS[row.id] || row.id}
+                        </td>
+                        <td className="p-2 border text-right">{row.total}</td>
+                        <td className="p-2 border text-right">{row.count}</td>
+                        <td className="p-2 border text-right">{row.average}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
 
           {hourlyLoading ? (
             <CardSpinner />
           ) : hourlyData ? (
-            <div className="bg-white rounded p-4 shadow mt-6">
+            <div className="bg-white/50 rounded p-4 shadow mt-6">
               <h3 className="font-semibold text-sm mb-2">時間帯別アクセス数</h3>
               <Bar
                 data={hourlyData}
@@ -541,7 +655,7 @@ export default function AnalyticsPage() {
           ) : null}
 
           {weekdayData && (
-            <div className="bg-white rounded p-4 shadow mt-6">
+            <div className="bg-white/50 rounded p-4 shadow mt-6">
               <h3 className="font-semibold text-sm mb-2">曜日別アクセス数</h3>
               <Bar
                 data={weekdayData}
@@ -560,7 +674,7 @@ export default function AnalyticsPage() {
           )}
 
           {dailyData && (
-            <div className="mt-8">
+            <div className="mt-8 bg-white/50">
               <DailyAccessChart data={dailyData} />
             </div>
           )}
@@ -572,6 +686,96 @@ export default function AnalyticsPage() {
             </div>
           )}
         </>
+      )}
+
+      {visitorStats && (
+        <div className="bg-white/50 rounded p-4 shadow mt-6">
+          <h3 className="font-semibold text-sm mb-2">新規 vs. リピーター</h3>
+          <Bar
+            data={{
+              labels: ["新規", "リピーター"],
+              datasets: [
+                {
+                  label: "訪問者数",
+                  data: [visitorStats.new, visitorStats.returning],
+                  backgroundColor: [
+                    "rgba(96, 165, 250, 0.6)",
+                    "rgba(34, 197, 94, 0.6)",
+                  ],
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              plugins: { tooltip: { enabled: true } },
+              scales: { y: { beginAtZero: true } },
+            }}
+          />
+        </div>
+      )}
+
+      {/* 直帰率グラフ */}
+      {bounceRates.length > 0 && (
+        <div className="bg-white/50 rounded p-4 shadow mt-6">
+          <h3 className="font-semibold text-sm mb-2">直帰率（%）</h3>
+          <Bar
+            data={{
+              labels: bounceRates.map((d) => PAGE_LABELS[d.page] || d.page),
+              datasets: [
+                {
+                  label: "直帰率 (%)",
+                  data: bounceRates.map((d) => Number(d.rate.toFixed(1))),
+                  backgroundColor: "rgba(239, 68, 68, 0.6)", // red系
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  max: 100,
+                  title: { display: true, text: "直帰率 (%)" },
+                },
+              },
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => `${ctx.parsed.y}%`,
+                  },
+                },
+              },
+            }}
+          />
+        </div>
+      )}
+
+      {geoData.length > 0 && (
+        <div className="bg-white/50 rounded p-4 shadow mt-6">
+          <h3 className="font-semibold text-sm mb-2">地域別アクセス分布</h3>
+          <Bar
+            data={{
+              labels: geoData.map((d) => d.region),
+              datasets: [
+                {
+                  label: "アクセス数",
+                  data: geoData.map((d) => d.count),
+                  backgroundColor: "rgba(37, 99, 235, 0.6)", // blue
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              plugins: { tooltip: { enabled: true } },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "アクセス数" },
+                },
+              },
+            }}
+          />
+        </div>
       )}
     </div>
   );

@@ -37,7 +37,7 @@ export default function ReferrerChart({
   };
 
   return (
-    <div className="bg-white rounded p-4 shadow mt-6">
+    <div className="bg-white/50 rounded p-4 shadow mt-6">
       <h3 className="font-semibold text-sm mb-2">アクセス元の割合</h3>
       <Bar
         data={chartData}
