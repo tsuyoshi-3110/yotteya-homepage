@@ -71,9 +71,14 @@ export default function AnalyticsLogger() {
     logPageView(currClean, SITE_KEY);
     logHourlyAccess(SITE_KEY, currClean);
     logDailyAccess(SITE_KEY);
-    logReferrer(SITE_KEY);
     logWeekdayAccess(SITE_KEY);
     logVisitorType(SITE_KEY);
+
+    // ✅ 初回のみ referrer を記録（sessionStorage制御）
+    if (!sessionStorage.getItem("refLogged")) {
+      logReferrer(SITE_KEY);
+      sessionStorage.setItem("refLogged", "1");
+    }
 
     prevPathRef.current = pathname;
     startTsRef.current = now;

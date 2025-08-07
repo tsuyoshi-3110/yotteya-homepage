@@ -47,7 +47,7 @@ const PAGE_LABELS: Record<string, string> = {
   map_click: "マップアクセス",
   analytics: "アクセス解析",
   staffs: "スタッフ紹介ぺージ",
-  jobApp: "応募ページ"
+  jobApp: "応募ページ",
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -213,15 +213,15 @@ export default function AnalyticsPage() {
   }, [siteKey]);
 
   useEffect(() => {
-    const fetchReferrerData = async () => {
-      const ref = collection(db, "analytics", siteKey, "referrers"); // ★ 修正
+    const timeout = setTimeout(async () => {
+      const ref = collection(db, "analytics", siteKey, "referrers");
       const snap = await getDocs(ref);
 
       const total = { sns: 0, search: 0, direct: 0 };
 
       snap.docs.forEach((doc) => {
-        const host = doc.id; // 例: "instagram.com" or "direct"
-        const cnt = doc.data().count ?? 0; // 例: {count: 12}
+        const host = doc.id;
+        const cnt = doc.data().count ?? 0;
 
         if (host === "direct") {
           total.direct += cnt;
@@ -232,14 +232,14 @@ export default function AnalyticsPage() {
         ) {
           total.search += cnt;
         } else {
-          total.sns += cnt; // その他は SNS 扱い
+          total.sns += cnt;
         }
       });
 
       setReferrerData(total);
-    };
+    }, 1000); // ← 1秒遅延を追加
 
-    fetchReferrerData();
+    return () => clearTimeout(timeout);
   }, [siteKey]);
 
   useEffect(() => {
