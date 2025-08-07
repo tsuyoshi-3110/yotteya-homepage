@@ -46,6 +46,8 @@ const PAGE_LABELS: Record<string, string> = {
   email: "メールアクセス",
   map_click: "マップアクセス",
   analytics: "アクセス解析",
+  staffs: "スタッフ紹介ぺージ",
+  jobApp: "応募ページ"
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -53,6 +55,8 @@ const EVENT_LABELS: Record<string, string> = {
   home_stay_seconds_about: "当店の思い滞在",
   home_stay_seconds_products: "商品一覧滞在",
   home_stay_seconds_stores: "店舗一覧滞在",
+  home_stay_seconds_staffs: "スタッフ紹介滞在",
+  home_stay_seconds_jobApp: "応募滞在",
   home_stay_seconds_news: "お知らせ滞在",
   home_stay_seconds_email: "メールアクセス滞在",
   home_stay_seconds_map_click: "マップアクセス滞在",

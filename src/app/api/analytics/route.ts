@@ -1,20 +1,23 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
-import { OAuth2Client } from "google-auth-library";
+
 
 export async function GET(req: Request) {
   const url = new URL(req.url || "");
   const isEvent = url.searchParams.get("type") === "event";
 
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    },
-    scopes: ["https://www.googleapis.com/auth/analytics.readonly"],
+  // OAuth2クライアントを明示的に作成
+  const authClient = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+  );
+
+  authClient.setCredentials({
+    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
   });
 
-  const authClient = (await auth.getClient()) as OAuth2Client;
+  // Analytics Data API クライアント作成
   const analyticsDataClient = google.analyticsdata({
     version: "v1beta",
     auth: authClient,
@@ -33,7 +36,7 @@ export async function GET(req: Request) {
             filter: {
               fieldName: "eventName",
               inListFilter: {
-                values: ["Deli_click", "access_click", "interview_click"],
+                values: ["DeLi_click", "access_click", "interview_click"],
               },
             },
           },
