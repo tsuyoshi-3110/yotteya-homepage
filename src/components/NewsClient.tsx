@@ -120,67 +120,67 @@ export default function NewsClient() {
   useEffect(() => onAuthStateChanged(auth, setUser), []);
 
   useEffect(() => {
-  if (isFetchingMore.current) return;      // 二重実行防止
-  isFetchingMore.current = true;
+    if (isFetchingMore.current) return; // 二重実行防止
+    isFetchingMore.current = true;
 
-  const firstQuery = query(
-    colRef,
-    orderBy("createdAt", "desc"),
-    limit(FIRST_LOAD)
-  );
+    const firstQuery = query(
+      colRef,
+      orderBy("createdAt", "desc"),
+      limit(FIRST_LOAD)
+    );
 
-  // ------- 🔴 onSnapshot で購読を開始 -------
-  const unsub = onSnapshot(firstQuery, (snap) => {
-    const firstPage: NewsItem[] = snap.docs.map((d) => ({
+    // ------- 🔴 onSnapshot で購読を開始 -------
+    const unsub = onSnapshot(firstQuery, (snap) => {
+      const firstPage: NewsItem[] = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<NewsItem, "id">),
+      }));
+
+      setItems(firstPage);
+      setLastDoc(snap.docs.at(-1) ?? null);
+      setHasMore(snap.docs.length === FIRST_LOAD);
+      isFetchingMore.current = false;
+    });
+
+    // アンマウント時にリスナー解除
+    return () => unsub();
+  }, [colRef]);
+
+  const fetchNextPage = useCallback(async () => {
+    if (isFetchingMore.current || !hasMore || !lastDoc) return;
+    isFetchingMore.current = true;
+
+    const nextQuery = query(
+      colRef,
+      orderBy("createdAt", "desc"),
+      startAfter(lastDoc),
+      limit(PAGE_SIZE)
+    );
+
+    const snap = await getDocs(nextQuery);
+
+    const nextPage: NewsItem[] = snap.docs.map((d) => ({
       id: d.id,
       ...(d.data() as Omit<NewsItem, "id">),
     }));
 
-    setItems(firstPage);
+    setItems((prev) => [...prev, ...nextPage]);
     setLastDoc(snap.docs.at(-1) ?? null);
-    setHasMore(snap.docs.length === FIRST_LOAD);
+    setHasMore(snap.docs.length === PAGE_SIZE);
     isFetchingMore.current = false;
-  });
-
-  // アンマウント時にリスナー解除
-  return () => unsub();
-}, [colRef]);
-
- const fetchNextPage = useCallback(async () => {
-  if (isFetchingMore.current || !hasMore || !lastDoc) return;
-  isFetchingMore.current = true;
-
-  const nextQuery = query(
-    colRef,
-    orderBy("createdAt", "desc"),
-    startAfter(lastDoc),
-    limit(PAGE_SIZE)
-  );
-
-  const snap = await getDocs(nextQuery);
-
-  const nextPage: NewsItem[] = snap.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as Omit<NewsItem, "id">),
-  }));
-
-  setItems((prev) => [...prev, ...nextPage]);
-  setLastDoc(snap.docs.at(-1) ?? null);
-  setHasMore(snap.docs.length === PAGE_SIZE);
-  isFetchingMore.current = false;
-}, [colRef, lastDoc, hasMore]);
+  }, [colRef, lastDoc, hasMore]);
 
   /* ---------- 無限スクロール ---------- */
   useEffect(() => {
-   const onScroll = () => {
-  if (
-    hasMore &&
-    !uploading &&
-    window.innerHeight + window.scrollY >= document.body.offsetHeight - 150
-  ) {
-    fetchNextPage();
-  }
-};
+    const onScroll = () => {
+      if (
+        hasMore &&
+        !uploading &&
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 150
+      ) {
+        fetchNextPage();
+      }
+    };
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, [fetchNextPage, hasMore, uploading]);
@@ -403,7 +403,7 @@ export default function NewsClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto">
           {/* ▼ ② モーダル本体にも最大高さを指定し、中だけスクロールできるように */}
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-md space-y-4 my-8   /* ← my-8 で上下余白 */
+            className="bg-white rounded-lg p-6 w-full max-w-md space-y-4 my-8
                 max-h-[90vh] overflow-y-auto"
           >
             <h3 className="text-xl font-bold text-center">
@@ -465,10 +465,16 @@ export default function NewsClient() {
 
             {/* ---------- AI 生成ボタン ---------- */}
             <button
-              onClick={() => setShowAIModal(true)}
+              onClick={() => {
+                if (!title.trim()) {
+                  alert("タイトルを入力してください。");
+                  return;
+                }
+                setShowAIModal(true); // モーダルを開く
+              }}
               className="bg-purple-600 text-white w-full py-2 rounded"
             >
-              AIで作成
+              AIで本文作成
             </button>
 
             {/* ---------- バリデーションエラー ---------- */}
@@ -563,7 +569,10 @@ export default function NewsClient() {
             </button>
 
             <button
-              onClick={() => setShowAIModal(false)}
+              onClick={() => {
+                setShowAIModal(false);
+                setKeywords(["", "", ""]);
+              }}
               className="w-full py-2 rounded bg-gray-300"
             >
               閉じる
