@@ -83,6 +83,7 @@ export default function NewsClient() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [flyerLoading, setFlyerLoading] = useState(false);
 
   /* メディア入力 */
   const [draftFile, setDraftFile] = useState<File | null>(null);
@@ -330,6 +331,54 @@ export default function NewsClient() {
     [user, colRef]
   );
 
+  const handleGenerateFlyer = async () => {
+    if (!title || !body) {
+      alert("タイトルと本文を先に入力してください");
+      return;
+    }
+
+    setFlyerLoading(true); // ← 追加
+
+    try {
+      const res = await fetch("/api/generate-flyer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, body }),
+      });
+
+      const resText = await res.text();
+
+      if (!res.ok) {
+        console.error("チラシ生成APIエラー:", res.status, resText);
+        alert(`チラシの生成に失敗しました（ステータス: ${res.status}）`);
+        return;
+      }
+
+      let data: { imageUrl?: string; error?: string };
+      try {
+        data = JSON.parse(resText);
+      } catch (jsonErr) {
+        console.error("JSONパースエラー:", jsonErr, resText);
+        alert("チラシの生成に失敗しました（レスポンス解析エラー）");
+        return;
+      }
+
+      if (!data.imageUrl) {
+        console.error("画像URLが存在しません:", data);
+        alert("画像URLが取得できませんでした");
+        return;
+      }
+
+      setDraftFile(null);
+      setPreviewURL(data.imageUrl);
+    } catch (err) {
+      console.error("チラシ生成エラー:", err);
+      alert("チラシの生成に失敗しました");
+    } finally {
+      setFlyerLoading(false); // ← 最後に解除
+    }
+  };
+
   /* =====================================================
       レンダリング
   ===================================================== */
@@ -403,7 +452,7 @@ export default function NewsClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto">
           {/* ▼ ② モーダル本体にも最大高さを指定し、中だけスクロールできるように */}
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-md space-y-4 my-8
+            className="bg-white rounded-lg p-6 w-full max-w-md space-y-4 my-8   /* ← my-8 で上下余白 */
                 max-h-[90vh] overflow-y-auto"
           >
             <h3 className="text-xl font-bold text-center">
@@ -442,25 +491,24 @@ export default function NewsClient() {
                 }
               />
 
-              {previewURL &&
-                (ALLOWED_VIDEO.includes(draftFile!.type) ? (
+              {previewURL ? (
+                ALLOWED_VIDEO.includes(draftFile?.type || "") ? (
                   <video
                     src={previewURL}
                     className="w-full mt-2 rounded"
                     controls
+                    playsInline
                   />
                 ) : (
-                  <div className="relative w-full mt-2 rounded overflow-hidden">
-                    <Image
-                      src={previewURL} // blob: URL そのまま
-                      alt="preview"
-                      fill // width/height の代わり
-                      sizes="100vw"
-                      className="object-cover"
-                      unoptimized /* ★ 最適化を無効化する */
-                    />
-                  </div>
-                ))}
+                  <Image
+                    src={previewURL}
+                    alt="preview"
+                    width={400}
+                    height={300}
+                    className="w-full mt-2 rounded"
+                  />
+                )
+              ) : null}
             </div>
 
             {/* ---------- AI 生成ボタン ---------- */}
@@ -474,7 +522,15 @@ export default function NewsClient() {
               }}
               className="bg-purple-600 text-white w-full py-2 rounded"
             >
-              AIで本文作成
+              AIで作成
+            </button>
+
+            <button
+              onClick={handleGenerateFlyer}
+              disabled={flyerLoading}
+              className="bg-red-500 text-white w-full py-2 rounded disabled:opacity-50"
+            >
+              {flyerLoading ? "生成中…" : "チラシを自動生成"}
             </button>
 
             {/* ---------- バリデーションエラー ---------- */}

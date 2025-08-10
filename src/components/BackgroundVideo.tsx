@@ -45,6 +45,7 @@ export default function BackgroundMedia() {
   const [progress, setProgress] = useState<number | null>(null);
   const [theme, setTheme] = useState<ThemeKey>("brandA");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [isPortrait, setIsPortrait] = useState<boolean | null>(null);
 
   const uploading = progress !== null;
 
@@ -228,6 +229,19 @@ export default function BackgroundMedia() {
     await setDoc(META_REF, { themeGradient: newTheme }, { merge: true });
   };
 
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const ratio = img.naturalWidth / img.naturalHeight;
+    setIsPortrait(ratio < 1); // 縦長なら true
+    setReady(true);
+  };
+
+  const handleCanPlay = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    setIsPortrait(video.videoWidth < video.videoHeight); // 縦長なら true
+    setReady(true);
+  };
+
   const renderMedia = () => {
     if (type === "video" && url) {
       return (
@@ -239,8 +253,10 @@ export default function BackgroundMedia() {
           playsInline
           preload="auto"
           poster={poster ?? ""}
-          onCanPlay={() => setReady(true)}
-          className="absolute inset-0 w-full h-full object-contain"
+          onCanPlay={handleCanPlay}
+          className={`absolute inset-0 w-full h-full ${
+            isPortrait ? "object-cover" : "object-contain"
+          }`}
         >
           <source src={url} type="video/mp4" />
         </video>
@@ -249,12 +265,15 @@ export default function BackgroundMedia() {
 
     if (type === "image" && imageUrls.length === 1) {
       return (
+        // 画像1枚表示の例
         <NextImage
           src={imageUrls[0]}
           alt="背景画像"
           fill
-          className="absolute inset-0 w-full h-full object-contain"
-          onLoad={() => setReady(true)}
+          className={`absolute inset-0 w-full h-full ${
+            isPortrait ? "object-cover" : "object-contain"
+          }`}
+          onLoad={handleImageLoad}
           priority
           sizes="100vw"
         />
