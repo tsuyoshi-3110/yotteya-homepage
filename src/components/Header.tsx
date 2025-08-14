@@ -133,23 +133,39 @@ export default function Header({ className = "" }: { className?: string }) {
             </SheetHeader>
 
             <div className="flex-1 flex flex-col justify-center items-center space-y-4 text-center">
-              <Link href="/products" onClick={handleMenuClose} className="text-lg text-white">
+              <Link
+                href="/products"
+                onClick={handleMenuClose}
+                className="text-lg text-white"
+              >
                 商品一覧
               </Link>
-              <Link href="/stores" onClick={handleMenuClose} className="text-lg text-white">
+              <Link
+                href="/stores"
+                onClick={handleMenuClose}
+                className="text-lg text-white"
+              >
                 アクセス
               </Link>
               <Link
-                href="https://www.ubereats.com/store/..."
+                href="https://www.ubereats.com/store/%E3%81%97%E3%82%85%E3%82%8F%E3%81%A3%E3%81%A8%E8%B4%85%E6%B2%A2%E3%83%8F%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%84%E3%81%BF%E3%81%A4%E3%81%8D%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%95-%E3%82%88%E3%81%A3%E3%81%A6%E5%B1%8B/ycwuMM91VIaoNcZ1oCr_5g?diningMode=DELIVERY"
                 onClick={handleMenuClose}
                 className="text-lg text-white"
               >
                 デリバリー
               </Link>
-              <Link href="/about" onClick={handleMenuClose} className="text-lg text-white">
+              <Link
+                href="/about"
+                onClick={handleMenuClose}
+                className="text-lg text-white"
+              >
                 当店の思い
               </Link>
-              <Link href="/news" onClick={handleMenuClose} className="text-lg text-white">
+              <Link
+                href="/news"
+                onClick={handleMenuClose}
+                className="text-lg text-white"
+              >
                 お知らせ
               </Link>
               <a
@@ -164,18 +180,34 @@ export default function Header({ className = "" }: { className?: string }) {
             <div className="p-4 space-y-2">
               {isLoggedIn && (
                 <>
-                  <Link href="/postList" onClick={handleMenuClose} className="block text-center text-lg text-white">
+                  <Link
+                    href="/postList"
+                    onClick={handleMenuClose}
+                    className="block text-center text-lg text-white"
+                  >
                     タイムライン
                   </Link>
-                  <Link href="/community" onClick={handleMenuClose} className="block text-center text-lg text-white">
+                  <Link
+                    href="/community"
+                    onClick={handleMenuClose}
+                    className="block text-center text-lg text-white"
+                  >
                     コミュニティ
                   </Link>
-                  <Link href="/analytics" onClick={handleMenuClose} className="block text-center text-lg text-white">
+                  <Link
+                    href="/analytics"
+                    onClick={handleMenuClose}
+                    className="block text-center text-lg text-white"
+                  >
                     分析
                   </Link>
                 </>
               )}
-              <Link href="/login" onClick={handleMenuClose} className="block text-center text-lg text-white">
+              <Link
+                href="/login"
+                onClick={handleMenuClose}
+                className="block text-center text-lg text-white"
+              >
                 管理者ログイン
               </Link>
             </div>
