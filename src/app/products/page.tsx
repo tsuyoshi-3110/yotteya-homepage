@@ -1,25 +1,35 @@
+// app/products/page.tsx
 import type { Metadata } from "next";
 import ProductsClient from "@/components/ProductsClient";
 
+const title = "メニュー一覧｜甘味処 よって屋";
+const description =
+  "甘味処 よって屋の人気クレープメニュー一覧ページ。季節限定商品やおすすめクレープを写真付きでご紹介。";
+const ogImage = "/ogp-products.jpg"; // public 配下の画像
+
 export const metadata: Metadata = {
-  title: "メニュー一覧｜甘味処 よって屋",
-  description:
-    "甘味処 よって屋の人気クレープメニュー一覧ページ。季節限定商品やおすすめクレープを写真付きでご紹介。",
+  title,
+  description,
   openGraph: {
-    title: "メニュー一覧｜甘味処 よって屋",
-    description:
-      "ふんわり生地とこだわりクリームのクレープメニューをご紹介。大阪市東淀川区の人気クレープ店。",
+    title,
+    description,
     url: "https://www.yotteya.shop/products",
     siteName: "甘味処 よって屋",
     images: [
       {
-        url: "/ogp-products.jpg",
+        url: ogImage as string,
         width: 1200,
         height: 630,
       },
     ],
     locale: "ja_JP",
-    type: "website",
+    type: "website", // ← "product" は型に無いので "website"
+  } satisfies Metadata["openGraph"],
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: [ogImage],
   },
 };
 

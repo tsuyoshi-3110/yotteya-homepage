@@ -1,4 +1,4 @@
-// src/app/products/[id]/page.tsx
+// app/products/[id]/page.tsx
 "use client";
 
 import { useParams } from "next/navigation";
@@ -15,15 +15,18 @@ export default function ProductPage() {
   const [product, setProduct] = useState<any | null>(null);
 
   useEffect(() => {
+    if (!id) return;
     (async () => {
-      const snap = await getDoc(
-        doc(db, "siteProducts", SITE_KEY, "items", id)
-      );
-      if (snap.exists()) setProduct({ id, ...snap.data() });
+      const snap = await getDoc(doc(db, "siteProducts", SITE_KEY, "items", id));
+      if (snap.exists()) {
+        setProduct({ id, ...snap.data() });
+      } else {
+        setProduct(null);
+      }
     })();
   }, [id]);
 
-  if (!product) return <CardSpinner />
+  if (!product) return <CardSpinner />;
 
   return <ProductDetail product={product} />;
 }
