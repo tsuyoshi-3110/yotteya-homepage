@@ -103,6 +103,7 @@ export default function ProductMedia({
         sizes="(min-width:1024px) 320px, (min-width:640px) 45vw, 90vw"
         onLoadingComplete={() => setLoaded(true)}
         priority={false}
+        unoptimized
       />
     </div>
   );

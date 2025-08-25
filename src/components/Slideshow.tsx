@@ -54,6 +54,7 @@ export default function Slideshow({ urls, interval = 5000, onFirstLoad }: Props)
         className="object-cover blur-xl scale-110 opacity-40"
         priority={!hasLoaded}
         sizes="100vw"
+        unoptimized
       />
 
       {/* 本体：縦は cover（トリミング有で画面ピッタリ）、横は contain（全体表示） */}
@@ -74,6 +75,7 @@ export default function Slideshow({ urls, interval = 5000, onFirstLoad }: Props)
             className={isPortrait === null ? "object-contain" : isPortrait ? "object-cover" : "object-contain"}
             onLoad={handleImageLoad}
             priority={!hasLoaded}
+            unoptimized
           />
         </motion.div>
       </AnimatePresence>

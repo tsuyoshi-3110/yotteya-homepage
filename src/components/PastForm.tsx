@@ -116,6 +116,7 @@ export default function PostForm() {
                 width={400}
                 height={300}
                 className="max-h-60 rounded border mb-2 object-contain"
+                unoptimized
               />
             </div>
           )}

@@ -225,6 +225,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               fill
               className="object-cover"
               sizes="100vw"
+              unoptimized
             />
           </div>
         ) : (

@@ -249,6 +249,7 @@ export default function MessagePage() {
                   width={32}
                   height={32}
                   className="mr-2 h-8 w-8 shrink-0 rounded-full"
+                  unoptimized
                 />
               )}
 
@@ -279,6 +280,7 @@ export default function MessagePage() {
                   width={32}
                   height={32}
                   className="ml-2 h-8 w-8 shrink-0 rounded-full"
+                  unoptimized
                 />
               )}
             </div>

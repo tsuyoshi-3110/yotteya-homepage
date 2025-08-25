@@ -69,6 +69,7 @@ export default function Header({ className = "" }: { className?: string }) {
             width={48}
             height={48}
             className="w-12 h-12 object-contain transition-opacity duration-200"
+            unoptimized
           />
         )}
         甘味処 クレープよって屋
@@ -101,6 +102,7 @@ export default function Header({ className = "" }: { className?: string }) {
           width={32}
           height={32}
           className="w-7 h-7 object-contain transition-opacity duration-200 mr-2"
+          unoptimized
         />
       </Link>
 

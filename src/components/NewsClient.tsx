@@ -506,6 +506,7 @@ export default function NewsClient() {
                     width={400}
                     height={300}
                     className="w-full mt-2 rounded"
+                    unoptimized
                   />
                 )
               ) : null}
