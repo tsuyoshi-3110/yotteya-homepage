@@ -36,6 +36,7 @@ import {
   fetchDailyByPeriod,
   fetchWeekdayByPeriod,
 } from "@/lib/logAnalytics";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 Chart.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
@@ -90,8 +91,6 @@ function getHourlyChartData(counts: number[]) {
 }
 
 export default function AnalyticsPage() {
-  const siteKey = "yotteya";
-
   const [pageData, setPageData] = useState<{ id: string; count: number }[]>([]);
   const [eventData, setEventData] = useState<
     { id: string; total: number; count: number; average: number }[]
@@ -159,15 +158,15 @@ export default function AnalyticsPage() {
         dailyRows,
         weekdayCounts,
       ] = await Promise.all([
-        fetchPagesByPeriod(siteKey, start, end),
-        fetchEventsByPeriod(siteKey, start, end),
-        fetchReferrersByPeriod(siteKey, start, end), // { byHost, buckets }
-        fetchVisitorsByPeriod(siteKey, start, end),
-        fetchBounceByPeriod(siteKey, start, end), // { pageId: { bounces, views, rate } }
-        fetchGeoByPeriod(siteKey, start, end),
-        fetchHourlyByPeriod(siteKey, start, end), // number[24]
-        fetchDailyByPeriod(siteKey, start, end), // [{ id:'YYYY-MM-DD', count, day }]
-        fetchWeekdayByPeriod(siteKey, start, end), // number[7]
+        fetchPagesByPeriod(SITE_KEY, start, end),
+        fetchEventsByPeriod(SITE_KEY, start, end),
+        fetchReferrersByPeriod(SITE_KEY, start, end), // { byHost, buckets }
+        fetchVisitorsByPeriod(SITE_KEY, start, end),
+        fetchBounceByPeriod(SITE_KEY, start, end), // { pageId: { bounces, views, rate } }
+        fetchGeoByPeriod(SITE_KEY, start, end),
+        fetchHourlyByPeriod(SITE_KEY, start, end), // number[24]
+        fetchDailyByPeriod(SITE_KEY, start, end), // [{ id:'YYYY-MM-DD', count, day }]
+        fetchWeekdayByPeriod(SITE_KEY, start, end), // number[7]
       ]);
 
       // ページ別アクセス（期間合算）
@@ -244,7 +243,7 @@ export default function AnalyticsPage() {
       setHourlyLoading(false);
       setLoading(false);
     }
-  }, [siteKey, startDate, endDate]);
+  }, [startDate, endDate]);
 
   useEffect(() => {
     fetchAll();

@@ -171,7 +171,7 @@ export default function Header({ className = "" }: { className?: string }) {
                 お知らせ
               </Link>
               <a
-                href="mailto:tsreform.yokisaito@gmail.com"
+                href="/blog"
                 onClick={handleMenuClose}
                 className="text-white hover:underline bg-transparent hover:bg-white/10 transition inline-block px-4 py-2 rounded"
               >

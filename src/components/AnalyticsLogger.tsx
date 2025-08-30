@@ -15,13 +15,14 @@ import {
   // 直帰率の分母（views）を正しく記録
   logLandingView,
 } from "@/lib/logAnalytics";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 /** 期間集計対応版ロガー
  * - *_Daily と day / accessedAt を logAnalytics 側で保持する前提
  * - 直帰率: セッション開始時に views を +1（logLandingView）
  *           離脱時に 1 ページのみなら bounces を +1（logBounce）
  */
-const SITE_KEY = "yotteya";
+
 const STAY_MAX_SEC = 60; // 異常値ガード（滞在時間の上限・秒）
 
 export default function AnalyticsLogger() {
