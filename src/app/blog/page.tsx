@@ -19,6 +19,8 @@ import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import BlogCard from "@/components/blog/BlogCard";
 import Link from "next/link";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, type User } from "firebase/auth";
 
 import { deleteObject, ref as storageRef } from "firebase/storage";
 import clsx from "clsx";
@@ -35,6 +37,13 @@ export default function BlogListPage() {
   const [noMore, setNoMore] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  // マウント時にログイン状態を監視
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, setUser);
+    return () => unsub();
+  }, []);
 
   // ===== テーマとグラデーション =====
   const gradient = useThemeGradient();
@@ -42,8 +51,6 @@ export default function BlogListPage() {
     const darkKeys: ThemeKey[] = ["brandG", "brandH", "brandI"];
     return gradient && darkKeys.some((k) => gradient === THEMES[k]);
   }, [gradient]);
-
-
 
   const fetchPage = useCallback(
     async (firstLoad = false) => {
@@ -195,20 +202,22 @@ export default function BlogListPage() {
         </>
       )}
 
-      {/* 右下固定の「新規投稿」ボタン（位置を少し上にして連絡ボタンと干渉回避） */}
-      <Link
-        href="/blog/new"
-        className="fixed bottom-24 right-6 z-40 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg transition-transform transform hover:scale-110 active:scale-95"
-      >
-        <span className="text-3xl leading-none">＋</span>
-      </Link>
+      {/* 右下固定の + ボタン（ログイン時のみ） */}
+      {user && (
+        <Link
+          href="/blog/new"
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg transition-transform transform hover:scale-110 active:scale-95"
+        >
+          <span className="text-3xl leading-none">＋</span>
+        </Link>
+      )}
 
-      {/* 右下固定「ご連絡はこちらへ」— 半透明グレー＋透過＆モーション */}
+      {/* 右下固定「取材はこちらへ」— 半透明グレー＋透過＆モーション */}
       <a
-        href="mailto:tsreform.yukisaito@gmail.com"
+        href="mailto:onestopgunma@gmail.com"
         aria-label="メールで問い合わせる"
         className={clsx(
-          "group fixed bottom-6 right-6 z-[60] pointer-events-auto",
+          "group fixed bottom-6 right-6 z-20 pointer-events-auto",
           "inline-flex items-center gap-2 rounded-full px-4 py-3 font-semibold text-white",
           // 半透明グレー & ぼかし（背景が透ける）
           "bg-neutral-800/70 backdrop-blur-md",
