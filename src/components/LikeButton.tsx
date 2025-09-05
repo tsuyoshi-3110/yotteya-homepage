@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { Heart } from "lucide-react";
 
@@ -13,22 +13,45 @@ type LikeButtonProps = {
 export default function LikeButton({
   postId,
   initialLikeCount,
-  count, // 互換
+  count,
 }: LikeButtonProps) {
-  const start = (count ?? initialLikeCount ?? 0);
+  // props からの初期値はメモ化して依存解決
+  const start = useMemo(
+    () => count ?? initialLikeCount ?? 0,
+    [count, initialLikeCount]
+  );
+
   const [likeCount, setLikeCount] = useState(start);
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 親からの値や postId 変更時に一旦リセット
+  // ユーザーが一度でもタップしたら true（以後は初期同期や props 変化で上書きしない）
+  const interactedRef = useRef(false);
+  // 最新の通信だけを採用するための ID
+  const latestReqRef = useRef(0);
+  // postId 変化検出
+  const prevPostIdRef = useRef<string | null>(null);
+
+  // postId 変化、または start 変化時の初期化
   useEffect(() => {
-    setLikeCount(start);
-    setLiked(false);
+    const isNewPost = prevPostIdRef.current !== postId;
+    if (isNewPost) {
+      // 別の投稿を見始めたら操作状態をリセット
+      interactedRef.current = false;
+    }
+    // まだユーザー操作が無いときだけ props ベースでセット
+    if (!interactedRef.current) {
+      setLikeCount(start);
+      setLiked(false);
+    }
+    prevPostIdRef.current = postId;
   }, [postId, start]);
 
-  // サーバーの現在値を取得
+  // サーバー状態の初期同期（ユーザー操作後は反映しない）
   useEffect(() => {
-    let mounted = true;
+    let active = true;
+    const reqId = ++latestReqRef.current;
+
     (async () => {
       try {
         const token = await auth.currentUser?.getIdToken().catch(() => null);
@@ -38,15 +61,19 @@ export default function LikeButton({
         });
         if (!res.ok) return;
         const data = await res.json();
-        if (!mounted) return;
+
+        if (!active || interactedRef.current || reqId !== latestReqRef.current)
+          return;
+
         if (typeof data.likeCount === "number") setLikeCount(data.likeCount);
         if (typeof data.liked === "boolean") setLiked(data.liked);
       } catch {
-        // 失敗時は props ベースのまま
+        /* 失敗時は何もしない（props のまま） */
       }
     })();
+
     return () => {
-      mounted = false;
+      active = false;
     };
   }, [postId]);
 
@@ -58,16 +85,18 @@ export default function LikeButton({
     }
     if (loading) return;
 
+    interactedRef.current = true;               // 以後、初期同期は上書きしない
+    const opId = ++latestReqRef.current;        // この操作を最新として記録
     setLoading(true);
+
     const nextLiked = !liked;
+
+    // 楽観更新
+    setLiked(nextLiked);
+    setLikeCount((c) => c + (nextLiked ? 1 : -1));
 
     try {
       const token = await user.getIdToken();
-
-      // 楽観更新（nextLiked を使う）
-      setLiked(nextLiked);
-      setLikeCount((c) => c + (nextLiked ? 1 : -1));
-
       const method = nextLiked ? "POST" : "DELETE";
       const res = await fetch(`/api/posts/${postId}/like`, {
         method,
@@ -77,16 +106,21 @@ export default function LikeButton({
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) throw new Error(data?.error || "failed");
 
-      if (typeof data.likeCount === "number") setLikeCount(data.likeCount);
-      if (typeof data.liked === "boolean") setLiked(data.liked);
+      // 最新操作のレスだけ反映
+      if (opId === latestReqRef.current) {
+        if (typeof data.likeCount === "number") setLikeCount(data.likeCount);
+        if (typeof data.liked === "boolean") setLiked(data.liked);
+      }
     } catch (e) {
-      // ロールバック（nextLiked の逆に戻す）
-      setLiked(!nextLiked);
-      setLikeCount((c) => c + (nextLiked ? -1 : 1));
+      // 最新操作のときのみロールバック
+      if (opId === latestReqRef.current) {
+        setLiked(!nextLiked);
+        setLikeCount((c) => c + (nextLiked ? -1 : 1));
+      }
       console.error("いいね処理に失敗しました", e);
       alert("いいねできませんでした。もう一度お試しください。");
     } finally {
-      setLoading(false);
+      if (opId === latestReqRef.current) setLoading(false);
     }
   };
 

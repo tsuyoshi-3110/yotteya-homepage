@@ -522,6 +522,7 @@ export default function PostList() {
   useEffect(() => auth.onAuthStateChanged((u) => setUid(u?.uid ?? null)), []);
 
   // リアルタイム：最新 LIMIT 件（mineOnly/uid 変化で貼り替え）
+  // リアルタイム：最新 LIMIT 件（mineOnly/uid 変化で貼り替え）
   useEffect(() => {
     if (mineOnly && !uid) {
       setPosts([]);
@@ -540,16 +541,24 @@ export default function PostList() {
         )
       : query(base, orderBy("createdAt", "desc"), qLimit(LIMIT));
 
+    // ★ 追加：フィルター（mineOnly/uid）が切り替わったら一旦リセット
+    setPosts([]);
+    setLastCursor(null);
+    setHasMore(true);
+
     const unsub = onSnapshot(qy, (snap) => {
       const head: Post[] = snap.docs.map((d) => ({
         id: d.id,
         ...(d.data() as Omit<Post, "id">),
       }));
       const headIds = new Set(head.map((h) => h.id));
+
+      // ここはこのままでもOK（直前で prev を空にしているため混ざらない）
       setPosts((prev) => {
         const tail = prev.filter((p) => !headIds.has(p.id));
         return [...head, ...tail];
       });
+
       setLastCursor(snap.docs.at(-1) ?? null);
       setHasMore(snap.size === LIMIT);
     });
@@ -1028,7 +1037,7 @@ function Card({
 
       {/* アクション列：いいね */}
       <div className="mt-3 flex items-center justify-between">
-        <LikeButton postId={post.id} count={post.likeCount ?? 0} />
+        <LikeButton postId={post.id} initialLikeCount={post.likeCount ?? 0} />
       </div>
 
       {/* コメント（テキストのみもOK・添付は任意） */}
