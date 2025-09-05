@@ -87,16 +87,18 @@ type Comment = {
   mediaType?: "image" | "video" | null;
 };
 
-/* ========================= Comments（メディア添付対応） ========================= */
+/* ========================= Comments（メディア添付対応／トグル開閉） ========================= */
 function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
   const [items, setItems] = useState<Comment[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
 
+  // 入力欄の開閉
+  const [composerOpen, setComposerOpen] = useState(false);
+
   // コメント用：任意で画像 or 動画（1つ）
   const [file, setFile] = useState<File | null>(null);
   const [isVideo, setIsVideo] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [uploadTask, setUploadTask] = useState<ReturnType<
     typeof uploadBytesResumable
@@ -106,6 +108,7 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
   const [siteName, setSiteName] = useState<string>("");
   const [logoUrl, setLogoUrl] = useState<string>("");
 
+  // 現在ログイン中の UID（削除ボタン表示制御に使用）
   const [currentUid, setCurrentUid] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
@@ -140,12 +143,12 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
 
   // コメント一覧を購読
   useEffect(() => {
-    const q = query(
+    const qy = query(
       collection(db, "posts", postId, "comments"),
       orderBy("createdAt", "asc"),
       qLimit(200)
     );
-    const unsub = onSnapshot(q, (snap) => {
+    const unsub = onSnapshot(qy, (snap) => {
       setItems(
         snap.docs.map((d) => ({
           id: d.id,
@@ -156,14 +159,11 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
     return () => unsub();
   }, [postId]);
 
-  // ファイル選択
+  // ファイル選択（プレビューは出さず、動画は60秒以内チェックだけ行う）
   const handlePick = (f: File | null) => {
-    // クリア
     if (!f) {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setFile(null);
       setIsVideo(false);
-      setPreviewUrl(null);
       return;
     }
 
@@ -176,23 +176,22 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
       );
       return;
     }
-    const blobUrl = URL.createObjectURL(f);
 
     if (vid) {
-      // 60秒以内チェック
+      // 60秒以内チェック（blob URL は検証後すぐ破棄）
+      const blobUrl = URL.createObjectURL(f);
       const v = document.createElement("video");
       v.preload = "metadata";
       v.src = blobUrl;
       v.onloadedmetadata = () => {
         const sec = v.duration ?? 0;
+        URL.revokeObjectURL(blobUrl);
         if (sec > MAX_VIDEO_SEC) {
           alert("動画は1分（60秒）以内にしてください。");
-          URL.revokeObjectURL(blobUrl);
           return;
         }
         setFile(f);
         setIsVideo(true);
-        setPreviewUrl(blobUrl);
       };
       v.onerror = () => {
         URL.revokeObjectURL(blobUrl);
@@ -204,7 +203,6 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
     // 画像
     setFile(f);
     setIsVideo(false);
-    setPreviewUrl(blobUrl);
   };
 
   // 送信（テキストのみでもOK / メディアは任意）
@@ -229,10 +227,9 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
 
       if (file) {
         const storage = getStorage();
-        const safeName =
-          Date.now().toString() +
-          "_" +
-          (file.name ?? (isVideo ? "video.mp4" : "image.jpg"));
+        const safeName = `${Date.now()}_${
+          file.name ?? (isVideo ? "video.mp4" : "image.jpg")
+        }`;
         const storageRef = ref(storage, `comments/${postId}/${safeName}`);
         const task = uploadBytesResumable(storageRef, file);
         setUploadTask(task);
@@ -267,14 +264,13 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
           : { mediaUrl: null, mediaType: null }),
       });
 
-      // 入力欄リセット
+      // 入力欄リセット & 閉じる
       setText("");
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setFile(null);
       setIsVideo(false);
-      setPreviewUrl(null);
       setUploadPct(null);
       setUploadTask(null);
+      setComposerOpen(false);
     } catch (e) {
       console.error(e);
       alert("コメントの送信に失敗しました");
@@ -285,11 +281,9 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
     }
   };
 
-  // 削除（本人のみ。投稿者にも許可したい場合はルール＋ここも調整）
+  // 削除（本人のみ）
   const remove = async (c: Comment) => {
-    // 本人以外は何もしない
-    if (!currentUid || currentUid !== c.authorUid) return;
-
+    if (!currentUid || currentUid !== c.authorUid) return; // ガード
     if (!confirm("このコメントを削除しますか？")) return;
     try {
       await deleteDoc(doc(db, "posts", postId, "comments", c.id));
@@ -321,7 +315,7 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
                   />
                 </div>
 
-                {/* 本文＋（添付は一覧では従来どおり表示可） */}
+                {/* 本文＋（添付は一覧では従来どおり表示） */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-xs font-semibold text-gray-700">
@@ -341,7 +335,7 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
                     {c.content}
                   </p>
 
-                  {/* 既存コメントに添付がある場合の表示（プレビューの話は送信前のUIだけなのでここは維持） */}
+                  {/* 添付（既存コメントにある場合のみ表示） */}
                   {c.mediaUrl && c.mediaType && (
                     <div className="mt-2 overflow-hidden rounded border border-gray-200">
                       <ProductMedia
@@ -365,108 +359,132 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
         )}
       </ul>
 
-      {/* 入力（テキスト必須／メディア任意） */}
-      {/* 入力（テキスト必須／メディア任意） */}
-      <div className="mt-4 rounded-xl border border-gray-200 bg-blue-100 overflow-hidden">
-        {/* ヘッダー：タイトル + 文字数 */}
-        <div className="flex items-center justify-between px-3 py-2 border-b">
-          <div className="text-sm font-medium text-gray-700">
-            コメントを書く
-          </div>
-          <div className="text-xs text-gray-500">{text.trim().length}/2000</div>
+      {/* 入力（ボタンで開閉：テキスト必須／メディア任意） */}
+      <div className="mt-4">
+        {/* トグルボタン */}
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() =>
+              myUid
+                ? setComposerOpen((v) => !v)
+                : alert("ログインするとコメントできます")
+            }
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+            disabled={!myUid}
+          >
+            {composerOpen ? "入力欄を閉じる" : "コメントする"}
+          </button>
         </div>
 
-        <div className="p-3 space-y-3">
-          {/* テキスト */}
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={
-              myUid ? "コメントを入力…" : "ログインするとコメントできます"
-            }
-            className="w-full min-h-[88px] bg-white rounded-lg border px-3 py-2 text-sm disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
-            disabled={!myUid || sending || uploadPct !== null}
-          />
+        {/* 入力フォーム（開いている時のみ） */}
+        {composerOpen && (
+          <div className="mt-3 rounded-xl border border-gray-200 bg-blue-100 overflow-hidden">
+            {/* ヘッダー：タイトル + 文字数 */}
+            <div className="flex items-center justify-between px-3 py-2 border-b">
+              <div className="text-sm font-medium text-gray-700">
+                コメントを書く
+              </div>
+              <div className="text-xs text-gray-500">
+                {text.trim().length}/2000
+              </div>
+            </div>
 
-          {/* 添付行：プレビューは出さず、ファイル名のみ表示 */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs text-gray-700 cursor-pointer">
-                <Paperclip className="h-4 w-4" />
-                <span>画像/動画を添付（任意）</span>
-                <input
-                  type="file"
-                  accept={[...ALLOWED_IMG, ...ALLOWED_VIDEO].join(",")}
-                  className="hidden"
-                  disabled={!myUid || sending || uploadPct !== null}
-                  onChange={(e) => handlePick(e.target.files?.[0] ?? null)}
-                />
-              </label>
+            <div className="p-3 space-y-3">
+              {/* テキスト */}
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={
+                  myUid ? "コメントを入力…" : "ログインするとコメントできます"
+                }
+                className="w-full min-h-[88px] bg-white rounded-lg border px-3 py-2 text-sm disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                disabled={!myUid || sending || uploadPct !== null}
+              />
 
-              {/* 選択中のファイル名（チップ表示） */}
-              {file && (
-                <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
-                  <span className="max-w-[28ch] truncate">{file.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => handlePick(null)}
-                    className="hover:text-gray-900"
-                    disabled={sending || uploadPct !== null}
-                    aria-label="添付を取り消す"
-                    title="添付を取り消す"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+              {/* 添付行：プレビューは出さず、ファイル名のみ表示 */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs text-gray-700 cursor-pointer">
+                    <Paperclip className="h-4 w-4" />
+                    <span>画像/動画を添付（任意）</span>
+                    <input
+                      type="file"
+                      accept={[...ALLOWED_IMG, ...ALLOWED_VIDEO].join(",")}
+                      className="hidden"
+                      disabled={!myUid || sending || uploadPct !== null}
+                      onChange={(e) => handlePick(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+
+                  {/* 選択中のファイル名（チップ表示） */}
+                  {file && (
+                    <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
+                      <span className="max-w-[28ch] truncate">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handlePick(null)}
+                        className="hover:text-gray-900"
+                        disabled={sending || uploadPct !== null}
+                        aria-label="添付を取り消す"
+                        title="添付を取り消す"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 送信ボタン（中央寄せ） */}
+              <button
+                onClick={send}
+                disabled={
+                  sending || !text.trim() || !myUid || uploadPct !== null
+                }
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {sending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                <span>送信</span>
+              </button>
+
+              {/* 送信中のアップロード進捗（バーのみ） */}
+              {uploadPct !== null && (
+                <div className="pt-1">
+                  <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 transition-all"
+                      style={{ width: `${uploadPct}%` }}
+                    />
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-gray-600">
+                    <span>アップロード中… {uploadPct}%</span>
+                    {uploadTask?.snapshot.state === "running" && (
+                      <button
+                        type="button"
+                        onClick={() => uploadTask.cancel()}
+                        className="text-red-600 hover:underline"
+                      >
+                        キャンセル
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
-            </div>
 
-            {/* 送信ボタン */}
-            <button
-              onClick={send}
-              disabled={sending || !text.trim() || !myUid || uploadPct !== null}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
-            >
-              {sending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
+              {/* ログイン促し（未ログイン時のみ） */}
+              {!myUid && (
+                <p className="text-xs text-red-600">
+                  ログインするとコメントできます
+                </p>
               )}
-              <span>送信</span>
-            </button>
-          </div>
-
-          {/* 送信中のアップロード進捗（バーのみ） */}
-          {uploadPct !== null && (
-            <div className="pt-1">
-              <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
-                <div
-                  className="h-full bg-blue-500 transition-all"
-                  style={{ width: `${uploadPct}%` }}
-                />
-              </div>
-              <div className="mt-1 flex items-center justify-between text-[11px] text-gray-600">
-                <span>アップロード中… {uploadPct}%</span>
-                {uploadTask?.snapshot.state === "running" && (
-                  <button
-                    type="button"
-                    onClick={() => uploadTask.cancel()}
-                    className="text-red-600 hover:underline"
-                  >
-                    キャンセル
-                  </button>
-                )}
-              </div>
             </div>
-          )}
-
-          {/* ログイン促し（未ログイン時のみ） */}
-          {!myUid && (
-            <p className="text-xs text-red-600">
-              ログインするとコメントできます
-            </p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -513,7 +531,7 @@ export default function PostList() {
     }
 
     const base = collection(db, "posts");
-    const q = mineOnly
+    const qy = mineOnly
       ? query(
           base,
           where("authorUid", "==", uid),
@@ -522,7 +540,7 @@ export default function PostList() {
         )
       : query(base, orderBy("createdAt", "desc"), qLimit(LIMIT));
 
-    const unsub = onSnapshot(q, (snap) => {
+    const unsub = onSnapshot(qy, (snap) => {
       const head: Post[] = snap.docs.map((d) => ({
         id: d.id,
         ...(d.data() as Omit<Post, "id">),
@@ -545,7 +563,7 @@ export default function PostList() {
 
     setLoadingMore(true);
     const base = collection(db, "posts");
-    const q = mineOnly
+    const qy = mineOnly
       ? query(
           base,
           where("authorUid", "==", uid),
@@ -560,7 +578,7 @@ export default function PostList() {
           qLimit(LIMIT)
         );
 
-    const snap = await getDocs(q);
+    const snap = await getDocs(qy);
     const page: Post[] = snap.docs.map((d) => ({
       id: d.id,
       ...(d.data() as Omit<Post, "id">),
@@ -588,7 +606,7 @@ export default function PostList() {
     return () => observer.disconnect();
   }, [loadMore]);
 
-  // プレビューURLクリーンアップ
+  // プレビューURLクリーンアップ（編集モーダルでのみ使用）
   useEffect(
     () => () => {
       if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl);
@@ -778,15 +796,18 @@ export default function PostList() {
             表示できる投稿がありません
           </p>
         ) : (
-          posts.map((p) => (
-            <Card
-              key={p.id}
-              post={p}
-              myUid={uid}
-              onEdit={openEdit}
-              onDelete={deletePost}
-            />
-          ))
+          <div className="divide-y divide-gray-200">
+            {posts.map((p) => (
+              <div key={p.id} className="py-6">
+                <Card
+                  post={p}
+                  myUid={uid}
+                  onEdit={openEdit}
+                  onDelete={deletePost}
+                />
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
