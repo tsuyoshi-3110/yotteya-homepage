@@ -163,6 +163,13 @@ export default function Header({ className = "" }: { className?: string }) {
               >
                 当店の思い
               </Link>
+               <Link
+                href="/company"
+                onClick={handleMenuClose}
+                className="text-lg text-white"
+              >
+                会社概要
+              </Link>
               <Link
                 href="/news"
                 onClick={handleMenuClose}
