@@ -12,12 +12,7 @@ import {
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { ThemeKey } from "@/lib/themes";
-import ThemeSelector from "./ThemeSelector";
 import { Button } from "@/components/ui/button";
-import imageCompression from "browser-image-compression";
-
-import ThemeWallpaper from "./ThemeWallpaper";
-import HeaderLogoPicker from "./HeaderLogoPicker";
 import Slideshow from "./Slideshow";
 import CrepeLoader from "./CrepeLoader";
 
@@ -43,7 +38,6 @@ export default function BackgroundMedia() {
   const [editing, setEditing] = useState(false);
   const [file, setFile] = useState<File | File[] | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
-  const [theme, setTheme] = useState<ThemeKey>("brandA");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isPortrait, setIsPortrait] = useState<boolean | null>(null);
 
@@ -144,7 +138,6 @@ export default function BackgroundMedia() {
             {
               url: downloadURL,
               type: "video",
-              themeGradient: theme,
             },
             { merge: true }
           );
@@ -203,7 +196,6 @@ export default function BackgroundMedia() {
         {
           imageUrls: urls,
           type: "image",
-          themeGradient: theme,
         },
         { merge: true }
       );
@@ -222,11 +214,6 @@ export default function BackgroundMedia() {
         "不正なファイル形式です。画像は最大3枚、動画は1本のみ対応しています。"
       );
     }
-  };
-
-  const handleThemeChange = async (newTheme: ThemeKey) => {
-    setTheme(newTheme);
-    await setDoc(META_REF, { themeGradient: newTheme }, { merge: true });
   };
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -292,87 +279,6 @@ export default function BackgroundMedia() {
     return null;
   };
 
-  const uploadImage = async (imageFile: File) => {
-    const imagePath = `images/public/${SITE_KEY}/wallpaper.jpg`;
-    const imageRef = ref(getStorage(), imagePath);
-
-    try {
-      await deleteObject(imageRef);
-    } catch {
-      // 画像がなければ無視
-    }
-
-    const task = uploadBytesResumable(imageRef, imageFile);
-
-    setProgress(0); // プログレスバー表示
-
-    task.on(
-      "state_changed",
-      (snapshot) => {
-        const percent = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        );
-        setProgress(percent);
-      },
-      (error) => {
-        console.error("画像アップロード失敗:", error);
-        setProgress(null);
-        alert("アップロードに失敗しました");
-      },
-      async () => {
-        const imageUrl = await getDownloadURL(imageRef);
-        await setDoc(META_REF, { imageUrl }, { merge: true });
-
-        setProgress(null); // 完了後モーダル非表示
-        alert("画像を更新しました！");
-      }
-    );
-  };
-
-  const uploadHeaderImage = async (file: File) => {
-    const imagePath = `images/public/${SITE_KEY}/headerLogo.jpg`;
-    const imageRef = ref(getStorage(), imagePath);
-
-    const compressedFile = await imageCompression(file, {
-      maxWidthOrHeight: 160, // ✅ 解像度を少し上げる（例：96 → 160）
-      maxSizeMB: 0.5, // ✅ 最大サイズを0.3MB → 0.5MBに増加
-      initialQuality: 0.9, // ✅ 明示的に高画質を指定（デフォルトは自動）
-      useWebWorker: true,
-    });
-
-    try {
-      await deleteObject(imageRef);
-    } catch {}
-
-    const task = uploadBytesResumable(imageRef, compressedFile);
-    setProgress(0); // プログレスバー表示
-
-    task.on(
-      "state_changed",
-      (snapshot) => {
-        const percent = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        );
-        setProgress(percent);
-      },
-      (error) => {
-        console.error("ロゴアップロード失敗:", error);
-        setProgress(null);
-        alert("アップロードに失敗しました");
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(imageRef);
-        await setDoc(
-          doc(db, "siteSettingsEditable", SITE_KEY),
-          { headerLogoUrl: downloadURL },
-          { merge: true }
-        );
-        setProgress(null);
-        alert("ヘッダー画像を更新しました！");
-      }
-    );
-  };
-
   return (
     <div className="fixed inset-0 top-12">
       {renderMedia()}
@@ -410,34 +316,6 @@ export default function BackgroundMedia() {
                   トップ画像・動画
                 </Button>
               )}
-
-              {/* カラーセレクター（ログインユーザーのみ表示） */}
-              <div className="absolute bottom-60 left-1/2 -translate-x-1/2">
-                <ThemeSelector
-                  currentTheme={theme}
-                  onChange={handleThemeChange}
-                />
-              </div>
-
-              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-8 items-end">
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-sm text-white">背景画像</span>
-                  <ThemeWallpaper
-                    onFileSelect={async (file) => {
-                      await uploadImage(file);
-                    }}
-                  />
-                </div>
-
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-sm text-white">ロゴ画像</span>
-                  <HeaderLogoPicker
-                    onSelectFile={async (file) => {
-                      await uploadHeaderImage(file);
-                    }}
-                  />
-                </div>
-              </div>
             </>
           )}
 

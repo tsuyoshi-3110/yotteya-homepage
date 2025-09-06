@@ -8,6 +8,7 @@ import WallpaperBackground from "@/components/WallpaperBackground"; // ← 追�
 import AnalyticsLogger from "@/components/AnalyticsLogger";
 import FontLoader from "@/components/FontLoader";
 import SubscriptionOverlay from "@/components/SubscriptionOverlay";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 import {
   kosugiMaru,
@@ -51,7 +52,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const siteKey = "yotteya";
+
 
   return (
     <html
@@ -99,7 +100,7 @@ export default function RootLayout({
       </head>
 
       <body className="relative min-h-screen">
-        <SubscriptionOverlay siteKey={siteKey} />
+        <SubscriptionOverlay siteKey={SITE_KEY} />
         <AnalyticsLogger />
         <WallpaperBackground />
         <ThemeBackground />

@@ -127,6 +127,18 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* 文字の周りに黒フチを作る */
+.text-outline {
+  text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000,
+    1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
+}
+
+/* 濃いめにしたいとき（太めのフチ） */
+.text-outline-2 {
+  text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,
+    2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000;
+}
+
 .font-kosugi {
   --selected-font: var(--font-kosugi);
 }
@@ -148,4 +160,10 @@
     @apply bg-background text-foreground;
     font-family: var(--selected-font);
   }
+}
+
+@keyframes progress {
+  0% { transform: translateX(-100%) }
+  50% { transform: translateX(0%) }
+  100% { transform: translateX(100%) }
 }

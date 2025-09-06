@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-// ★ 期間指定対応の取得関数（logAnalytics 側で追加済みの想定）
 import {
   fetchPagesByPeriod,
   fetchEventsByPeriod,
@@ -40,14 +39,13 @@ import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 Chart.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
-/* ───────── 期間計算用ヘルパー ───────── */
+/* 期間計算 */
 const calcStart = (daysAgo: number) =>
   format(subDays(new Date(), daysAgo), "yyyy-MM-dd");
-
 const TODAY = format(new Date(), "yyyy-MM-dd");
 const DEFAULT_START = calcStart(30);
 
-/* ───────── ラベル定義 ───────── */
+/* 固定ラベル */
 const PAGE_LABELS: Record<string, string> = {
   home: "ホーム",
   about: "当店の思い",
@@ -57,9 +55,10 @@ const PAGE_LABELS: Record<string, string> = {
   news: "お知らせページ",
   email: "メールアクセス",
   map_click: "マップアクセス",
-  analytics: "アクセス解析",
   staffs: "スタッフ紹介ぺージ",
   jobApp: "応募ページ",
+  blog: "ブログページ",
+  company: "会社概要ページ"
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -72,11 +71,69 @@ const EVENT_LABELS: Record<string, string> = {
   home_stay_seconds_news: "お知らせ滞在",
   home_stay_seconds_email: "メールアクセス滞在",
   home_stay_seconds_map_click: "マップアクセス滞在",
+  home_stay_seconds_company: "会社概要滞在",
 };
 
+/* 生IDレベルの除外 */
 const EXCLUDED_PAGE_IDS = ["login", "analytics", "community", "postList"];
 
-/* ───────── 補助：グラフ整形 ───────── */
+/* ラベル化後に表示から除外するカテゴリ */
+const EXCLUDE_LABELS = new Set<string>([
+  "ブログ編集ページ",
+  "ブログ新規作成",
+  "api_probe",
+  "ポーセラーツ",
+  "アクセス解析",
+  "postList",
+  "login",
+]);
+
+/* オーナー専用ページ（直帰率から除外） */
+const OWNER_ONLY_LABELS = new Set<string>([
+  "アクセス解析",
+  "analytics",
+  "ブログ編集ページ",
+  "ブログ新規作成",
+  "postList",
+  "login",
+  "api_probe",
+  "ポーセラーツ",
+]);
+
+/* ラベル変換 */
+function formatPageLabelByRule(id: string): string {
+  if (PAGE_LABELS[id]) return PAGE_LABELS[id];
+  if (
+    (id.startsWith("blog_") || id.startsWith("blog.")) &&
+    id.endsWith("_edit")
+  )
+    return "ブログ編集ページ";
+  if (id === "blog") return "ブログページ";
+  if (id.startsWith("blog_") || id.startsWith("blog.")) return "ブログページ";
+  if (id === "blog_new") return "ブログ新規作成";
+  if (id.startsWith("products")) return "商品一覧ページ";
+  if (id.length > 24) return "その他ページ";
+  return id;
+}
+
+function formatEventLabelByRule(eventId: string): {
+  label: string;
+  keyForGroup: string;
+  pageLabel?: string;
+} {
+  if (EVENT_LABELS[eventId])
+    return { label: EVENT_LABELS[eventId], keyForGroup: EVENT_LABELS[eventId] };
+  const m = /^home_stay_seconds_(.+)$/.exec(eventId);
+  if (m) {
+    const pageId = m[1];
+    const pageLabel = formatPageLabelByRule(pageId);
+    const label = `${pageLabel}滞在`;
+    return { label, keyForGroup: label, pageLabel };
+  }
+  return { label: eventId, keyForGroup: eventId };
+}
+
+/* グラフ補助 */
 function getHourlyChartData(counts: number[]) {
   return {
     labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
@@ -84,7 +141,7 @@ function getHourlyChartData(counts: number[]) {
       {
         label: "アクセス数",
         data: counts,
-        backgroundColor: "rgba(255, 159, 64, 0.6)", // orange
+        backgroundColor: "rgba(255,159,64,0.6)",
       },
     ],
   };
@@ -122,24 +179,8 @@ export default function AnalyticsPage() {
     []
   );
 
-  // const presets = [
-  //   { label: "過去 1 週間", days: 7 },
-  //   { label: "過去 1 か月", days: 30 },
-  //   { label: "過去 3 か月", days: 90 },
-  // ];
+  useEffect(() => setAdvice(""), [startDate, endDate]);
 
-  // const handlePreset = (days: number) => {
-  //   setStartDate(calcStart(days));
-  //   setEndDate(TODAY); // 常に今日まで
-  //   setAdvice("");
-  // };
-
-  // 期間が変わるたびAI提案をリセット
-  useEffect(() => {
-    setAdvice("");
-  }, [startDate, endDate]);
-
-  /* ───────── 期間指定で全部まとめて取得 ───────── */
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setHourlyLoading(true);
@@ -160,65 +201,89 @@ export default function AnalyticsPage() {
       ] = await Promise.all([
         fetchPagesByPeriod(SITE_KEY, start, end),
         fetchEventsByPeriod(SITE_KEY, start, end),
-        fetchReferrersByPeriod(SITE_KEY, start, end), // { byHost, buckets }
+        fetchReferrersByPeriod(SITE_KEY, start, end),
         fetchVisitorsByPeriod(SITE_KEY, start, end),
-        fetchBounceByPeriod(SITE_KEY, start, end), // { pageId: { bounces, views, rate } }
+        fetchBounceByPeriod(SITE_KEY, start, end),
         fetchGeoByPeriod(SITE_KEY, start, end),
-        fetchHourlyByPeriod(SITE_KEY, start, end), // number[24]
-        fetchDailyByPeriod(SITE_KEY, start, end), // [{ id:'YYYY-MM-DD', count, day }]
-        fetchWeekdayByPeriod(SITE_KEY, start, end), // number[7]
+        fetchHourlyByPeriod(SITE_KEY, start, end),
+        fetchDailyByPeriod(SITE_KEY, start, end),
+        fetchWeekdayByPeriod(SITE_KEY, start, end),
       ]);
 
-      // ページ別アクセス（期間合算）
-      const pageArr = Object.entries(pagesTotals)
-        .map(([id, count]) => ({ id, count }))
-        .filter((r) => !EXCLUDED_PAGE_IDS.includes(r.id))
-        .sort((a, b) => b.count - a.count);
-      setPageData(pageArr);
-
-      // イベント（滞在時間）期間合算
-      const evtArr = Object.entries(eventsTotals).map(([id, v]) => {
-        const total = v.totalSeconds ?? 0;
-        const cnt = v.count ?? 0;
-        const average = cnt ? Math.round(total / cnt) : 0;
-        return { id, total, count: cnt, average };
+      /* ページ別アクセス */
+      const pageMap: Record<string, number> = {};
+      Object.entries(pagesTotals).forEach(([rawId, count]) => {
+        if (EXCLUDED_PAGE_IDS.includes(rawId)) return;
+        const label = formatPageLabelByRule(rawId);
+        if (EXCLUDE_LABELS.has(label)) return;
+        pageMap[label] = (pageMap[label] || 0) + (count || 0);
       });
-      evtArr.sort((a, b) => b.total - a.total);
-      setEventData(evtArr);
+      setPageData(
+        Object.entries(pageMap)
+          .map(([id, count]) => ({ id, count }))
+          .sort((a, b) => b.count - a.count)
+      );
 
-      // リファラー：SNS/検索/ダイレクト（期間合算）
+      /* イベント（滞在時間） */
+      const evtMap: Record<string, { totalSeconds: number; count: number }> =
+        {};
+      Object.entries(eventsTotals).forEach(([eventId, v]) => {
+        const { keyForGroup, pageLabel } = formatEventLabelByRule(eventId);
+        if (pageLabel && EXCLUDE_LABELS.has(pageLabel)) return;
+        if (!evtMap[keyForGroup])
+          evtMap[keyForGroup] = { totalSeconds: 0, count: 0 };
+        evtMap[keyForGroup].totalSeconds += v.totalSeconds ?? 0;
+        evtMap[keyForGroup].count += v.count ?? 0;
+      });
+      setEventData(
+        Object.entries(evtMap)
+          .map(([id, v]) => ({
+            id,
+            total: v.totalSeconds,
+            count: v.count,
+            average: v.count ? Math.round(v.totalSeconds / v.count) : 0,
+          }))
+          .sort((a, b) => b.total - a.total)
+      );
+
+      /* リファラー */
       setReferrerData(refTotals.buckets);
 
-      // 新規/リピーター
+      /* 新規/リピーター */
       setVisitorStats(visitors);
 
-      // 直帰率
-      const bounceArr = Object.entries(bouncePerPage).map(([page, v]) => ({
-        page,
-        rate: v.rate,
-      }));
-      setBounceRates(bounceArr);
+      /* 直帰率：オーナー専用ページを除外 */
+      const bounceMap: Record<string, { bounces: number; views: number }> = {};
+      Object.entries(bouncePerPage).forEach(([rawPageId, v]) => {
+        const label = formatPageLabelByRule(rawPageId);
+        if (OWNER_ONLY_LABELS.has(label)) return; // ★ 除外
+        if (!bounceMap[label]) bounceMap[label] = { bounces: 0, views: 0 };
+        bounceMap[label].bounces += v.bounces || 0;
+        bounceMap[label].views += v.views || 0;
+      });
+      setBounceRates(
+        Object.entries(bounceMap).map(([page, v]) => ({
+          page,
+          rate: v.views > 0 ? (v.bounces / v.views) * 100 : 0,
+        }))
+      );
 
-      // 地域
-      const geoArr = Object.entries(geoTotals).map(([region, count]) => ({
-        region,
-        count,
-      }));
-      setGeoData(geoArr);
+      /* 地域 */
+      setGeoData(
+        Object.entries(geoTotals).map(([region, count]) => ({ region, count }))
+      );
 
-      // 時間帯
+      /* 時間帯 */
       setHourlyRawCounts(hourlyCounts);
       setHourlyData(getHourlyChartData(hourlyCounts));
 
-      // 日別アクセス（ライン）
-      const labels = dailyRows.map((r) => r.id);
-      const counts = dailyRows.map((r) => r.count);
+      /* 日別アクセス */
       setDailyData({
-        labels,
+        labels: dailyRows.map((r) => r.id),
         datasets: [
           {
             label: "日別アクセス数",
-            data: counts,
+            data: dailyRows.map((r) => r.count),
             fill: false,
             borderColor: "rgba(75,192,192,1)",
             tension: 0.3,
@@ -226,19 +291,17 @@ export default function AnalyticsPage() {
         ],
       });
 
-      // 曜日別
+      /* 曜日別 */
       setWeekdayData({
         labels: ["日", "月", "火", "水", "木", "金", "土"],
         datasets: [
           {
             label: "曜日別アクセス数",
             data: weekdayCounts,
-            backgroundColor: "rgba(139, 92, 246, 0.6)",
+            backgroundColor: "rgba(139,92,246,0.6)",
           },
         ],
       });
-    } catch (e) {
-      console.error("期間データ取得エラー:", e);
     } finally {
       setHourlyLoading(false);
       setLoading(false);
@@ -249,7 +312,7 @@ export default function AnalyticsPage() {
     fetchAll();
   }, [fetchAll]);
 
-  /* ───────── AI 提案ボタン ───────── */
+  /* AI提案 */
   const handleAnalysis = async () => {
     setAnalyzing(true);
     try {
@@ -257,7 +320,7 @@ export default function AnalyticsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          period: startDate && endDate ? `${startDate}〜${endDate}` : "全期間",
+          period: `${startDate}〜${endDate}`,
           pageData,
           eventData,
           hourlyData: hourlyRawCounts,
@@ -271,9 +334,6 @@ export default function AnalyticsPage() {
       });
       const data = await res.json();
       setAdvice(data.advice);
-    } catch (err) {
-      console.error("分析エラー:", err);
-      setAdvice("AIによる提案の取得に失敗しました。");
     } finally {
       setAnalyzing(false);
     }
@@ -351,7 +411,7 @@ export default function AnalyticsPage() {
               <div className="w-full h-64">
                 <Bar
                   data={{
-                    labels: pageData.map((d) => PAGE_LABELS[d.id] || d.id),
+                    labels: pageData.map((d) => d.id), // 既にラベル化・統合済み
                     datasets: [
                       {
                         label: "アクセス数",
@@ -383,9 +443,7 @@ export default function AnalyticsPage() {
                   <tbody>
                     {pageData.map((row) => (
                       <tr key={row.id}>
-                        <td className="p-2 border">
-                          {PAGE_LABELS[row.id] || row.id}
-                        </td>
+                        <td className="p-2 border">{row.id}</td>
                         <td className="p-2 border text-right">{row.count}</td>
                       </tr>
                     ))}
@@ -402,7 +460,7 @@ export default function AnalyticsPage() {
               <div className="w-full h-64">
                 <Bar
                   data={{
-                    labels: eventData.map((d) => EVENT_LABELS[d.id] || d.id),
+                    labels: eventData.map((d) => d.id), // 既にラベル化（◯◯滞在）
                     datasets: [
                       {
                         label: "平均滞在秒数",
@@ -436,9 +494,7 @@ export default function AnalyticsPage() {
                   <tbody>
                     {eventData.map((row) => (
                       <tr key={row.id}>
-                        <td className="p-2 border">
-                          {EVENT_LABELS[row.id] || row.id}
-                        </td>
+                        <td className="p-2 border">{row.id}</td>
                         <td className="p-2 border text-right">{row.total}</td>
                         <td className="p-2 border text-right">{row.count}</td>
                         <td className="p-2 border text-right">{row.average}</td>
@@ -542,7 +598,7 @@ export default function AnalyticsPage() {
           <h3 className="font-semibold text-sm mb-2">直帰率（%）</h3>
           <Bar
             data={{
-              labels: bounceRates.map((d) => PAGE_LABELS[d.page] || d.page),
+              labels: bounceRates.map((d) => d.page), // ラベル化・統合後
               datasets: [
                 {
                   label: "直帰率 (%)",
@@ -561,11 +617,7 @@ export default function AnalyticsPage() {
                 },
               },
               plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: (ctx) => `${ctx.parsed.y}%`,
-                  },
-                },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y}%` } },
               },
             }}
           />
