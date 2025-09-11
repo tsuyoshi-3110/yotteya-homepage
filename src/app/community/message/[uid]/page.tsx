@@ -19,9 +19,10 @@ import { useAtomValue } from "jotai";
 import { partnerSiteKeyAtom } from "@/lib/atoms/siteKeyAtom";
 import dayjs from "dayjs";
 import Image from "next/image";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 /* ===== 定数 ===== */
-const MY_SITE_KEY = "yotteya"; // 自分の siteKey
+
 const DUMMY_IMG = "/noImage.png"; // ロゴが無いとき
 const INPUT_H_REM = 3.5; // 入力欄高さ (rem)
 
@@ -66,7 +67,7 @@ export default function MessagePage() {
     };
     (async () => {
       const [myLogo, partnerLogo] = await Promise.all([
-        fetchLogo(MY_SITE_KEY),
+        fetchLogo(SITE_KEY),
         fetchLogo(partnerSiteKey),
       ]);
       setLogos({ my: myLogo ?? DUMMY_IMG, partner: partnerLogo ?? DUMMY_IMG });
@@ -76,7 +77,7 @@ export default function MessagePage() {
   /* 3. メッセージ購読 + 既読処理 */
   useEffect(() => {
     if (!partnerSiteKey) return;
-    const convId = [MY_SITE_KEY, partnerSiteKey].sort().join("__");
+    const convId = [SITE_KEY, partnerSiteKey].sort().join("__");
     const q = query(
       collection(db, "siteMessages", convId, "messages"),
       orderBy("createdAt", "asc"),
@@ -96,7 +97,7 @@ export default function MessagePage() {
       let dirty = false;
       snap.docs.forEach((d) => {
         const m = d.data() as Message;
-        if (!m.read && m.senderSiteKey !== MY_SITE_KEY) {
+        if (!m.read && m.senderSiteKey !== SITE_KEY) {
           batch.update(d.ref, { read: true });
           dirty = true;
         }
@@ -106,13 +107,7 @@ export default function MessagePage() {
         await batch.commit(); // コミットは 1 回だけ
         /* 自分側メタの未読フラグを解除 */
         await setDoc(
-          doc(
-            db,
-            "siteMessageMeta",
-            MY_SITE_KEY,
-            "conversations",
-            partnerSiteKey
-          ),
+          doc(db, "siteMessageMeta", SITE_KEY, "conversations", partnerSiteKey),
           { hasUnread: false },
           { merge: true }
         );
@@ -163,12 +158,12 @@ export default function MessagePage() {
   const sendMessage = async () => {
     if (!text.trim() || !uid || !partnerSiteKey) return;
 
-    const convId = [MY_SITE_KEY, partnerSiteKey].sort().join("__");
+    const convId = [SITE_KEY, partnerSiteKey].sort().join("__");
 
     /* 1) メッセージ追加 */
     await addDoc(collection(db, "siteMessages", convId, "messages"), {
       senderUid: uid,
-      senderSiteKey: MY_SITE_KEY,
+      senderSiteKey: SITE_KEY,
       text: text.trim(),
       createdAt: serverTimestamp(),
       read: false,
@@ -188,8 +183,8 @@ export default function MessagePage() {
       );
 
     await Promise.all([
-      upsert(MY_SITE_KEY, partnerSiteKey, false), // 自分側→既読
-      upsert(partnerSiteKey, MY_SITE_KEY, true), // 相手側→未読
+      upsert(SITE_KEY, partnerSiteKey, false), // 自分側→既読
+      upsert(partnerSiteKey, SITE_KEY, true), // 相手側→未読
     ]);
 
     /* 3) 入力欄クリア */
@@ -212,7 +207,7 @@ export default function MessagePage() {
   /* 動的パディング (iOS KB) */
   const bottomPad = kbHeight + INPUT_H_REM;
 
-  const HEADER_H_REM = 3;
+  const HEADER_H_REM = 4;
 
   return (
     <main
@@ -221,7 +216,7 @@ export default function MessagePage() {
       className="mx-auto w-full md:max-w-xl flex flex-col"
     >
       {/* タイトル */}
-      <h1 className="mb-2 mt-2 text-center text-xl font-bold text-white">
+      <h1 className="mb-2 text-center text-xl font-bold text-white">
         {partnerSiteKey} とのメッセージ
       </h1>
 
@@ -232,7 +227,7 @@ export default function MessagePage() {
         style={{ paddingBottom: bottomPad }}
       >
         {messages.map((m, i) => {
-          const isMe = m.senderSiteKey === MY_SITE_KEY;
+          const isMe = m.senderSiteKey === SITE_KEY;
           const isLast = isMe && i === messages.length - 1;
           const logo = isMe ? logos.my : logos.partner;
 
