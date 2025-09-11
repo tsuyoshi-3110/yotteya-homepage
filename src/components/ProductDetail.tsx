@@ -23,17 +23,99 @@ import {
   deleteObject,
 } from "firebase/storage";
 import CardSpinner from "./CardSpinner";
+import { BusyOverlay } from "./BusyOverlay";
+
+/* 追加：共通ファイル形式ユーティリティを使用 */
+import {
+  IMAGE_MIME_TYPES,
+  VIDEO_MIME_TYPES,
+  extFromMime,
+} from "@/lib/fileTypes";
 
 /* あなたの siteKey に合わせてください */
 const SITE_KEY = "yotteya";
 
 import { motion } from "framer-motion";
 
+/* ▼ 多言語対応：UI言語 & 対応言語一覧 */
+import { LANGS, type LangKey } from "@/lib/langs";
+import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
+
 type MediaType = "image" | "video";
+
+/* ▼ Product に多言語フィールドを拡張（Firestore 互換） */
+type ProductDoc = Product & {
+  base?: { title: string; body: string };
+  t?: Array<{ lang: LangKey; title?: string; body?: string }>;
+};
+
+/* ▼ 表示用：UI 言語に応じてタイトル/本文を解決 */
+function pickLocalized(
+  p: ProductDoc,
+  lang: UILang
+): { title: string; body: string } {
+  if (lang === "ja") {
+    return {
+      title: p.base?.title ?? p.title ?? "",
+      body: p.base?.body ?? p.body ?? "",
+    };
+  }
+  const hit = p.t?.find((x) => x.lang === lang);
+  return {
+    title: hit?.title ?? p.base?.title ?? p.title ?? "",
+    body: hit?.body ?? p.base?.body ?? p.body ?? "",
+  };
+}
+
+/* ▼ 保存時に日本語→各言語へ翻訳（/api/translate を使用） */
+type Tr = { lang: LangKey; title: string; body: string };
+async function translateAll(titleJa: string, bodyJa: string): Promise<Tr[]> {
+  const jobs: Promise<Tr>[] = LANGS.map(async (l) => {
+    const res = await fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: titleJa, body: bodyJa, target: l.key }),
+    });
+    if (!res.ok) throw new Error(`translate error: ${l.key}`);
+    const data = (await res.json()) as { title?: string; body?: string };
+    return {
+      lang: l.key,
+      title: (data.title ?? "").trim(),
+      body: (data.body ?? "").trim(),
+    };
+  });
+
+  const settled = await Promise.allSettled(jobs);
+  return settled
+    .filter((r): r is PromiseFulfilledResult<Tr> => r.status === "fulfilled")
+    .map((r) => r.value);
+}
+
+/* ▼▼▼ 税込/税抜 表示の多言語辞書（追加） ▼▼▼ */
+const TAX_T: Record<UILang, { incl: string; excl: string }> = {
+  ja: { incl: "税込", excl: "税抜" },
+  en: { incl: "tax included", excl: "tax excluded" },
+  zh: { incl: "含税", excl: "不含税" },
+  "zh-TW": { incl: "含稅", excl: "未稅" },
+  ko: { incl: "부가세 포함", excl: "부가세 별도" },
+  fr: { incl: "TTC", excl: "HT" },
+  es: { incl: "IVA incluido", excl: "sin IVA" },
+  de: { incl: "inkl. MwSt.", excl: "zzgl. MwSt." },
+  pt: { incl: "com impostos", excl: "sem impostos" },
+  it: { incl: "IVA inclusa", excl: "IVA esclusa" },
+  ru: { incl: "с НДС", excl: "без НДС" },
+  th: { incl: "รวมภาษี", excl: "ไม่รวมภาษี" },
+  vi: { incl: "đã gồm thuế", excl: "chưa gồm thuế" },
+  id: { incl: "termasuk pajak", excl: "tidak termasuk pajak" },
+  hi: { incl: "कर सहित", excl: "कर के बिना" },
+  ar: { incl: "شامل الضريبة", excl: "غير شامل الضريبة" },
+};
 
 export default function ProductDetail({ product }: { product: Product }) {
   /* ---------- 権限・テーマ ---------- */
   const [isAdmin, setIsAdmin] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [uploadingPercent, setUploadingPercent] = useState<number | null>(null);
   const gradient = useThemeGradient();
   const router = useRouter();
 
@@ -47,9 +129,14 @@ export default function ProductDetail({ product }: { product: Product }) {
     return gradient && darks.some((k) => gradient === THEMES[k]);
   }, [gradient]);
 
+  /* ---------- UI言語 ---------- */
+  const { uiLang } = useUILang();
+  const taxT = TAX_T[uiLang] ?? TAX_T.ja;
+
   /* ---------- 表示用データ ---------- */
-  /** ← これを state にして、保存後すぐ setDisplayProduct で更新 */
-  const [displayProduct, setDisplayProduct] = useState<Product>(product);
+  const [displayProduct, setDisplayProduct] = useState<ProductDoc>(
+    product as ProductDoc
+  );
 
   /* ---------- 編集モーダル用 state ---------- */
   const [showEdit, setShowEdit] = useState(false);
@@ -64,15 +151,15 @@ export default function ProductDetail({ product }: { product: Product }) {
   /* ---------- ハンドラ ---------- */
 
   useEffect(() => {
-  setDisplayProduct(product);
-}, [product]);
+    setDisplayProduct(product as ProductDoc);
+  }, [product]);
 
-
-  // 編集保存
+  // 編集保存（※UIやバリデーションはそのまま／多言語フィールドだけ追加保存）
   const handleSave = async () => {
     if (!title.trim()) return alert("タイトル必須");
     if (price === "") return alert("価格を入力してください");
 
+    setSaving(true); // BusyOverlay 用
     try {
       let mediaURL = displayProduct.mediaURL;
       let mediaType: MediaType = displayProduct.mediaType;
@@ -82,29 +169,29 @@ export default function ProductDetail({ product }: { product: Product }) {
         const isVideo = file.type.startsWith("video/");
         mediaType = isVideo ? "video" : "image";
 
-        const isValidImage =
-          file.type === "image/jpeg" || file.type === "image/png";
-        const isValidVideo =
-          file.type === "video/mp4" || file.type === "video/quicktime";
-        if (!isValidImage && !isValidVideo)
-          return alert("対応形式：JPEG/PNG/MP4/MOV");
+        const isValidImage = IMAGE_MIME_TYPES.includes(file.type);
+        const isValidVideo = VIDEO_MIME_TYPES.includes(file.type);
+        if (!isValidImage && !isValidVideo) {
+          alert("対応形式ではありません");
+          setSaving(false);
+          return;
+        }
 
-        if (isVideo && file.size > 50 * 1024 * 1024)
-          return alert("動画は 50 MB 未満にしてください");
+        if (isVideo && file.size > 50 * 1024 * 1024) {
+          alert("動画は 50 MB 未満にしてください");
+          setSaving(false);
+          return;
+        }
 
-        /* 圧縮（画像のみ） */
-        const ext = isVideo
-          ? file.type === "video/quicktime"
-            ? "mov"
-            : "mp4"
-          : "jpg";
+        /* 拡張子は extFromMime で決定。画像は圧縮して JPEG化 */
+        const ext = extFromMime(file.type);
         const uploadFile = isVideo
           ? file
           : await imageCompression(file, {
               maxWidthOrHeight: 1200,
               maxSizeMB: 0.7,
               useWebWorker: true,
-              fileType: "image/jpeg",
+              fileType: "image/jpeg", // JPEGでアップロード
               initialQuality: 0.8,
             });
 
@@ -118,35 +205,49 @@ export default function ProductDetail({ product }: { product: Product }) {
         });
 
         setProgress(0);
-        task.on("state_changed", (s) =>
-          setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100))
-        );
+        setUploadingPercent(0); // BusyOverlay 連動
+
+        task.on("state_changed", (s) => {
+          const pct = Math.round((s.bytesTransferred / s.totalBytes) * 100);
+          setProgress(pct);
+          setUploadingPercent(pct); // BusyOverlay 連動
+        });
+
         await task;
 
         mediaURL = `${await getDownloadURL(storageRef)}?v=${uuid()}`;
         setProgress(null);
+        setUploadingPercent(null); // BusyOverlay 連動
       }
 
-      /* Firestore 更新 */
+      /* ▼▼▼ 多言語フィールドの生成と保存 ▼▼▼ */
+      const base = { title: title.trim(), body: body.trim() };
+      const t = await translateAll(base.title, base.body);
+
+      /* Firestore 更新（既存フィールドは維持しつつ、base/t を追加保存） */
       await updateDoc(doc(db, "siteProducts", SITE_KEY, "items", product.id), {
-        title,
-        body,
+        title: base.title,
+        body: base.body,
         price,
         taxIncluded,
         mediaURL,
         mediaType,
+        base,
+        t,
         updatedAt: serverTimestamp(),
       });
 
-      /* ★ ローカル表示も即更新 */
+      /* ★ ローカル表示も即更新（base/t を反映） */
       setDisplayProduct((prev) => ({
-        ...prev,
-        title,
-        body,
+        ...(prev as ProductDoc),
+        title: base.title,
+        body: base.body,
         price: typeof price === "number" ? price : 0,
         taxIncluded,
         mediaURL,
         mediaType,
+        base,
+        t,
       }));
 
       setShowEdit(false);
@@ -154,12 +255,15 @@ export default function ProductDetail({ product }: { product: Product }) {
       console.error(err);
       alert("保存に失敗しました");
       setProgress(null);
+      setUploadingPercent(null);
+    } finally {
+      setSaving(false); // BusyOverlay 用
     }
   };
 
-  // 削除
+  // 削除（そのまま）
   const handleDelete = async () => {
-    console.log("!sadf")
+    console.log("!sadf");
     if (!confirm(`「${displayProduct.title}」を削除しますか？`)) return;
 
     await deleteDoc(doc(db, "siteProducts", SITE_KEY, "items", product.id));
@@ -173,16 +277,22 @@ export default function ProductDetail({ product }: { product: Product }) {
   };
 
   if (!displayProduct) {
-  return (
-    <main className="min-h-screen flex items-center justify-center pt-24">
-      <CardSpinner />
-    </main>
-  );
-}
+    return (
+      <main className="min-h-screen flex items-center justify-center pt-24">
+        <CardSpinner />
+      </main>
+    );
+  }
+
+  /* ▼ 表示テキストは UI 言語に応じて解決（価格表記などは従来どおり日本語のまま） */
+  const loc = pickLocalized(displayProduct, uiLang);
 
   /* ---------- JSX ---------- */
   return (
     <main className="min-h-screen flex items-start justify-center p-4 pt-24">
+      {/* アップロード/保存中オーバーレイ */}
+      <BusyOverlay uploadingPercent={uploadingPercent} saving={saving} />
+
       {/* カード外枠 */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -221,7 +331,7 @@ export default function ProductDetail({ product }: { product: Product }) {
           <div className="relative w-full aspect-square">
             <Image
               src={displayProduct.mediaURL}
-              alt={displayProduct.title}
+              alt={loc.title || displayProduct.title}
               fill
               className="object-cover"
               sizes="100vw"
@@ -240,23 +350,23 @@ export default function ProductDetail({ product }: { product: Product }) {
           />
         )}
 
-        {/* テキスト */}
+        {/* テキスト（タイトル/本文のみ多言語化、他は既存のまま） */}
         <div className="p-4 space-y-2">
           <h1 className={clsx("text-lg font-bold", isDark && "text-white")}>
-            {displayProduct.title}
+            {loc.title}
           </h1>
           <p className={clsx("font-semibold", isDark && "text-white")}>
             ¥{displayProduct.price.toLocaleString()}（
-            {displayProduct.taxIncluded ? "税込" : "税抜"}）
+            {displayProduct.taxIncluded ? taxT.incl : taxT.excl}）
           </p>
-          {displayProduct.body && (
+          {loc.body && (
             <p
               className={clsx(
                 "text-sm whitespace-pre-wrap leading-relaxed",
                 isDark && "text-white"
               )}
             >
-              {displayProduct.body}
+              {loc.body}
             </p>
           )}
         </div>
@@ -296,6 +406,7 @@ export default function ProductDetail({ product }: { product: Product }) {
                   checked={taxIncluded}
                   onChange={() => setTaxIncluded(true)}
                 />
+                {/* ← 多言語をやめて日本語固定 */}
                 税込
               </label>
               <label>
@@ -304,6 +415,7 @@ export default function ProductDetail({ product }: { product: Product }) {
                   checked={!taxIncluded}
                   onChange={() => setTaxIncluded(false)}
                 />
+                {/* ← 多言語をやめて日本語固定 */}
                 税抜
               </label>
             </div>
@@ -319,7 +431,7 @@ export default function ProductDetail({ product }: { product: Product }) {
 
             <input
               type="file"
-              accept="image/*,video/mp4,video/quicktime"
+              accept={[...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES].join(",")}
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="bg-gray-500 text-white w-full h-10 px-3 py-1 rounded"
               disabled={uploading}

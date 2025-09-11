@@ -23,6 +23,7 @@ import {
   Upload,
   Trash2,
 } from "lucide-react";
+import { useUILang } from "@/lib/atoms/uiLangAtom";
 
 /* ========= Firebase App 安全初期化 ========= */
 import { getApp, getApps, initializeApp } from "firebase/app";
@@ -42,11 +43,6 @@ import {
   deleteObject,
 } from "firebase/storage";
 
-/**
- * next/image の最適化を使う場合は next.config.js に remotePatterns を追加してください。
- * この実装は `unoptimized` を使っているので設定無しで動きます。
- */
-
 /* ========= Firebase Config（.env から） ========= */
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -56,33 +52,59 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
+/* ========= 言語リスト（ja は base として保持） ========= */
+const LANGS = [
+  { key: "en", label: "English" },
+  { key: "zh", label: "简体中文" },
+  { key: "zh-TW", label: "繁體中文" },
+  { key: "ko", label: "한국어" },
+  { key: "fr", label: "Français" },
+  { key: "es", label: "Español" },
+  { key: "de", label: "Deutsch" },
+  { key: "pt", label: "Português" },
+  { key: "it", label: "Italiano" },
+  { key: "ru", label: "Русский" },
+  { key: "th", label: "ไทย" },
+  { key: "vi", label: "Tiếng Việt" },
+  { key: "id", label: "Bahasa Indonesia" },
+  { key: "hi", label: "हिन्दी" },
+  { key: "ar", label: "العربية" },
+] as const;
+type LangKey = (typeof LANGS)[number]["key"];
+
 /* ========= Types ========= */
 type MediaKind = "image" | "video" | null;
 
-type CompanyProfile = {
-  // 必須
+type TranslatableFields = {
   name: string;
-
-  // 任意
   tagline?: string | null;
   about?: string | null;
+  business?: string[]; // 1項目1行
+  address?: string | null;
+};
 
-  // 会社情報
+type TranslatedPack = {
+  lang: LangKey;
+  name?: string;
+  tagline?: string | null;
+  about?: string | null;
+  business?: string[];
+  address?: string | null;
+};
+
+type CompanyDoc = {
+  // 多言語
+  base?: TranslatableFields;
+  t?: TranslatedPack[];
+
+  // 非翻訳（共通）
   founded?: string | null;   // 設立
   ceo?: string | null;       // 代表者名
   capital?: string | null;   // 資本金
   employees?: string | null; // 従業員数
-
-  // 連絡先
-  address?: string | null;
   phone?: string | null;
   email?: string | null;
   website?: string | null;
-
-  // 事業内容（複数行）
-  business?: string[];
-
-  // Google マップ埋め込み
   mapEmbedUrl?: string | null;
 
   // タイトル直下のメディア
@@ -93,24 +115,42 @@ type CompanyProfile = {
   updatedAt?: any;
   updatedByUid?: string | null;
   updatedByName?: string | null;
+
+  // 後方互換（従来の平坦フィールド）
+  name?: string;
+  tagline?: string | null;
+  about?: string | null;
+  business?: string[];
+  address?: string | null;
 };
 
-const EMPTY: CompanyProfile = {
+type CompanyProfileView = {
+  // 表示用（ローカライズ済み）
+  name: string;
+  tagline?: string | null;
+  about?: string | null;
+  business?: string[];
+  address?: string | null;
+
+  // 共通
+  founded?: string | null;
+  ceo?: string | null;
+  capital?: string | null;
+  employees?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  mapEmbedUrl?: string | null;
+  heroMediaUrl?: string | null;
+  heroMediaType?: MediaKind;
+};
+
+const EMPTY_EDIT_BASE: Required<TranslatableFields> = {
   name: "",
   tagline: "",
   about: "",
-  founded: "",
-  ceo: "",
-  capital: "",
-  employees: "",
-  address: "",
-  phone: "",
-  email: "",
-  website: "",
   business: [],
-  mapEmbedUrl: "",
-  heroMediaUrl: "",
-  heroMediaType: null,
+  address: "",
 };
 
 /* ========= Utils ========= */
@@ -143,7 +183,7 @@ function buildSimpleEmbedSrc(input?: string | null) {
 }
 
 /** CompanyProfile から埋め込みURLを決定（mapEmbedUrl 優先、なければ address → name） */
-function computeMapEmbedSrc(data: CompanyProfile) {
+function computeMapEmbedSrc(data: { mapEmbedUrl?: string | null; address?: string | null; name: string }) {
   return (
     buildSimpleEmbedSrc(data.mapEmbedUrl) ||
     buildSimpleEmbedSrc(data.address) ||
@@ -159,13 +199,62 @@ function urlToStoragePath(url: string | null | undefined): string | null {
     const apiHost = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/`;
     if (url.startsWith(apiHost)) {
       const pathEnc = url.slice(apiHost.length).split("?")[0];
-      return decodeURIComponent(pathEnc); // 例: siteMeta/.../file.jpg
+      return decodeURIComponent(pathEnc);
     }
     if (url.startsWith("gs://")) return url;
-  } catch {
-    // no-op
-  }
+  } catch {}
   return null;
+}
+
+/** 後方互換：ドキュメントから原文(base)を抽出 */
+function readBaseFromDoc(
+  d: CompanyDoc | null | undefined
+): Required<TranslatableFields> {
+  // ← 部分型を明示
+  const base: Partial<TranslatableFields> = d?.base ?? {};
+
+  return {
+    name: String(base.name ?? d?.name ?? ""),
+    tagline: (base.tagline ?? d?.tagline ?? "") || "",
+    about: (base.about ?? d?.about ?? "") || "",
+    business: Array.isArray(base.business)
+      ? base.business
+      : Array.isArray(d?.business)
+        ? (d!.business as string[])
+        : [],
+    address: (base.address ?? d?.address ?? "") || "",
+  };
+}
+
+/** ロケールに応じて表示内容を合成（見つからなければ原文(base)） */
+function pickLocalizedCompany(d: CompanyDoc | null | undefined, lang: string): CompanyProfileView {
+  const base = readBaseFromDoc(d);
+  const t = Array.isArray(d?.t) ? (d!.t as TranslatedPack[]) : [];
+  const hit = lang === "ja" ? null : t.find((x) => x.lang === lang);
+
+  const name = (hit?.name ?? base.name).toString();
+  const tagline = (hit?.tagline ?? base.tagline) || "";
+  const about = (hit?.about ?? base.about) || "";
+  const business = Array.isArray(hit?.business) && hit!.business!.length > 0 ? hit!.business! : base.business;
+  const address = (hit?.address ?? base.address) || "";
+
+  return {
+    name,
+    tagline,
+    about,
+    business,
+    address,
+    founded: d?.founded ?? "",
+    ceo: d?.ceo ?? "",
+    capital: d?.capital ?? "",
+    employees: d?.employees ?? "",
+    phone: d?.phone ?? "",
+    email: d?.email ?? "",
+    website: d?.website ?? "",
+    mapEmbedUrl: d?.mapEmbedUrl ?? "",
+    heroMediaUrl: d?.heroMediaUrl ?? "",
+    heroMediaType: d?.heroMediaType ?? null,
+  };
 }
 
 /* ========= 自動伸縮 Textarea ========= */
@@ -268,8 +357,8 @@ function InlineMediaEditor({
   onChange,
   storage,
 }: {
-  data: CompanyProfile;
-  onChange: (v: CompanyProfile) => void;
+  data: CompanyDoc;
+  onChange: (v: CompanyDoc) => void;
   storage: ReturnType<typeof getStorage>;
 }) {
   const [isOver, setIsOver] = useState(false);
@@ -301,7 +390,6 @@ function InlineMediaEditor({
       alert("画像または動画ファイルを選択してください。");
       return null;
     }
-    // サイズ（任意制限：200MB）
     const maxBytes = 200 * 1024 * 1024;
     if (file.size > maxBytes) {
       alert("ファイルサイズが大きすぎます（最大200MBまで）。");
@@ -357,18 +445,14 @@ function InlineMediaEditor({
           try {
             const oldRef = sRef(storage, pathOld);
             await deleteObject(oldRef);
-          } catch {
-            /* ignore */
-          }
+          } catch {}
         }
       }
 
       onChange({ ...data, heroMediaUrl: url, heroMediaType: kind });
     } catch (e) {
       console.error(e);
-      alert(
-        "アップロードに失敗しました。権限またはネットワークをご確認ください。"
-      );
+      alert("アップロードに失敗しました。権限またはネットワークをご確認ください。");
     } finally {
       setUploading(false);
       setProgress(0);
@@ -388,9 +472,7 @@ function InlineMediaEditor({
     e.preventDefault();
     e.stopPropagation();
     setIsOver(false);
-    const dropped = e.dataTransfer?.files
-      ? Array.from(e.dataTransfer.files)
-      : [];
+    const dropped = e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : [];
     await onFilesArray(dropped);
   };
 
@@ -400,11 +482,7 @@ function InlineMediaEditor({
     void (async () => {
       await onFilesArray(picked);
       if (typeof input.value !== "undefined") {
-        try {
-          input.value = "";
-        } catch {
-          /* ignore */
-        }
+        try { input.value = ""; } catch {}
       }
     })();
   };
@@ -419,9 +497,8 @@ function InlineMediaEditor({
         const r = sRef(storage, pathOld);
         await deleteObject(r);
       }
-    } catch {
-      /* ignore */
-    } finally {
+    } catch {}
+    finally {
       onChange({ ...data, heroMediaUrl: "", heroMediaType: null });
     }
   };
@@ -434,19 +511,14 @@ function InlineMediaEditor({
           isOver ? "ring-2 ring-purple-500" : "ring-1 ring-black/5",
         ].join(" ")}
         style={{ aspectRatio: "21 / 9" }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsOver(true);
-        }}
+        onDragOver={(e) => { e.preventDefault(); setIsOver(true); }}
         onDragLeave={() => setIsOver(false)}
         onDrop={onDrop}
       >
         {!data.heroMediaUrl ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
             <Upload className="h-8 w-8 mb-2" />
-            <div className="text-xs mt-1">
-              画像または60秒以内の動画（最大200MB）
-            </div>
+            <div className="text-xs mt-1">画像または60秒以内の動画（最大200MB）</div>
           </div>
         ) : data.heroMediaType === "video" ? (
           <video
@@ -472,19 +544,10 @@ function InlineMediaEditor({
           <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur border shadow cursor-pointer text-sm">
             <Upload className="h-4 w-4" />
             <span>ファイル選択</span>
-            <input
-              type="file"
-              accept="image/*,video/*"
-              className="hidden"
-              onChange={onInputChange}
-            />
+            <input type="file" accept="image/*,video/*" className="hidden" onChange={onInputChange} />
           </label>
           {data.heroMediaUrl && (
-            <Button
-              variant="secondary"
-              onClick={removeMedia}
-              className="bg-white/90 text-red-600 hover:text-red-700"
-            >
+            <Button variant="secondary" onClick={removeMedia} className="bg-white/90 text-red-600 hover:text-red-700">
               <Trash2 className="h-4 w-4 mr-1" />
               削除
             </Button>
@@ -494,17 +557,12 @@ function InlineMediaEditor({
         {/* 進捗バー */}
         {uploading && (
           <div className="absolute left-0 right-0 bottom-0 h-1 bg-white/50">
-            <div
-              className="h-1 bg-purple-600 transition-all"
-              style={{ width: `${progress}%` }}
-            />
+            <div className="h-1 bg-purple-600 transition-all" style={{ width: `${progress}%` }} />
           </div>
         )}
       </div>
 
-      <p className="mt-2 text-xs text-gray-500">
-        ※ タイトル下のメディアは保存後に公開画面へ反映。
-      </p>
+      <p className="mt-2 text-xs text-gray-500">※ タイトル下のメディアは保存後に公開画面へ反映。</p>
     </div>
   );
 }
@@ -544,10 +602,7 @@ function AiGenerateModal({
 
   useEffect(() => {
     if (!open) {
-      setK1("");
-      setK2("");
-      setK3("");
-      setLoading(false);
+      setK1(""); setK2(""); setK3(""); setLoading(false);
     }
   }, [open]);
 
@@ -581,30 +636,22 @@ function AiGenerateModal({
 
       if (target === "about") {
         if (typeof data.about !== "string" || !data.about.trim()) {
-          alert(
-            "AIから有効な『会社説明』が返りませんでした。キーワードや文脈を見直してください。"
-          );
+          alert("AIから有効な『会社説明』が返りませんでした。キーワードや文脈を見直してください。");
           return;
         }
         onGenerate({ about: data.about.trim() });
       } else {
         if (!Array.isArray(data.business) || data.business.length === 0) {
-          alert(
-            "AIから有効な『事業内容』が返りませんでした。キーワードや文脈を見直してください。"
-          );
+          alert("AIから有効な『事業内容』が返りませんでした。キーワードや文脈を見直してください。");
           return;
         }
-        onGenerate(
-          data.business.map((s: any) => String(s).trim()).filter(Boolean)
-        );
+        onGenerate({ business: data.business.map((s: any) => String(s).trim()).filter(Boolean) });
       }
 
       onClose();
     } catch (e) {
       console.error(e);
-      alert(
-        "AI生成リクエストでエラーが発生しました。ネットワークをご確認ください。"
-      );
+      alert("AI生成リクエストでエラーが発生しました。ネットワークをご確認ください。");
     } finally {
       setLoading(false);
     }
@@ -620,38 +667,18 @@ function AiGenerateModal({
             <Wand2 className="h-5 w-5 text-purple-600" />
             {target === "about" ? "会社説明をAIで生成" : "事業内容をAIで生成"}
           </h3>
-          <p className="text-xs text-gray-500 mt-1">
-            キーワードを最大3つまで入力（1つ以上で開始可能）
-          </p>
+          <p className="text-xs text-gray-500 mt-1">キーワードを最大3つまで入力（1つ以上で開始可能）</p>
         </div>
 
         <div className="p-5 space-y-3">
-          <Input
-            value={k1}
-            onChange={(e) => setK1(e.target.value)}
-            placeholder="キーワード1（例：短納期／CMS構築 など）"
-          />
-          <Input
-            value={k2}
-            onChange={(e) => setK2(e.target.value)}
-            placeholder="キーワード2（任意）"
-          />
-          <Input
-            value={k3}
-            onChange={(e) => setK3(e.target.value)}
-            placeholder="キーワード3（任意）"
-          />
+          <Input value={k1} onChange={(e) => setK1(e.target.value)} placeholder="キーワード1（例：短納期／CMS構築 など）" />
+          <Input value={k2} onChange={(e) => setK2(e.target.value)} placeholder="キーワード2（任意）" />
+          <Input value={k3} onChange={(e) => setK3(e.target.value)} placeholder="キーワード3（任意）" />
         </div>
 
         <div className="p-5 pt-0 flex items-center justify-end gap-2">
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
-            キャンセル
-          </Button>
-          <Button
-            onClick={start}
-            disabled={!canStart || loading}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
+          <Button variant="secondary" onClick={onClose} disabled={loading}>キャンセル</Button>
+          <Button onClick={start} disabled={!canStart || loading} className="bg-purple-600 hover:bg-purple-700 text-white">
             {loading ? "生成中..." : "生成開始"}
           </Button>
         </div>
@@ -660,13 +687,64 @@ function AiGenerateModal({
   );
 }
 
+/* ========= 多言語翻訳（原文 → target へ一括） ========= */
+async function translateCompany(base: Required<TranslatableFields>, target: LangKey): Promise<TranslatedPack> {
+  // name / tagline / about / business[n]... / address
+  const SEP = "\n---\n";
+  type Item =
+    | { kind: "name" }
+    | { kind: "tagline" }
+    | { kind: "about" }
+    | { kind: "business"; idx: number }
+    | { kind: "address" };
+
+  const items: Item[] = [];
+  const payload: string[] = [];
+
+  items.push({ kind: "name" });    payload.push(base.name || "");
+  items.push({ kind: "tagline" }); payload.push(base.tagline || "");
+  items.push({ kind: "about" });   payload.push(base.about || "");
+  (base.business || []).forEach((s, i) => { items.push({ kind: "business", idx: i }); payload.push(s || ""); });
+  items.push({ kind: "address" }); payload.push(base.address || "");
+
+  const res = await fetch("/api/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: "", body: payload.join(SEP), target }),
+  });
+  if (!res.ok) throw new Error("翻訳APIエラー");
+  const data = (await res.json()) as { body?: string };
+  const parts = String(data.body ?? "").split(SEP);
+
+  let p = 0;
+  const out: TranslatedPack = { lang: target, name: "", tagline: "", about: "", business: [], address: "" };
+
+  for (const it of items) {
+    const text = (parts[p++] ?? "").trim();
+    if (it.kind === "name") out.name = text || base.name;
+    if (it.kind === "tagline") out.tagline = text || base.tagline;
+    if (it.kind === "about") out.about = text || base.about;
+    if (it.kind === "address") out.address = text || base.address;
+    if (it.kind === "business") {
+      if (!out.business) out.business = [];
+      out.business[it.idx] = text || (base.business[it.idx] ?? "");
+    }
+  }
+
+  // 末尾の空要素除去
+  if (Array.isArray(out.business)) {
+    out.business = (out.business ?? []).map((s) => String(s ?? ""));
+  }
+
+  return out;
+}
+
 /* ========= Main ========= */
 export default function CompanyOverview() {
+  const { uiLang } = useUILang();
+
   // Firebase App & Services
-  const app = useMemo(
-    () => (getApps().length ? getApp() : initializeApp(firebaseConfig)),
-    []
-  );
+  const app = useMemo(() => (getApps().length ? getApp() : initializeApp(firebaseConfig)), []);
   const db = useMemo(() => getFirestore(app), [app]);
   const auth = useMemo(() => getAuth(app), [app]);
   const storage = useMemo(() => getStorage(app), [app]);
@@ -675,13 +753,17 @@ export default function CompanyOverview() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [profile, setProfile] = useState<CompanyProfile>(EMPTY);
-  const [edit, setEdit] = useState<CompanyProfile>(EMPTY);
-  const [isEditing, setIsEditing] = useState(false);
+  // Firestore ドキュメント生データ（base/t 含む）
+  const [docData, setDocData] = useState<CompanyDoc | null>(null);
 
-  // モーダル制御
-  const [aiOpen, setAiOpen] = useState(false);
-  const [aiTarget, setAiTarget] = useState<AiTarget>("about");
+  // 編集用（原文=ja のみ編集）
+  const [editBase, setEditBase] = useState<Required<TranslatableFields>>(EMPTY_EDIT_BASE);
+  const [editCommon, setEditCommon] = useState<Pick<CompanyDoc,
+    "founded" | "ceo" | "capital" | "employees" | "phone" | "email" | "website" | "mapEmbedUrl" | "heroMediaUrl" | "heroMediaType"
+  >>({
+    founded: "", ceo: "", capital: "", employees: "", phone: "", email: "", website: "", mapEmbedUrl: "", heroMediaUrl: "", heroMediaType: null
+  });
+  const [isEditing, setIsEditing] = useState(false);
 
   // ログイン監視
   useEffect(() => {
@@ -697,10 +779,35 @@ export default function CompanyOverview() {
         const ref = doc(db, "siteMeta", SITE_KEY, "company", "profile");
         const snap = await getDoc(ref);
         if (snap.exists()) {
-          const data = snap.data() as CompanyProfile;
-          setProfile({ ...EMPTY, ...data });
+          const data = snap.data() as CompanyDoc;
+          setDocData(data);
+          // 編集用に原文(base)と共通を展開
+          const base = readBaseFromDoc(data);
+          setEditBase({ ...EMPTY_EDIT_BASE, ...base });
+          setEditCommon({
+            founded: data.founded ?? "",
+            ceo: data.ceo ?? "",
+            capital: data.capital ?? "",
+            employees: data.employees ?? "",
+            phone: data.phone ?? "",
+            email: data.email ?? "",
+            website: data.website ?? "",
+            mapEmbedUrl: data.mapEmbedUrl ?? "",
+            heroMediaUrl: data.heroMediaUrl ?? "",
+            heroMediaType: data.heroMediaType ?? null,
+          });
         } else {
-          setProfile(EMPTY);
+          // 新規
+          setDocData({
+            base: { ...EMPTY_EDIT_BASE },
+            t: [],
+          });
+          setEditBase({ ...EMPTY_EDIT_BASE });
+          setEditCommon({
+            founded: "", ceo: "", capital: "", employees: "",
+            phone: "", email: "", website: "", mapEmbedUrl: "",
+            heroMediaUrl: "", heroMediaType: null,
+          });
         }
       } finally {
         setLoading(false);
@@ -708,61 +815,88 @@ export default function CompanyOverview() {
     })();
   }, [db]);
 
-  // 編集開始/取消
-  const startEdit = () => {
-    setEdit(profile);
-    setIsEditing(true);
-  };
+  const canEdit = !!user;
+
+  // 表示用（uiLang に応じてローカライズ）
+  const displayData: CompanyProfileView | null = useMemo(() => {
+    if (!docData) return null;
+    return pickLocalizedCompany(docData, uiLang);
+  }, [docData, uiLang]);
+
+  const startEdit = () => setIsEditing(true);
   const cancelEdit = () => {
+    // ドキュメントの値に戻す
+    if (docData) {
+      const base = readBaseFromDoc(docData);
+      setEditBase({ ...EMPTY_EDIT_BASE, ...base });
+      setEditCommon({
+        founded: docData.founded ?? "",
+        ceo: docData.ceo ?? "",
+        capital: docData.capital ?? "",
+        employees: docData.employees ?? "",
+        phone: docData.phone ?? "",
+        email: docData.email ?? "",
+        website: docData.website ?? "",
+        mapEmbedUrl: docData.mapEmbedUrl ?? "",
+        heroMediaUrl: docData.heroMediaUrl ?? "",
+        heroMediaType: docData.heroMediaType ?? null,
+      });
+    }
     setIsEditing(false);
-    setEdit(profile);
   };
 
-  // Firestore に undefined を書かないように正規化
-  const normalizeForSave = (src: CompanyProfile): CompanyProfile => {
-    const n = { ...src };
-    (
-      [
-        "tagline",
-        "about",
-        "founded",
-        "ceo",
-        "capital",
-        "employees",
-        "address",
-        "phone",
-        "email",
-        "website",
-        "mapEmbedUrl",
-        "heroMediaUrl",
-      ] as const
-    ).forEach((k) => {
-      if (n[k] === undefined) n[k] = null;
-    });
-    if (n.heroMediaType === undefined) n.heroMediaType = null;
-    if (!Array.isArray(n.business)) n.business = [];
-    return n;
-  };
-
-  // 保存（✅ 必須は name のみ）
+  // 保存（原文を更新し、全言語を上書き再生成）
   const saveEdit = async () => {
-    if (!edit.name.trim()) {
+    if (!editBase.name.trim()) {
       alert("会社名は必須です。");
       return;
     }
     setSaving(true);
     try {
+      // 全言語翻訳（ja は base に保持、その他は t へ）
+      const targets: LangKey[] = LANGS.map((l) => l.key) as LangKey[];
+      const tAll = await Promise.all(targets.map((lang) => translateCompany(editBase, lang)));
+
       const ref = doc(db, "siteMeta", SITE_KEY, "company", "profile");
-      const payload: CompanyProfile = normalizeForSave({
-        ...edit,
-        // business は改行保持のまま配列
-        business: edit.business,
+
+      const payload: CompanyDoc = {
+        // 多言語
+        base: {
+          name: editBase.name,
+          tagline: editBase.tagline ?? "",
+          about: editBase.about ?? "",
+          business: Array.isArray(editBase.business) ? editBase.business : [],
+          address: editBase.address ?? "",
+        },
+        t: tAll,
+
+        // 非翻訳
+        founded: editCommon.founded ?? "",
+        ceo: editCommon.ceo ?? "",
+        capital: editCommon.capital ?? "",
+        employees: editCommon.employees ?? "",
+        phone: editCommon.phone ?? "",
+        email: editCommon.email ?? "",
+        website: editCommon.website ?? "",
+        mapEmbedUrl: editCommon.mapEmbedUrl ?? "",
+        heroMediaUrl: editCommon.heroMediaUrl ?? "",
+        heroMediaType: editCommon.heroMediaType ?? null,
+
+        // メタ
         updatedAt: serverTimestamp(),
         updatedByUid: user?.uid ?? null,
         updatedByName: user?.displayName ?? null,
-      });
+
+        // 後方互換（原文を平坦にも保存）
+        name: editBase.name,
+        tagline: editBase.tagline ?? "",
+        about: editBase.about ?? "",
+        business: Array.isArray(editBase.business) ? editBase.business : [],
+        address: editBase.address ?? "",
+      };
+
       await setDoc(ref, payload, { merge: true });
-      setProfile(payload);
+      setDocData(payload);         // ローカルにも反映
       setIsEditing(false);
     } catch (e) {
       console.error(e);
@@ -772,55 +906,47 @@ export default function CompanyOverview() {
     }
   };
 
-  const canEdit = !!user;
-  const displayData = isEditing ? edit : profile;
-
   // AI結果の反映
-  const applyAiResult = useCallback(
-    (result: { about?: string; business?: string[] }) => {
-      if (result.about != null) {
-        setEdit((prev) => ({ ...prev, about: result.about ?? "" }));
-      }
-      if (result.business != null) {
-        setEdit((prev) => ({ ...prev, business: result.business ?? [] }));
-      }
-    },
-    []
-  );
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiTarget, setAiTarget] = useState<AiTarget>("about");
+  const applyAiResult = useCallback((result: { about?: string; business?: string[] }) => {
+    if (result.about != null) {
+      setEditBase((prev) => ({ ...prev, about: result.about ?? "" }));
+    }
+    if (result.business != null) {
+      setEditBase((prev) => ({ ...prev, business: result.business ?? [] }));
+    }
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <div className="relative rounded-3xl bg-white/60 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
+          <CardSpinner />
+          <div className="p-8">読み込み中…</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto">
       {/* ===== 会社概要カード ===== */}
       <div className="relative rounded-3xl bg-white/60 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
-        {(loading || saving) && <CardSpinner />}
+        {saving && <CardSpinner />}
 
         {/* 先頭：編集/保存ボタン */}
         {canEdit && (
           <div className="px-6 md:px-8 pt-4">
             <div className="flex justify-end gap-2">
               {!isEditing ? (
-                <Button
-                  onClick={startEdit}
-                  disabled={loading}
-                  className="bg-blue-500 hover:bg-blue-400"
-                >
-                  編集
-                </Button>
+                <Button onClick={startEdit} className="bg-blue-500 hover:bg-blue-400">編集</Button>
               ) : (
                 <>
-                  <Button
-                    variant="secondary"
-                    onClick={cancelEdit}
-                    disabled={saving}
-                    className="bg-white/70 text-slate-700 hover:bg-white"
-                  >
+                  <Button variant="secondary" onClick={cancelEdit} disabled={saving} className="bg-white/70 text-slate-700 hover:bg-white">
                     キャンセル
                   </Button>
-                  <Button
-                    onClick={saveEdit}
-                    disabled={saving}
-                    className="bg-blue-500 hover:bg-blue-400"
-                  >
+                  <Button onClick={saveEdit} disabled={saving} className="bg-blue-500 hover:bg-blue-400">
                     保存
                   </Button>
                 </>
@@ -837,10 +963,10 @@ export default function CompanyOverview() {
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-semibold">
-                {displayData.name || "（会社名未設定）"}
+                {(!isEditing ? (displayData?.name ?? "") : editBase.name) || "（会社名未設定）"}
               </h1>
-              {displayData.tagline && (
-                <p className="text-gray-600 mt-1">{displayData.tagline}</p>
+              {(!isEditing ? (displayData?.tagline ?? "") : (editBase.tagline ?? "")) && (
+                <p className="text-gray-600 mt-1">{!isEditing ? displayData?.tagline : editBase.tagline}</p>
               )}
             </div>
           </div>
@@ -848,26 +974,29 @@ export default function CompanyOverview() {
 
         {/* タイトル直下のメディア（編集 or 閲覧） */}
         {isEditing ? (
-          <InlineMediaEditor data={edit} onChange={setEdit} storage={storage} />
-        ) : (
-          <InlineMediaViewer
-            url={displayData.heroMediaUrl}
-            type={displayData.heroMediaType}
+          <InlineMediaEditor
+            data={{
+              heroMediaUrl: editCommon.heroMediaUrl ?? "",
+              heroMediaType: editCommon.heroMediaType ?? null,
+            } as CompanyDoc}
+            onChange={(v) => setEditCommon((prev) => ({ ...prev, heroMediaUrl: v.heroMediaUrl ?? "", heroMediaType: v.heroMediaType ?? null }))}
+            storage={storage}
           />
+        ) : (
+          <InlineMediaViewer url={displayData?.heroMediaUrl} type={displayData?.heroMediaType ?? null} />
         )}
 
         {/* 本体 */}
         <div className="p-6 md:p-8">
           {!isEditing ? (
-            <ReadOnlyView data={profile} />
+            <ReadOnlyView data={displayData!} />
           ) : (
             <EditView
-              data={edit}
-              onChange={setEdit}
-              onOpenAi={(target) => {
-                setAiTarget(target);
-                setAiOpen(true);
-              }}
+              base={editBase}
+              common={editCommon}
+              onBaseChange={setEditBase}
+              onCommonChange={setEditCommon}
+              onOpenAi={(target) => { setAiTarget(target); setAiOpen(true); }}
             />
           )}
         </div>
@@ -880,11 +1009,11 @@ export default function CompanyOverview() {
         onGenerate={applyAiResult}
         target={aiTarget}
         context={{
-          companyName: edit.name,
-          tagline: edit.tagline,
-          location: edit.address,
-          existingAbout: edit.about ?? undefined,
-          existingBusiness: edit.business,
+          companyName: editBase.name,
+          tagline: editBase.tagline,
+          location: editBase.address,
+          existingAbout: editBase.about ?? undefined,
+          existingBusiness: editBase.business,
         }}
       />
     </div>
@@ -892,8 +1021,8 @@ export default function CompanyOverview() {
 }
 
 /* ===================== ReadOnly ===================== */
-function ReadOnlyView({ data }: { data: CompanyProfile }) {
-  const embedSrc = computeMapEmbedSrc(data);
+function ReadOnlyView({ data }: { data: CompanyProfileView }) {
+  const embedSrc = computeMapEmbedSrc({ name: data.name, address: data.address, mapEmbedUrl: data.mapEmbedUrl });
 
   return (
     <div className="space-y-10">
@@ -963,7 +1092,7 @@ function Field({
   icon,
 }: {
   label: string;
-  value?: string;
+  value?: string | null;
   isLink?: boolean;
   icon?: React.ReactNode;
 }) {
@@ -975,18 +1104,11 @@ function Field({
         {label}
       </div>
       {isLink ? (
-        <a
-          href={value}
-          target="_blank"
-          rel="noreferrer"
-          className="text-blue-700 underline break-all"
-        >
+        <a href={value} target="_blank" rel="noreferrer" className="text-blue-700 underline break-all">
           {value}
         </a>
       ) : (
-        <div className="text-gray-900 break-words whitespace-pre-wrap">
-          {value}
-        </div>
+        <div className="text-gray-900 break-words whitespace-pre-wrap">{value}</div>
       )}
     </div>
   );
@@ -994,103 +1116,56 @@ function Field({
 
 /* ===================== Edit ===================== */
 function EditView({
-  data,
-  onChange,
+  base,
+  common,
+  onBaseChange,
+  onCommonChange,
   onOpenAi,
 }: {
-  data: CompanyProfile;
-  onChange: (v: CompanyProfile) => void;
+  base: Required<TranslatableFields>;
+  common: Pick<CompanyDoc, "founded" | "ceo" | "capital" | "employees" | "phone" | "email" | "website" | "mapEmbedUrl" | "heroMediaUrl" | "heroMediaType">;
+  onBaseChange: (v: Required<TranslatableFields>) => void;
+  onCommonChange: (v: typeof common) => void;
   onOpenAi: (target: "about" | "business") => void;
 }) {
-  const previewSrc = computeMapEmbedSrc(data);
+  const previewSrc = computeMapEmbedSrc({ name: base.name, address: base.address, mapEmbedUrl: common.mapEmbedUrl });
 
   return (
     <div className="space-y-8">
-      {/* 必須は会社名のみ */}
+      {/* 必須は会社名のみ（原文=ja） */}
       <div className="grid md:grid-cols-2 gap-4">
-        <LabeledInput
-          label="会社名 *"
-          value={data.name}
-          onChange={(v) => onChange({ ...data, name: v })}
-        />
-        <LabeledInput
-          label="キャッチコピー（任意）"
-          value={data.tagline ?? ""}
-          onChange={(v) => onChange({ ...data, tagline: v })}
-        />
+        <LabeledInput label="会社名 *" value={base.name} onChange={(v) => onBaseChange({ ...base, name: v })} />
+        <LabeledInput label="キャッチコピー（任意）" value={base.tagline ?? ""} onChange={(v) => onBaseChange({ ...base, tagline: v })} />
       </div>
 
       {/* 会社情報（代表者・設立・資本金・従業員数） */}
       <div className="grid md:grid-cols-2 gap-4">
-        <LabeledInput
-          label="代表者（任意）"
-          value={data.ceo ?? ""}
-          onChange={(v) => onChange({ ...data, ceo: v })}
-          placeholder="例）山田 太郎"
-        />
-        <LabeledInput
-          label="設立（任意）"
-          value={data.founded ?? ""}
-          onChange={(v) => onChange({ ...data, founded: v })}
-          placeholder="例）2020年4月"
-        />
-        <LabeledInput
-          label="資本金（任意）"
-          value={data.capital ?? ""}
-          onChange={(v) => onChange({ ...data, capital: v })}
-          placeholder="例）1,000万円"
-        />
-        <LabeledInput
-          label="従業員数（任意）"
-          value={data.employees ?? ""}
-          onChange={(v) => onChange({ ...data, employees: v })}
-          placeholder="例）25名（アルバイト含む）"
-        />
+        <LabeledInput label="代表者（任意）" value={common.ceo ?? ""} onChange={(v) => onCommonChange({ ...common, ceo: v })} placeholder="例）山田 太郎" />
+        <LabeledInput label="設立（任意）" value={common.founded ?? ""} onChange={(v) => onCommonChange({ ...common, founded: v })} placeholder="例）2020年4月" />
+        <LabeledInput label="資本金（任意）" value={common.capital ?? ""} onChange={(v) => onCommonChange({ ...common, capital: v })} placeholder="例）1,000万円" />
+        <LabeledInput label="従業員数（任意）" value={common.employees ?? ""} onChange={(v) => onCommonChange({ ...common, employees: v })} placeholder="例）25名（アルバイト含む）" />
       </div>
 
       {/* 連絡先（住所・電話・メール・Web） */}
       <div className="grid md:grid-cols-2 gap-4">
-        <LabeledInput
-          label="所在地（任意）"
-          value={data.address ?? ""}
-          onChange={(v) => onChange({ ...data, address: v })}
-          placeholder="住所または地名"
-        />
-        <LabeledInput
-          label="電話番号（任意）"
-          value={data.phone ?? ""}
-          onChange={(v) => onChange({ ...data, phone: v })}
-          placeholder="例）03-1234-5678"
-        />
-        <LabeledInput
-          label="メール（任意）"
-          value={data.email ?? ""}
-          onChange={(v) => onChange({ ...data, email: v })}
-          placeholder="info@example.com"
-        />
-        <LabeledInput
-          label="Webサイト（任意）"
-          value={data.website ?? ""}
-          onChange={(v) => onChange({ ...data, website: v })}
-          placeholder="https://example.com"
-        />
+        <LabeledInput label="所在地（任意・翻訳対象）" value={base.address ?? ""} onChange={(v) => onBaseChange({ ...base, address: v })} placeholder="住所または地名" />
+        <LabeledInput label="電話番号（任意）" value={common.phone ?? ""} onChange={(v) => onCommonChange({ ...common, phone: v })} placeholder="例）03-1234-5678" />
+        <LabeledInput label="メール（任意）" value={common.email ?? ""} onChange={(v) => onCommonChange({ ...common, email: v })} placeholder="info@example.com" />
+        <LabeledInput label="Webサイト（任意）" value={common.website ?? ""} onChange={(v) => onCommonChange({ ...common, website: v })} placeholder="https://example.com" />
       </div>
 
       {/* 会社説明 + AI（自動伸縮） */}
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-sm text-gray-600">会社説明（任意）</div>
-          <Button
-            onClick={() => onOpenAi("about")}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
+          <div className="text-sm text-gray-600">会社説明（任意・翻訳対象）</div>
+          <Button onClick={() => onOpenAi("about")} className="bg-purple-600 hover:bg-purple-700 text-white">
             <Wand2 className="h-4 w-4 mr-1" />
             AIで生成
           </Button>
         </div>
         <AutoResizeTextarea
-          value={data.about ?? ""}
-          onValueChange={(v) => onChange({ ...data, about: v })}
+          value={base.about ?? ""}
+          onValueChange={(v) => onBaseChange({ ...base, about: v })}
           minRows={4}
           maxRows={40}
           placeholder="（任意）会社の特徴・強み・提供価値などを記載"
@@ -1100,47 +1175,31 @@ function EditView({
 
       {/* 事業内容（自動伸縮 / 空行・末尾改行を保持） */}
       <div className="space-y-2">
-        <div className="text-sm text-gray-600">
-          事業内容（任意・1行につき1項目 / 空行OK）
-        </div>
+        <div className="text-sm text-gray-600">事業内容（任意・翻訳対象 / 1行につき1項目 / 空行OK）</div>
         <AutoResizeTextarea
-          value={arrayToLinesPreserve(data.business)}
-          onValueChange={(v) =>
-            onChange({
-              ...data,
-              business: linesToArrayPreserve(v),
-            })
-          }
+          value={arrayToLinesPreserve(base.business)}
+          onValueChange={(v) => onBaseChange({ ...base, business: linesToArrayPreserve(v) })}
           minRows={6}
           maxRows={50}
           placeholder={"例：\n主要サービスA\nCMS構築\n運用サポート\n"}
           className="bg-white/80"
         />
-        <p className="text-xs text-gray-500">
-          ※ Enter での空行や、最後の改行も保持されます（閲覧表示では空行は表示されません）。
-        </p>
+        <p className="text-xs text-gray-500">※ Enter での空行や、最後の改行も保持されます（閲覧表示では空行は表示されません）。</p>
       </div>
 
       {/* Googleマップ：住所から自動生成 & ライブプレビュー */}
       <div>
         <LabeledInput
           label="Googleマップ埋め込みURL（任意）"
-          value={data.mapEmbedUrl ?? ""}
-          onChange={(v) => onChange({ ...data, mapEmbedUrl: v })}
+          value={common.mapEmbedUrl ?? ""}
+          onChange={(v) => onCommonChange({ ...common, mapEmbedUrl: v })}
           placeholder="https://www.google.com/maps/embed?..."
         />
-        <div className="mt-2 text-xs text-gray-500">
-          ※ 短縮URL（maps.app.goo.gl）や通常URLでもOK。自動で埋め込み形式に変換します。
-        </div>
+        <div className="mt-2 text-xs text-gray-500">※ 短縮URL（maps.app.goo.gl）や通常URLでもOK。自動で埋め込み形式に変換します。</div>
 
         {previewSrc && (
           <div className="mt-4 aspect-video w-full overflow-hidden rounded-lg border">
-            <iframe
-              src={previewSrc}
-              className="w-full h-full"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+            <iframe src={previewSrc} className="w-full h-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
           </div>
         )}
       </div>
@@ -1162,12 +1221,7 @@ function LabeledInput({
   return (
     <label className="block">
       <div className="mb-1 text-sm text-gray-600">{label}</div>
-      <Input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="bg-white/80"
-      />
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="bg-white/80" />
     </label>
   );
 }

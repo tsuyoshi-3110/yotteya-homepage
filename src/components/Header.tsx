@@ -1,6 +1,7 @@
+// components/common/Header.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Menu, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,10 @@ import { useThemeGradient } from "@/lib/useThemeGradient";
 import { useHeaderLogoUrl } from "../hooks/useHeaderLogoUrl";
 import { auth } from "@/lib/firebase";
 
+// ▼ 追加：多言語ピッカー & 言語Atom
+import UILangFloatingPicker from "./UILangFloatingPicker";
+import { useUILang, type UILang as UILangType } from "@/lib/atoms/uiLangAtom";
+
 const SNS = [
   {
     name: "Instagram",
@@ -27,11 +32,267 @@ const SNS = [
 
 const HEADER_H = "3rem";
 
+// ▼ 3タップ検出
+const TRIPLE_TAP_INTERVAL_MS = 500;
+const IGNORE_SELECTOR = "a,button,input,select,textarea,[role='button']";
+
+/* ===== 多言語辞書 ===== */
+type Keys =
+  | "menuTitle"
+  | "products"
+  | "stores"
+  | "delivery"
+  | "about"
+  | "company"
+  | "news"
+  | "interview"
+  | "timeline"
+  | "community"
+  | "analytics"
+  | "admin";
+
+const T: Record<UILangType, Record<Keys, string>> = {
+  ja: {
+    menuTitle: "メニュー",
+    products: "商品一覧",
+    stores: "アクセス",
+    delivery: "デリバリー",
+    about: "当店の思い",
+    company: "会社概要",
+    news: "お知らせ",
+    interview: "取材はこちら",
+    timeline: "タイムライン",
+    community: "コミュニティ",
+    analytics: "分析",
+    admin: "管理者ログイン",
+  },
+  en: {
+    menuTitle: "Menu",
+    products: "Products",
+    stores: "Access",
+    delivery: "Delivery",
+    about: "Our Story",
+    company: "Company",
+    news: "News",
+    interview: "Press & Inquiries",
+    timeline: "Timeline",
+    community: "Community",
+    analytics: "Analytics",
+    admin: "Administrator Login",
+  },
+  zh: {
+    menuTitle: "菜单",
+    products: "商品一览",
+    stores: "交通/访问",
+    delivery: "外送",
+    about: "我们的理念",
+    company: "公司简介",
+    news: "通知",
+    interview: "媒体采访",
+    timeline: "时间线",
+    community: "社区",
+    analytics: "分析",
+    admin: "管理员登录",
+  },
+  "zh-TW": {
+    menuTitle: "選單",
+    products: "商品一覽",
+    stores: "交通/位置",
+    delivery: "外送",
+    about: "我們的理念",
+    company: "公司簡介",
+    news: "最新消息",
+    interview: "媒體採訪",
+    timeline: "時間軸",
+    community: "社群",
+    analytics: "分析",
+    admin: "管理者登入",
+  },
+  ko: {
+    menuTitle: "메뉴",
+    products: "상품 목록",
+    stores: "오시는 길",
+    delivery: "딜리버리",
+    about: "가게 이야기",
+    company: "회사 소개",
+    news: "알림",
+    interview: "취재 문의",
+    timeline: "타임라인",
+    community: "커뮤니티",
+    analytics: "분석",
+    admin: "관리자 로그인",
+  },
+  fr: {
+    menuTitle: "Menu",
+    products: "Produits",
+    stores: "Accès",
+    delivery: "Livraison",
+    about: "Notre histoire",
+    company: "Entreprise",
+    news: "Actualités",
+    interview: "Presse",
+    timeline: "Timeline",
+    community: "Communauté",
+    analytics: "Analyses",
+    admin: "Connexion administrateur",
+  },
+  es: {
+    menuTitle: "Menú",
+    products: "Productos",
+    stores: "Acceso",
+    delivery: "Entrega",
+    about: "Nuestra historia",
+    company: "Empresa",
+    news: "Noticias",
+    interview: "Prensa",
+    timeline: "Cronología",
+    community: "Comunidad",
+    analytics: "Analítica",
+    admin: "Inicio de sesión administrador",
+  },
+  de: {
+    menuTitle: "Menü",
+    products: "Produkte",
+    stores: "Anfahrt",
+    delivery: "Lieferung",
+    about: "Unsere Geschichte",
+    company: "Unternehmen",
+    news: "Neuigkeiten",
+    interview: "Presse",
+    timeline: "Timeline",
+    community: "Community",
+    analytics: "Analytik",
+    admin: "Admin-Anmeldung",
+  },
+  pt: {
+    menuTitle: "Menu",
+    products: "Produtos",
+    stores: "Acesso",
+    delivery: "Delivery",
+    about: "Nossa história",
+    company: "Empresa",
+    news: "Notícias",
+    interview: "Imprensa",
+    timeline: "Linha do tempo",
+    community: "Comunidade",
+    analytics: "Análises",
+    admin: "Login do administrador",
+  },
+  it: {
+    menuTitle: "Menu",
+    products: "Prodotti",
+    stores: "Accesso",
+    delivery: "Consegna",
+    about: "La nostra storia",
+    company: "Azienda",
+    news: "Notizie",
+    interview: "Stampa",
+    timeline: "Timeline",
+    community: "Community",
+    analytics: "Analitiche",
+    admin: "Accesso amministratore",
+  },
+  ru: {
+    menuTitle: "Меню",
+    products: "Товары",
+    stores: "Как добраться",
+    delivery: "Доставка",
+    about: "О нас",
+    company: "О компании",
+    news: "Новости",
+    interview: "Для прессы",
+    timeline: "Лента",
+    community: "Сообщество",
+    analytics: "Аналитика",
+    admin: "Вход администратора",
+  },
+  th: {
+    menuTitle: "เมนู",
+    products: "รายการสินค้า",
+    stores: "การเดินทาง",
+    delivery: "เดลิเวอรี่",
+    about: "เรื่องราวของเรา",
+    company: "ข้อมูลบริษัท",
+    news: "ประกาศ",
+    interview: "ติดต่อสื่อ",
+    timeline: "ไทม์ไลน์",
+    community: "คอมมูนิตี้",
+    analytics: "วิเคราะห์",
+    admin: "เข้าสู่ระบบผู้ดูแล",
+  },
+  vi: {
+    menuTitle: "Menu",
+    products: "Danh mục",
+    stores: "Đường đi",
+    delivery: "Giao hàng",
+    about: "Câu chuyện của chúng tôi",
+    company: "Hồ sơ công ty",
+    news: "Thông báo",
+    interview: "Báo chí",
+    timeline: "Dòng thời gian",
+    community: "Cộng đồng",
+    analytics: "Phân tích",
+    admin: "Đăng nhập quản trị",
+  },
+  id: {
+    menuTitle: "Menu",
+    products: "Daftar produk",
+    stores: "Akses",
+    delivery: "Delivery",
+    about: "Kisah kami",
+    company: "Profil perusahaan",
+    news: "Pemberitahuan",
+    interview: "Untuk media",
+    timeline: "Linimasa",
+    community: "Komunitas",
+    analytics: "Analitik",
+    admin: "Masuk admin",
+  },
+  hi: {
+    menuTitle: "मेनू",
+    products: "उत्पाद सूची",
+    stores: "पहुँच",
+    delivery: "डिलीवरी",
+    about: "हमारी कहानी",
+    company: "कंपनी प्रोफ़ाइल",
+    news: "सूचनाएँ",
+    interview: "प्रेस",
+    timeline: "टाइमलाइन",
+    community: "समुदाय",
+    analytics: "विश्लेषण",
+    admin: "प्रशासक लॉगिन",
+  },
+  ar: {
+    menuTitle: "القائمة",
+    products: "قائمة المنتجات",
+    stores: "الوصول",
+    delivery: "التوصيل",
+    about: "قصتنا",
+    company: "نبذة عن الشركة",
+    news: "الإشعارات",
+    interview: "للاعلام",
+    timeline: "الخط الزمني",
+    community: "المجتمع",
+    analytics: "التحليلات",
+    admin: "تسجيل دخول المسؤول",
+  },
+};
+
 export default function Header({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // ▼ UI言語
+  const { uiLang } = useUILang();
+  const t = T[uiLang] ?? T.ja;
+  const rtl = uiLang === "ar";
+
+  // 3タップ状態
+  const [showAdminLink, setShowAdminLink] = useState(false);
+  const tapCountRef = useRef(0);
+  const lastTapAtRef = useRef(0);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -48,6 +309,39 @@ export default function Header({ className = "" }: { className?: string }) {
     ? `bg-gradient-to-b ${gradient}`
     : "bg-gray-100";
 
+  // Sheetが閉じたら3タップ状態をリセット
+  useEffect(() => {
+    if (!open) {
+      setShowAdminLink(false);
+      tapCountRef.current = 0;
+      lastTapAtRef.current = 0;
+    }
+  }, [open]);
+
+  // Sheet内で3タップ検出
+  const handleSecretTap = (e: React.PointerEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest(IGNORE_SELECTOR)) return;
+
+    const now = Date.now();
+    const last = lastTapAtRef.current;
+
+    if (now - last > TRIPLE_TAP_INTERVAL_MS) {
+      tapCountRef.current = 1;
+      lastTapAtRef.current = now;
+      return;
+    }
+
+    tapCountRef.current += 1;
+    lastTapAtRef.current = now;
+
+    if (tapCountRef.current >= 3) {
+      setShowAdminLink(true);
+      tapCountRef.current = 0;
+      lastTapAtRef.current = 0;
+    }
+  };
+
   return (
     <header
       className={clsx(
@@ -59,7 +353,7 @@ export default function Header({ className = "" }: { className?: string }) {
     >
       <Link
         href="/"
-        className="text-[18px] text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
+        className="text-[18px] text-white text-outline font-bold flex items-center gap-2 py-2 hover:opacity-50"
         onClick={handleMenuClose}
       >
         {logoUrl && logoUrl.trim() !== "" && (
@@ -113,6 +407,7 @@ export default function Header({ className = "" }: { className?: string }) {
               variant="ghost"
               size="icon"
               className="w-7 h-7 text-white border-2 border-white"
+              aria-label={t.menuTitle}
             >
               <Menu size={26} />
             </Button>
@@ -120,6 +415,7 @@ export default function Header({ className = "" }: { className?: string }) {
 
           <SheetContent
             side="right"
+            dir={rtl ? "rtl" : "ltr"}
             className={clsx(
               "flex flex-col bg-gray-100",
               gradient && "bg-gradient-to-b",
@@ -130,95 +426,111 @@ export default function Header({ className = "" }: { className?: string }) {
           >
             <SheetHeader className="pt-4 px-4">
               <SheetTitle className="text-center text-xl text-white">
-                メニュー
+                {t.menuTitle}
               </SheetTitle>
             </SheetHeader>
 
-            <div className="flex-1 flex flex-col justify-center items-center space-y-4 text-center">
-              <Link
-                href="/products"
-                onClick={handleMenuClose}
-                className="text-lg text-white"
-              >
-                商品一覧
-              </Link>
-              <Link
-                href="/stores"
-                onClick={handleMenuClose}
-                className="text-lg text-white"
-              >
-                アクセス
-              </Link>
-              <Link
-                href="https://www.ubereats.com/store/%E3%81%97%E3%82%85%E3%82%8F%E3%81%A3%E3%81%A8%E8%B4%85%E6%B2%A2%E3%83%8F%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%84%E3%81%BF%E3%81%A4%E3%81%8D%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%95-%E3%82%88%E3%81%A3%E3%81%A6%E5%B1%8B/ycwuMM91VIaoNcZ1oCr_5g?diningMode=DELIVERY"
-                onClick={handleMenuClose}
-                className="text-lg text-white"
-              >
-                デリバリー
-              </Link>
-              <Link
-                href="/about"
-                onClick={handleMenuClose}
-                className="text-lg text-white"
-              >
-                当店の思い
-              </Link>
-               <Link
-                href="/company"
-                onClick={handleMenuClose}
-                className="text-lg text-white"
-              >
-                会社概要
-              </Link>
-              <Link
-                href="/news"
-                onClick={handleMenuClose}
-                className="text-lg text-white"
-              >
-                お知らせ
-              </Link>
-              <a
-                href="/blog"
-                onClick={handleMenuClose}
-                className="text-white hover:underline bg-transparent hover:bg-white/10 transition inline-block px-4 py-2 rounded"
-              >
-                取材はこちら
-              </a>
-            </div>
+            {/* ▼ このラッパーで3タップ検出 */}
+            <div
+              className="flex-1 flex flex-col justify-between"
+              onPointerDown={handleSecretTap}
+            >
+              {/* 上段：メニュー（文言のみ多言語化） */}
+              <div className="flex-1 flex flex-col justify-center items-center space-y-4 text-center">
+                <Link
+                  href="/products"
+                  onClick={handleMenuClose}
+                  className="text-lg text-white"
+                >
+                  {t.products}
+                </Link>
+                <Link
+                  href="/stores"
+                  onClick={handleMenuClose}
+                  className="text-lg text-white"
+                >
+                  {t.stores}
+                </Link>
+                <Link
+                  href="https://www.ubereats.com/store/%E3%81%97%E3%82%85%E3%82%8F%E3%81%A3%E3%81%A8%E8%B4%85%E6%B2%A2%E3%83%8F%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%84%E3%81%BF%E3%81%A4%E3%81%8D%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%95-%E3%82%88%E3%81%A3%E3%81%A6%E5%B1%8B/ycwuMM91VIaoNcZ1oCr_5g?diningMode=DELIVERY"
+                  onClick={handleMenuClose}
+                  className="text-lg text-white"
+                >
+                  {t.delivery}
+                </Link>
+                <Link
+                  href="/about"
+                  onClick={handleMenuClose}
+                  className="text-lg text-white"
+                >
+                  {t.about}
+                </Link>
+                <Link
+                  href="/company"
+                  onClick={handleMenuClose}
+                  className="text-lg text-white"
+                >
+                  {t.company}
+                </Link>
+                <Link
+                  href="/news"
+                  onClick={handleMenuClose}
+                  className="text-lg text-white"
+                >
+                  {t.news}
+                </Link>
+                <a
+                  href="/blog"
+                  onClick={handleMenuClose}
+                  className="text-white hover:underline bg-transparent hover:bg-white/10 transition inline-block px-4 py-2 rounded"
+                >
+                  {t.interview}
+                </a>
+              </div>
 
-            <div className="p-4 space-y-2">
-              {isLoggedIn && (
-                <>
+              {/* 言語ピッカー（既存UIに影響しない位置） */}
+              <div className="flex flex-col items-center gap-3 px-4 pb-2">
+                <UILangFloatingPicker />
+              </div>
+
+              {/* 下段：フッターリンク（ログイン or 3タップで管理者表示） */}
+              <div className="p-4 space-y-2">
+                {isLoggedIn && (
+                  <>
+                    <Link
+                      href="/postList"
+                      onClick={handleMenuClose}
+                      className="block text-center text-lg text-white"
+                    >
+                      {t.timeline}
+                    </Link>
+                    <Link
+                      href="/community"
+                      onClick={handleMenuClose}
+                      className="block text-center text-lg text-white"
+                    >
+                      {t.community}
+                    </Link>
+                    <Link
+                      href="/analytics"
+                      onClick={handleMenuClose}
+                      className="block text-center text-lg text-white"
+                    >
+                      {t.analytics}
+                    </Link>
+                  </>
+                )}
+
+                {(showAdminLink || isLoggedIn) && (
                   <Link
-                    href="/postList"
+                    href="/login"
                     onClick={handleMenuClose}
                     className="block text-center text-lg text-white"
                   >
-                    タイムライン
+                    {t.admin}
                   </Link>
-                  <Link
-                    href="/community"
-                    onClick={handleMenuClose}
-                    className="block text-center text-lg text-white"
-                  >
-                    コミュニティ
-                  </Link>
-                  <Link
-                    href="/analytics"
-                    onClick={handleMenuClose}
-                    className="block text-center text-lg text-white"
-                  >
-                    分析
-                  </Link>
-                </>
-              )}
-              <Link
-                href="/login"
-                onClick={handleMenuClose}
-                className="block text-center text-lg text-white"
-              >
-                管理者ログイン
-              </Link>
+                )}
+              </div>
             </div>
           </SheetContent>
         </Sheet>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { Plus } from "lucide-react";
+import { Pin, Plus } from "lucide-react";
 import { v4 as uuid } from "uuid";
 import imageCompression from "browser-image-compression";
 import {
@@ -51,45 +51,116 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import ProductMedia from "./ProductMedia";
 
+// ▼ 多言語関連
+import { LANGS, type LangKey } from "@/lib/langs";
+import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
+
+// 既存型を尊重しつつ、base/t を拡張で扱えるようにする
 import { type Product } from "@/types/Product";
 import { QueryDocumentSnapshot } from "firebase/firestore";
 
+// BusyOverlay
+import { BusyOverlay } from "./BusyOverlay";
+
+// ▼ 共通ファイル形式ユーティリティ
+import {
+  IMAGE_MIME_TYPES,
+  VIDEO_MIME_TYPES,
+  extFromMime,
+} from "@/lib/fileTypes";
+
+/* ===================== 多言語用型・ユーティリティ ===================== */
+type Base = { title: string; body: string };
+type Tr = { lang: LangKey; title?: string; body?: string };
+
+// 表示用：UI言語に応じて title/body を解決（既存 title/body も後方互換で参照）
+function displayOf(p: Product & { base?: Base; t?: Tr[] }, lang: UILang): Base {
+  const fallback: Base = {
+    title: (p as any)?.title ?? "",
+    body: (p as any)?.body ?? "",
+  };
+
+  // base/t を持たない古いデータは既存の title/body をそのまま表示
+  if (!p.base && !p.t) return fallback;
+
+  if (lang === "ja") {
+    return p.base ?? fallback;
+  }
+  const hit = p.t?.find((x) => x.lang === lang);
+  return {
+    title: (hit?.title ?? p.base?.title ?? fallback.title) || "",
+    body: (hit?.body ?? p.base?.body ?? fallback.body) || "",
+  };
+}
+
+// 一括翻訳（/api/translate を各言語へ投げる）
+async function translateAll(titleJa: string, bodyJa: string): Promise<Tr[]> {
+  const tasks = LANGS.map(async (l) => {
+    const res = await fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: titleJa, body: bodyJa, target: l.key }),
+    });
+    if (!res.ok) throw new Error(`translate failed: ${l.key}`);
+    const data = (await res.json()) as { title?: string; body?: string };
+    return {
+      lang: l.key,
+      title: (data.title ?? "").trim(),
+      body: (data.body ?? "").trim(),
+    };
+  });
+  return Promise.all(tasks);
+}
+
+/* ===================== 税込/税抜の多言語辞書 ===================== */
+const TAX_T: Record<UILang, { incl: string; excl: string }> = {
+  ja: { incl: "税込", excl: "税抜" },
+  en: { incl: "tax included", excl: "tax excluded" },
+  zh: { incl: "含税", excl: "不含税" },
+  "zh-TW": { incl: "含稅", excl: "未稅" },
+  ko: { incl: "부가세 포함", excl: "부가세 별도" },
+  fr: { incl: "TTC", excl: "HT" },
+  es: { incl: "IVA incluido", excl: "sin IVA" },
+  de: { incl: "inkl. MwSt.", excl: "zzgl. MwSt." },
+  pt: { incl: "com impostos", excl: "sem impostos" },
+  it: { incl: "IVA inclusa", excl: "IVA esclusa" },
+  ru: { incl: "с НДС", excl: "без НДС" },
+  th: { incl: "รวมภาษี", excl: "ไม่รวมภาษี" },
+  vi: { incl: "đã gồm thuế", excl: "chưa gồm thuế" },
+  id: { incl: "termasuk pajak", excl: "tidak termasuk pajak" },
+  hi: { incl: "कर सहित", excl: "कर के बिना" },
+  ar: { incl: "شامل الضريبة", excl: "غير شامل الضريبة" },
+};
+
+/* ===================== 既存コードの定数 ===================== */
 type MediaType = "image" | "video";
 
 const SITE_KEY = "yotteya";
 const PAGE_SIZE = 20;
 const MAX_VIDEO_SEC = 30;
-const VIDEO_MIME_TYPES: string[] = [
-  "video/mp4",
-  "video/quicktime",
-  "video/webm",
-  "video/ogg",
-  "video/x-m4v",
-  "video/x-msvideo",
-  "video/x-ms-wmv",
-  "video/mpeg",
-  "video/3gpp",
-  "video/3gpp2",
-];
-const IMAGE_MIME_TYPES: string[] = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-];
 
 export default function ProductsClient() {
-  const [list, setList] = useState<Product[]>([]);
+  // ▼ list は base/t を含む拡張で扱えるように（UIや機能はそのまま）
+  const [list, setList] = useState<(Product & { base?: Base; t?: Tr[] })[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit" | null>(null);
-  const [editing, setEditing] = useState<Product | null>(null);
+  const [editing, setEditing] = useState<
+    (Product & { base?: Base; t?: Tr[] }) | null
+  >(null);
   const [file, setFile] = useState<File | null>(null);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+
+  // ▼ フォーム表示は既存 UI を変えず、日本語（原文）入力を維持
+  const [title, setTitle] = useState(""); // 原文＝日本語
+  const [body, setBody] = useState(""); // 原文＝日本語
   const [price, setPrice] = useState<number | "">("");
   const [taxIncluded, setTaxIncluded] = useState(true); // デフォルト税込
+
+  // アップロード・保存の可視化
   const [progress, setProgress] = useState<number | null>(null);
+  const [uploadingPercent, setUploadingPercent] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const uploading = progress !== null;
+
   const [aiLoading, setAiLoading] = useState(false);
 
   // 1ページあたり
@@ -101,6 +172,10 @@ export default function ProductsClient() {
 
   const gradient = useThemeGradient();
   const router = useRouter();
+
+  // ▼ 現在のUI言語（多言語表示に使用）
+  const { uiLang } = useUILang();
+  const taxT = TAX_T[uiLang] ?? TAX_T.ja;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -142,10 +217,24 @@ export default function ProductsClient() {
 
     // ─── リアルタイム購読 ───
     const unsub = onSnapshot(firstQuery, (snap) => {
-      const firstPage: Product[] = snap.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<Product, "id">),
-      }));
+      const firstPage = snap.docs.map((d) => {
+        const data = d.data() as any;
+        // base/t（新方式）と、既存 title/body 両対応
+        const row: Product & { base?: Base; t?: Tr[] } = {
+          id: d.id,
+          title: data.title ?? "",
+          body: data.body ?? "",
+          price: data.price ?? 0,
+          mediaURL: data.mediaURL ?? data.imageURL ?? "",
+          mediaType: (data.mediaType ?? "image") as MediaType,
+          originalFileName: data.originalFileName,
+          taxIncluded: data.taxIncluded ?? true,
+          order: data.order ?? 9999,
+          base: data.base, // 追加
+          t: Array.isArray(data.t) ? data.t : [], // 追加
+        };
+        return row;
+      });
 
       setList(firstPage);
       setLastDoc(snap.docs.at(-1) ?? null);
@@ -169,10 +258,23 @@ export default function ProductsClient() {
     );
 
     const snap = await getDocs(nextQuery);
-    const nextPage: Product[] = snap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as Omit<Product, "id">),
-    }));
+    const nextPage = snap.docs.map((d) => {
+      const data = d.data() as any;
+      const row: Product & { base?: Base; t?: Tr[] } = {
+        id: d.id,
+        title: data.title ?? "",
+        body: data.body ?? "",
+        price: data.price ?? 0,
+        mediaURL: data.mediaURL ?? data.imageURL ?? "",
+        mediaType: (data.mediaType ?? "image") as MediaType,
+        originalFileName: data.originalFileName,
+        taxIncluded: data.taxIncluded ?? true,
+        order: data.order ?? 9999,
+        base: data.base, // 追加
+        t: Array.isArray(data.t) ? data.t : [], // 追加
+      };
+      return row;
+    });
 
     setList((prev) => [...prev, ...nextPage]);
     setLastDoc(snap.docs.at(-1) ?? null);
@@ -197,9 +299,9 @@ export default function ProductsClient() {
 
   useEffect(() => {
     const unsub = onSnapshot(colRef, (snap) => {
-      const rows: Product[] = snap.docs.map((d) => {
-        const data = d.data() as DocumentData;
-        return {
+      const rows = snap.docs.map((d) => {
+        const data = d.data() as any;
+        const row: Product & { base?: Base; t?: Tr[] } = {
           id: d.id,
           title: data.title,
           body: data.body,
@@ -208,8 +310,11 @@ export default function ProductsClient() {
           mediaType: (data.mediaType ?? "image") as MediaType,
           originalFileName: data.originalFileName,
           taxIncluded: data.taxIncluded ?? true,
-          order: data.order ?? 9999, // 🔧 ← 追加
+          order: data.order ?? 9999,
+          base: data.base, // 追加
+          t: Array.isArray(data.t) ? data.t : [], // 追加
         };
+        return row;
       });
       rows.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
       setList(rows);
@@ -223,6 +328,7 @@ export default function ProductsClient() {
     if (price === "") return alert("価格を入力してください");
     if (formMode === "add" && !file) return alert("メディアを選択してください");
 
+    setSaving(true);
     try {
       const id = editing?.id ?? uuid();
       let mediaURL = editing?.mediaURL ?? "";
@@ -239,15 +345,15 @@ export default function ProductsClient() {
         const isValidImage = IMAGE_MIME_TYPES.includes(file.type);
 
         if (!isValidImage && !isValidVideo) {
-          alert("対応形式：画像（JPEG, PNG）／動画（MP4, MOV）");
+          alert(
+            "対応形式：画像（JPEG, PNG, WEBP, GIF）／動画（MP4, MOV など）"
+          );
+          setSaving(false);
           return;
         }
 
-        const ext = isVideo
-          ? file.type === "video/quicktime"
-            ? "mov"
-            : "mp4"
-          : "jpg";
+        // 画像は JPEG へ圧縮・変換するため拡張子は jpg、動画は MIME から拡張子を得る
+        const ext = isVideo ? extFromMime(file.type) : "jpg";
 
         const uploadFile = isVideo
           ? file
@@ -255,7 +361,7 @@ export default function ProductsClient() {
               maxWidthOrHeight: 1200,
               maxSizeMB: 0.7,
               useWebWorker: true,
-              fileType: "image/jpeg",
+              fileType: "image/jpeg", // JPEGでアップロード
               initialQuality: 0.8,
             });
 
@@ -269,9 +375,12 @@ export default function ProductsClient() {
         });
 
         setProgress(0);
-        task.on("state_changed", (s) =>
-          setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100))
-        );
+        setUploadingPercent(0);
+        task.on("state_changed", (s) => {
+          const pct = Math.round((s.bytesTransferred / s.totalBytes) * 100);
+          setProgress(pct);
+          setUploadingPercent(pct);
+        });
         await task;
 
         const downloadURL = await getDownloadURL(storageRef);
@@ -280,8 +389,9 @@ export default function ProductsClient() {
         // キャッシュバスターで強制更新
         mediaURL = `${downloadURL}?v=${uuid()}`;
         setProgress(null);
+        setUploadingPercent(null);
 
-        // 拡張子変更に伴う旧ファイル削除
+        // 拡張子変更に伴う旧ファイル削除（既存は mp4/jpg 想定のまま）
         if (formMode === "edit" && editing) {
           const oldExt = editing.mediaType === "video" ? "mp4" : "jpg";
           if (oldExt !== ext) {
@@ -292,7 +402,12 @@ export default function ProductsClient() {
         }
       }
 
+      // ▼ 多言語保存：原文（日本語）→ 全言語翻訳して base/t を保存
+      const base: Base = { title: title.trim(), body: body.trim() };
+      const t: Tr[] = await translateAll(base.title, base.body);
+
       type ProductPayload = {
+        // 既存互換フィールド（UIは変えない）
         title: string;
         body: string;
         price: number;
@@ -300,15 +415,22 @@ export default function ProductsClient() {
         mediaType: "image" | "video";
         originalFileName?: string;
         taxIncluded: boolean;
+
+        // 多言語フィールド（追加）
+        base: Base;
+        t: Tr[];
       };
 
       const payload: ProductPayload = {
-        title,
-        body,
-        price,
+        // 既存互換として title/body に原文（日本語）を維持
+        title: base.title,
+        body: base.body,
+        price: Number(price),
         mediaURL,
         mediaType,
         taxIncluded,
+        base,
+        t,
       };
 
       // originalFileName があるときだけ追加
@@ -328,44 +450,25 @@ export default function ProductsClient() {
       console.error(e);
       alert("保存に失敗しました。対応形式や容量をご確認ください。");
       setProgress(null);
+      setUploadingPercent(null);
+    } finally {
+      setSaving(false);
     }
   };
-
-  // const remove = async (p: Product) => {
-  //   if (uploading) return;
-  //   if (!confirm(`「${p.title}」を削除しますか？`)) return;
-
-  //   await deleteDoc(doc(colRef, p.id));
-  //   if (p.mediaURL) {
-  //     const ext = p.mediaType === "video" ? "mp4" : "jpg";
-  //     await deleteObject(
-  //       ref(getStorage(), `products/public/${SITE_KEY}/${p.id}.${ext}`)
-  //     ).catch(() => {});
-  //   }
-  // };
 
   const openAdd = () => {
     if (uploading) return;
     resetFields();
     setFormMode("add");
   };
-  // const openEdit = (p: Product) => {
-  //   if (uploading) return;
-  //   setEditing(p);
-  //   setTitle(p.title);
-  //   setBody(p.body);
-  //   setPrice(p.price);
-  //   setTaxIncluded(p.taxIncluded ?? true);
-  //   setFile(null);
-  //   setFormMode("edit");
-  // };
+  // const openEdit = (p: Product) => { ... }
 
   const closeForm = () => {
     if (uploading) return;
     setTimeout(() => {
       resetFields();
       setFormMode(null);
-    }, 100); // 少しだけ遅延させるとUIフリーズ対策になる
+    }, 100);
   };
 
   const resetFields = () => {
@@ -396,17 +499,8 @@ export default function ProductsClient() {
 
   return (
     <main className="max-w-5xl mx-auto p-4 pt-20">
-      {uploading && (
-        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/60 gap-4">
-          <p className="text-white">アップロード中… {progress}%</p>
-          <div className="w-64 h-2 bg-gray-700 rounded">
-            <div
-              className="h-full bg-green-500 rounded transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      )}
+      {/* BusyOverlay：アップロード中 or 保存中 */}
+      <BusyOverlay uploadingPercent={uploadingPercent} saving={saving} />
 
       <DndContext
         sensors={sensors}
@@ -419,6 +513,8 @@ export default function ProductsClient() {
         >
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {list.map((p) => {
+              // ▼ 多言語表示：UI言語に応じて見出しを決定
+              const loc = displayOf(p, uiLang);
               return (
                 <SortableItem key={p.id} product={p}>
                   {({ listeners, attributes, isDragging }) => (
@@ -429,10 +525,11 @@ export default function ProductsClient() {
                       transition={{ duration: 0.3 }}
                       onClick={() => {
                         if (isDragging) return;
+                        // 既存遷移はそのまま
                         router.push(`/products/${p.id}`);
                       }}
                       className={clsx(
-                        "flex flex-col h-full border rounded-lg overflow-hidden shadow relative transition-colors duration-200",
+                        "flex flex-col h-full border rounded-lg shadow relative transition-colors duration-200",
                         "bg-gradient-to-b",
                         gradient,
                         isDragging
@@ -448,54 +545,36 @@ export default function ProductsClient() {
                         <div
                           {...attributes}
                           {...listeners}
-                          onTouchStart={(e) => e.preventDefault()}
-                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 cursor-grab active:cursor-grabbing touch-none select-none"
+                          onClick={(e) => e.stopPropagation()} // カード遷移を防止
+                          onTouchStart={(e) => e.preventDefault()} // ロングタップ誤作動防止
+                          onContextMenu={(e) => e.preventDefault()} // 右クリックメニュー抑止
+                          draggable={false} // ネイティブD&D無効化
+                          className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 z-30 cursor-grab active:cursor-grabbing touch-none select-none p-3"
+                          role="button"
+                          aria-label="並び替え"
                         >
-                          <div className="w-10 h-10 bg-gray-200 text-gray-700 rounded-full text-sm flex items-center justify-center shadow">
-                            ≡
+                          {/* 白い丸い土台（影付き） */}
+                          <div className="w-10 h-10 rounded-full bg-white/95 flex items-center justify-center shadow pointer-events-none">
+                            <Pin />
                           </div>
                         </div>
                       )}
 
-                      {/* 編集・削除ボタン */}
-                      {/* {isAdmin && (
-                        <div className="absolute top-2 right-2 z-20 flex gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEdit(p);
-                            }}
-                            disabled={uploading}
-                            className="px-2 py-1 bg-blue-600 text-white text-md rounded shadow disabled:opacity-50"
-                          >
-                            編集
-                          </button>
-                          <button
-                            onClick={() => remove(p)}
-                            disabled={uploading}
-                            className="px-2 py-1 bg-red-600 text-white text-md rounded shadow disabled:opacity-50"
-                          >
-                            削除
-                          </button>
-                        </div>
-                      )} */}
-
-                      {/* メディア表示 */}
+                      {/* メディア表示（既存のまま） */}
                       <ProductMedia
                         src={p.mediaURL}
                         type={p.mediaType}
-                        className="shadow-lg" /* 追加スタイルがあれば */
-                        /* autoPlay / loop / muted はデフォルト true。変更する場合だけ渡す */
+                        className="shadow-lg"
                       />
 
-                      {/* 商品情報 */}
+                      {/* 商品情報（タイトルは多言語化／税込表示は辞書化） */}
                       <div className="p-1 space-y-1">
                         <h2
                           className={clsx("text-sm font-bold", {
                             "text-white": isDark,
                           })}
                         >
-                          {p.title}
+                          {loc.title || p.title || "（無題）"}
                         </h2>
 
                         <p
@@ -503,18 +582,9 @@ export default function ProductsClient() {
                             "text-white": isDark,
                           })}
                         >
-                          ¥{p.price.toLocaleString()}（
-                          {p.taxIncluded ? "税込" : "税抜"}）
+                          ¥{(p.price ?? 0).toLocaleString()}（
+                          {p.taxIncluded ? taxT.incl : taxT.excl}）
                         </p>
-
-                        {/* <p
-                          className={clsx(
-                            "text-sm whitespace-pre-wrap",
-                            isDark && "text-white"
-                          )}
-                        >
-                          {p.body}
-                        </p> */}
                       </div>
                     </motion.div>
                   )}
@@ -543,6 +613,7 @@ export default function ProductsClient() {
               {formMode === "edit" ? "商品を編集" : "新規商品追加"}
             </h2>
 
+            {/* 原文（日本語）入力は既存のまま維持 */}
             <input
               type="text"
               placeholder="商品名"
@@ -554,12 +625,12 @@ export default function ProductsClient() {
             <input
               type="number"
               inputMode="numeric"
-              pattern="[0-9]*" // iOS向けの補助
+              pattern="[0-9]*"
               placeholder="価格 (円)"
               value={price}
               onChange={(e) => {
                 const val = e.target.value;
-                setPrice(val === "" ? "" : Number(val)); // 空なら ""、それ以外は number
+                setPrice(val === "" ? "" : Number(val));
               }}
               className="w-full border px-3 py-2 rounded"
               disabled={uploading}
@@ -572,6 +643,7 @@ export default function ProductsClient() {
                   checked={taxIncluded}
                   onChange={() => setTaxIncluded(true)}
                 />
+                {/* ← 多言語をやめて日本語固定 */}
                 税込
               </label>
               <label>
@@ -580,6 +652,7 @@ export default function ProductsClient() {
                   checked={!taxIncluded}
                   onChange={() => setTaxIncluded(false)}
                 />
+                {/* ← 多言語をやめて日本語固定 */}
                 税抜
               </label>
             </div>
@@ -592,6 +665,7 @@ export default function ProductsClient() {
               disabled={uploading}
             />
 
+            {/* 既存の AI 生成ボタンはそのまま（結果は日本語本文へ） */}
             <button
               onClick={async () => {
                 if (!title) return alert("タイトルを入力してください");
@@ -646,6 +720,7 @@ export default function ProductsClient() {
                 "AIで紹介文を生成"
               )}
             </button>
+
             <input
               type="file"
               accept={[...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES].join(",")}
@@ -667,13 +742,13 @@ export default function ProductsClient() {
                 vid.src = blobURL;
 
                 vid.onloadedmetadata = () => {
-                  URL.revokeObjectURL(blobURL); // もう不要
+                  URL.revokeObjectURL(blobURL);
                   if (vid.duration > MAX_VIDEO_SEC) {
                     alert(`動画は ${MAX_VIDEO_SEC} 秒以内にしてください`);
-                    e.target.value = ""; // input をリセット
+                    e.target.value = "";
                     return;
                   }
-                  setFile(f); // 30 秒以内なら state へ
+                  setFile(f);
                 };
               }}
               className="bg-gray-500 text-white w-full h-10 px-3 py-1 rounded"
