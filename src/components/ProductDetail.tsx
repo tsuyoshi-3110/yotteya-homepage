@@ -67,8 +67,6 @@ type ProductDoc = Product & {
   sectionId?: string | null;
 };
 
-
-
 /* ▼ 表示用：UI 言語に応じてタイトル/本文を解決 */
 function pickLocalized(
   p: ProductDoc,
@@ -87,11 +85,7 @@ function pickLocalized(
   };
 }
 
-function sectionTitleLoc(s: Section, lang: UILang): string {
-  if (lang === "ja") return s.base?.title ?? "";
-  const hit = s.t?.find((x) => x.lang === lang);
-  return hit?.title ?? s.base?.title ?? "";
-}
+
 
 /* ▼ 保存時に日本語→各言語へ翻訳（/api/translate を使用） */
 type Tr = { lang: LangKey; title: string; body: string };
@@ -228,7 +222,8 @@ export default function ProductDetail({ product }: { product: Product }) {
     try {
       let mediaURL = displayProduct.mediaURL;
       let mediaType: MediaType = displayProduct.mediaType;
-      let originalFileName: string | undefined = displayProduct.originalFileName;
+      let originalFileName: string | undefined =
+        displayProduct.originalFileName;
 
       /* 画像 / 動画を差し替える場合のみアップロード */
       if (file) {
@@ -471,7 +466,7 @@ export default function ProductDetail({ product }: { product: Product }) {
           <div className="w-full max-w-md bg-white rounded-lg p-6 space-y-4">
             <h2 className="text-xl font-bold text-center">商品を編集</h2>
 
-             {/* ▼ セクションピッカー（管理画面の order 順を反映） */}
+            {/* ▼ セクションピッカー（管理画面の order 順を反映） */}
             <div className="space-y-1">
               <label className="text-sm">カテゴリー</label>
               <select
@@ -484,10 +479,10 @@ export default function ProductDetail({ product }: { product: Product }) {
                 }
                 disabled={uploading}
               >
-                <option value="">全カテゴリー</option>
+                <option value="">未設定</option>
                 {sections.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {sectionTitleLoc(s, uiLang)}
+                    {s.base?.title ?? ""}
                   </option>
                 ))}
               </select>
@@ -544,8 +539,6 @@ export default function ProductDetail({ product }: { product: Product }) {
               disabled={uploading}
             />
 
-
-
             <input
               type="file"
               accept={[...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES].join(",")}
@@ -577,7 +570,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               <button
                 onClick={() => !uploading && setShowEdit(false)}
                 disabled={uploading}
-                className="px-4 py-2 bg-gray-500 text白 rounded disabled:opacity-50"
+                className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
               >
                 閉じる
               </button>

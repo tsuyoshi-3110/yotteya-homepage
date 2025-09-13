@@ -87,24 +87,24 @@ type Section = {
 
 type ProdDoc = Product & { base?: Base; t?: Tr[]; sectionId?: string | null };
 
-  const ALL_CATEGORY_T: Record<UILang, string> = {
-    ja: "全カテゴリー",
-    en: "All categories",
-    zh: "全部分类",
-    "zh-TW": "全部分類",
-    ko: "모든 카테고리",
-    fr: "Toutes les catégories",
-    es: "Todas las categorías",
-    de: "Alle Kategorien",
-    pt: "Todas as categorias",
-    it: "Tutte le categorie",
-    ru: "Все категории",
-    th: "ทุกหมวดหมู่",
-    vi: "Tất cả danh mục",
-    id: "Semua kategori",
-    hi: "सभी श्रेणियाँ",
-    ar: "كل الفئات",
-  };
+const ALL_CATEGORY_T: Record<UILang, string> = {
+  ja: "全カテゴリー",
+  en: "All categories",
+  zh: "全部分类",
+  "zh-TW": "全部分類",
+  ko: "모든 카테고리",
+  fr: "Toutes les catégories",
+  es: "Todas las categorías",
+  de: "Alle Kategorien",
+  pt: "Todas as categorias",
+  it: "Tutte le categorie",
+  ru: "Все категории",
+  th: "ทุกหมวดหมู่",
+  vi: "Tất cả danh mục",
+  id: "Semua kategori",
+  hi: "सभी श्रेणियाँ",
+  ar: "كل الفئات",
+};
 
 /** 表示テキスト多言語解決 */
 function displayOf(p: Product & { base?: Base; t?: Tr[] }, lang: UILang): Base {
@@ -286,8 +286,6 @@ export default function ProductsClient() {
 
   const gradient = useThemeGradient();
   const router = useRouter();
-
-
 
   // UI言語
   const { uiLang } = useUILang();
@@ -708,7 +706,8 @@ export default function ProductsClient() {
   };
 
   const currentSectionLabel = useMemo(() => {
-  if (selectedSectionId === "all") return ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja;
+    if (selectedSectionId === "all")
+      return ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja;
     const hit = sections.find((s) => s.id === selectedSectionId);
     return hit ? sectionTitleLoc(hit, uiLang) : "";
   }, [selectedSectionId, sections, uiLang]);
@@ -733,7 +732,9 @@ export default function ProductsClient() {
               value={selectedSectionId}
               onChange={(e) => setSelectedSectionId(e.target.value)}
             >
-              <option value="all">{ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja}</option>
+              <option value="all">
+                {ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja}
+              </option>
               {sections.map((s) => (
                 <option key={s.id} value={s.id}>
                   {sectionTitleLoc(s, uiLang)}
@@ -957,12 +958,12 @@ export default function ProductsClient() {
                   onChange={(e) => setFormSectionId(e.target.value)}
                   className="w-full border px-3 h-10 rounded bg-white"
                 >
-                  <option value="">
-                    {ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja}
-                  </option>
+                  {/* 多言語辞書は使わず日本語固定 */}
+                  <option value="">未設定</option>
                   {sections.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {sectionTitleLoc(s, uiLang)}
+                      {/* セクション名も原文（base.title）を表示 */}
+                      {s.base?.title ?? ""}
                     </option>
                   ))}
                 </select>
