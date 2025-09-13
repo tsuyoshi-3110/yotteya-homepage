@@ -353,7 +353,7 @@ export default function Header({ className = "" }: { className?: string }) {
     >
       <Link
         href="/"
-        className="text-[18px] text-white text-outline font-bold flex items-center gap-2 py-2 hover:opacity-50"
+        className="text-md text-white text-outline font-bold flex items-center gap-2 py-2 hover:opacity-50"
         onClick={handleMenuClose}
       >
         {logoUrl && logoUrl.trim() !== "" && (
