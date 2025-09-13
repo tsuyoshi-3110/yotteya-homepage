@@ -10,7 +10,7 @@
   --font-mono: var(--font-geist-mono);
 
   /* ✅ 日本語フォントも切替対象に */
-   --font-kosugi: "Kosugi Maru", sans-serif;
+  --font-kosugi: "Kosugi Maru", sans-serif;
   --font-noto: "Noto Sans JP", sans-serif;
   --font-shippori: "Shippori Mincho", serif;
   --font-reggae: "Reggae One", cursive;
@@ -129,8 +129,9 @@
 
 /* 文字の周りに黒フチを作る */
 .text-outline {
-  text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000,
-    1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
+  color: white;
+  text-shadow: 1px 0 0 black, -1px 0 0 black, 0 1px 0 black, 0 -1px 0 black,
+    1px 1px 0 black, -1px 1px 0 black, 1px -1px 0 black, -1px -1px 0 black;
 }
 
 /* 濃いめにしたいとき（太めのフチ） */
@@ -163,7 +164,13 @@
 }
 
 @keyframes progress {
-  0% { transform: translateX(-100%) }
-  50% { transform: translateX(0%) }
-  100% { transform: translateX(100%) }
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }

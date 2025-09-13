@@ -82,7 +82,7 @@ export default function ProductMedia({
     <div
       ref={ref}
       className={clsx(
-        "relative w-full aspect-square overflow-hidden",
+        "relative w-full aspect-square overflow-hidden rounded-inherit", 
         className
       )}
     >

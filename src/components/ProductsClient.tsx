@@ -19,6 +19,9 @@ import {
   limit,
   startAfter,
   getDocs,
+  QueryDocumentSnapshot,
+  where,
+  deleteDoc,
 } from "firebase/firestore";
 import {
   getStorage,
@@ -41,6 +44,7 @@ import {
   useSensors,
   DragEndEvent,
 } from "@dnd-kit/core";
+
 import {
   arrayMove,
   SortableContext,
@@ -50,14 +54,14 @@ import SortableItem from "./SortableItem";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import ProductMedia from "./ProductMedia";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 // ▼ 多言語関連
 import { LANGS, type LangKey } from "@/lib/langs";
 import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
 
-// 既存型を尊重しつつ、base/t を拡張で扱えるようにする
+// 既存型を尊重しつつ、base/t/sectionId を拡張で扱えるようにする
 import { type Product } from "@/types/Product";
-import { QueryDocumentSnapshot } from "firebase/firestore";
 
 // BusyOverlay
 import { BusyOverlay } from "./BusyOverlay";
@@ -70,8 +74,18 @@ import {
 } from "@/lib/fileTypes";
 
 /* ===================== 多言語用型・ユーティリティ ===================== */
+type MediaType = "image" | "video";
+
 type Base = { title: string; body: string };
 type Tr = { lang: LangKey; title?: string; body?: string };
+
+/* ▼▼▼ セクション（タイトルのみ、多言語対応） ▼▼▼ */
+type Section = {
+  id: string;
+  base: { title: string }; // body なし（タイトルのみ）
+  t: Array<{ lang: LangKey; title?: string }>;
+  createdAt?: any;
+};
 
 // 表示用：UI言語に応じて title/body を解決（既存 title/body も後方互換で参照）
 function displayOf(p: Product & { base?: Base; t?: Tr[] }, lang: UILang): Base {
@@ -93,7 +107,14 @@ function displayOf(p: Product & { base?: Base; t?: Tr[] }, lang: UILang): Base {
   };
 }
 
-// 一括翻訳（/api/translate を各言語へ投げる）
+// セクション表示用ローカライズ（タイトルのみ）
+function sectionTitleLoc(s: Section, lang: UILang): string {
+  if (lang === "ja") return s.base?.title ?? "";
+  const hit = s.t?.find((x) => x.lang === lang);
+  return hit?.title ?? s.base?.title ?? "";
+}
+
+// 本体の一括翻訳（/api/translate を各言語へ）
 async function translateAll(titleJa: string, bodyJa: string): Promise<Tr[]> {
   const tasks = LANGS.map(async (l) => {
     const res = await fetch("/api/translate", {
@@ -110,6 +131,22 @@ async function translateAll(titleJa: string, bodyJa: string): Promise<Tr[]> {
     };
   });
   return Promise.all(tasks);
+}
+
+// セクション（タイトルのみ）の一括翻訳（allSettledではなくallで型を揃える）
+type SectionTr = { lang: LangKey; title: string };
+async function translateSectionTitleAll(titleJa: string): Promise<SectionTr[]> {
+  const jobs: Promise<SectionTr>[] = LANGS.map(async (l) => {
+    const res = await fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: titleJa, body: "", target: l.key }),
+    });
+    if (!res.ok) throw new Error(`section translate failed: ${l.key}`);
+    const data = (await res.json()) as { title?: string };
+    return { lang: l.key, title: (data.title ?? "").trim() };
+  });
+  return Promise.all(jobs);
 }
 
 /* ===================== 税込/税抜の多言語辞書 ===================== */
@@ -133,29 +170,30 @@ const TAX_T: Record<UILang, { incl: string; excl: string }> = {
 };
 
 /* ===================== 既存コードの定数 ===================== */
-type MediaType = "image" | "video";
 
-const SITE_KEY = "yotteya";
 const PAGE_SIZE = 20;
 const MAX_VIDEO_SEC = 30;
 
+type ProdDoc = Product & { base?: Base; t?: Tr[]; sectionId?: string | null };
+
 export default function ProductsClient() {
-  // ▼ list は base/t を含む拡張で扱えるように（UIや機能はそのまま）
-  const [list, setList] = useState<(Product & { base?: Base; t?: Tr[] })[]>([]);
+  // ▼ 商品
+  const [list, setList] = useState<ProdDoc[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit" | null>(null);
-  const [editing, setEditing] = useState<
-    (Product & { base?: Base; t?: Tr[] }) | null
-  >(null);
+  const [editing, setEditing] = useState<ProdDoc | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
-  // ▼ フォーム表示は既存 UI を変えず、日本語（原文）入力を維持
-  const [title, setTitle] = useState(""); // 原文＝日本語
-  const [body, setBody] = useState(""); // 原文＝日本語
+  // ▼ 原文（日本語）入力
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
   const [price, setPrice] = useState<number | "">("");
-  const [taxIncluded, setTaxIncluded] = useState(true); // デフォルト税込
+  const [taxIncluded, setTaxIncluded] = useState(true);
 
-  // アップロード・保存の可視化
+  // ▼ 新規追加用：セクション選択（★追加）
+  const [formSectionId, setFormSectionId] = useState<string>("");
+
+  // 既存アップロード表示
   const [progress, setProgress] = useState<number | null>(null);
   const [uploadingPercent, setUploadingPercent] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -163,24 +201,29 @@ export default function ProductsClient() {
 
   const [aiLoading, setAiLoading] = useState(false);
 
-  // 1ページあたり
-  const [lastDoc, setLastDoc] = useState<
-    QueryDocumentSnapshot<DocumentData> | null | undefined
-  >(null);
+  // ページング
+  const [lastDoc, setLastDoc] =
+    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const isFetchingMore = useRef(false);
+
+  // ▼ セクション（カテゴリ）
+  const [sections, setSections] = useState<Section[]>([]);
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("all");
+
+  // セクション管理モーダル
+  const [showSecModal, setShowSecModal] = useState(false);
+  const [newSecName, setNewSecName] = useState("");
 
   const gradient = useThemeGradient();
   const router = useRouter();
 
-  // ▼ 現在のUI言語（多言語表示に使用）
+  // UI言語
   const { uiLang } = useUILang();
   const taxT = TAX_T[uiLang] ?? TAX_T.ja;
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, {
       activationConstraint: { delay: 250, tolerance: 5 },
     })
@@ -192,8 +235,12 @@ export default function ProductsClient() {
     return darkThemes.some((key) => gradient === THEMES[key]);
   }, [gradient]);
 
-  const colRef: CollectionReference = useMemo(
+  const productColRef: CollectionReference = useMemo(
     () => collection(db, "siteProducts", SITE_KEY, "items"),
+    []
+  );
+  const sectionColRef: CollectionReference = useMemo(
+    () => collection(db, "siteSections", SITE_KEY, "sections"),
     []
   );
 
@@ -204,23 +251,53 @@ export default function ProductsClient() {
 
   useEffect(() => onAuthStateChanged(auth, (u) => setIsAdmin(!!u)), []);
 
+  /* ========== セクション購読（左上ピッカー & 新規追加モーダル用） ========== */
   useEffect(() => {
-    // すでに読み込み中ならスキップ
+    const qSec = query(sectionColRef, orderBy("createdAt", "asc"));
+    const unsub = onSnapshot(qSec, (snap) => {
+      const items: Section[] = snap.docs.map((d) => {
+        const data = d.data() as any;
+        return {
+          id: d.id,
+          base: data.base ?? { title: data.title ?? "" },
+          t: Array.isArray(data.t) ? data.t : [],
+          createdAt: data.createdAt,
+        };
+      });
+      setSections(items);
+      // 選択中が消された場合は "all" に戻す
+      if (
+        selectedSectionId !== "all" &&
+        !items.some((s) => s.id === selectedSectionId)
+      ) {
+        setSelectedSectionId("all");
+      }
+    });
+    return () => unsub();
+  }, [sectionColRef, selectedSectionId]);
+
+  /* ========== 初回/フィルタ変更で最初のページを購読 ========== */
+  useEffect(() => {
+    // リセット
+    setList([]);
+    setLastDoc(null);
+    setHasMore(true);
+
     if (isFetchingMore.current) return;
     isFetchingMore.current = true;
 
-    const firstQuery = query(
-      colRef,
-      orderBy("createdAt", "desc"),
-      limit(PAGE_SIZE)
-    );
+    const parts: any[] = [productColRef];
+    if (selectedSectionId !== "all") {
+      parts.push(where("sectionId", "==", selectedSectionId));
+    }
+    parts.push(orderBy("createdAt", "desc"));
+    parts.push(limit(PAGE_SIZE));
 
-    // ─── リアルタイム購読 ───
+    const firstQuery = query(...(parts as Parameters<typeof query>));
     const unsub = onSnapshot(firstQuery, (snap) => {
-      const firstPage = snap.docs.map((d) => {
+      const rows: ProdDoc[] = snap.docs.map((d) => {
         const data = d.data() as any;
-        // base/t（新方式）と、既存 title/body 両対応
-        const row: Product & { base?: Base; t?: Tr[] } = {
+        return {
           id: d.id,
           title: data.title ?? "",
           body: data.body ?? "",
@@ -230,37 +307,41 @@ export default function ProductsClient() {
           originalFileName: data.originalFileName,
           taxIncluded: data.taxIncluded ?? true,
           order: data.order ?? 9999,
-          base: data.base, // 追加
-          t: Array.isArray(data.t) ? data.t : [], // 追加
+          base: data.base,
+          t: Array.isArray(data.t) ? data.t : [],
+          sectionId: data.sectionId ?? null,
         };
-        return row;
       });
-
-      setList(firstPage);
-      setLastDoc(snap.docs.at(-1) ?? null);
+      setList(rows);
+      setLastDoc(
+        (snap.docs.at(-1) as QueryDocumentSnapshot<DocumentData>) || null
+      );
       setHasMore(snap.docs.length === PAGE_SIZE);
       isFetchingMore.current = false;
     });
 
-    // アンマウント時に解除
     return () => unsub();
-  }, [colRef]);
+  }, [productColRef, selectedSectionId]);
 
+  /* ========== 追加ページ取得（スクロールで使用） ========== */
   const fetchNextPage = useCallback(async () => {
     if (isFetchingMore.current || !hasMore || !lastDoc) return;
     isFetchingMore.current = true;
 
-    const nextQuery = query(
-      colRef,
-      orderBy("createdAt", "desc"),
-      startAfter(lastDoc),
-      limit(PAGE_SIZE)
-    );
+    const parts: any[] = [productColRef];
+    if (selectedSectionId !== "all") {
+      parts.push(where("sectionId", "==", selectedSectionId));
+    }
+    parts.push(orderBy("createdAt", "desc"));
+    parts.push(startAfter(lastDoc));
+    parts.push(limit(PAGE_SIZE));
 
+    const nextQuery = query(...(parts as Parameters<typeof query>));
     const snap = await getDocs(nextQuery);
-    const nextPage = snap.docs.map((d) => {
+
+    const nextRows: ProdDoc[] = snap.docs.map((d) => {
       const data = d.data() as any;
-      const row: Product & { base?: Base; t?: Tr[] } = {
+      return {
         id: d.id,
         title: data.title ?? "",
         body: data.body ?? "",
@@ -270,18 +351,21 @@ export default function ProductsClient() {
         originalFileName: data.originalFileName,
         taxIncluded: data.taxIncluded ?? true,
         order: data.order ?? 9999,
-        base: data.base, // 追加
-        t: Array.isArray(data.t) ? data.t : [], // 追加
+        base: data.base,
+        t: Array.isArray(data.t) ? data.t : [],
+        sectionId: data.sectionId ?? null,
       };
-      return row;
     });
 
-    setList((prev) => [...prev, ...nextPage]);
-    setLastDoc(snap.docs.at(-1) ?? null);
+    setList((prev) => [...prev, ...nextRows]);
+    setLastDoc(
+      (snap.docs.at(-1) as QueryDocumentSnapshot<DocumentData>) || null
+    );
     setHasMore(snap.docs.length === PAGE_SIZE);
     isFetchingMore.current = false;
-  }, [colRef, lastDoc, hasMore]);
+  }, [productColRef, lastDoc, hasMore, selectedSectionId]);
 
+  /* ========== スクロール監視で追加ロード ========== */
   useEffect(() => {
     const handleScroll = () => {
       if (
@@ -289,39 +373,47 @@ export default function ProductsClient() {
         !uploading &&
         window.innerHeight + window.scrollY >= document.body.offsetHeight - 150
       ) {
-        fetchNextPage();
+        fetchNextPage(); // lastDoc を使用
       }
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [fetchNextPage, hasMore, uploading]);
 
+  /* ========== 並び順リアルタイム（order 反映） ========== */
   useEffect(() => {
-    const unsub = onSnapshot(colRef, (snap) => {
-      const rows = snap.docs.map((d) => {
-        const data = d.data() as any;
-        const row: Product & { base?: Base; t?: Tr[] } = {
-          id: d.id,
-          title: data.title,
-          body: data.body,
-          price: data.price ?? 0,
-          mediaURL: data.mediaURL ?? data.imageURL ?? "",
-          mediaType: (data.mediaType ?? "image") as MediaType,
-          originalFileName: data.originalFileName,
-          taxIncluded: data.taxIncluded ?? true,
-          order: data.order ?? 9999,
-          base: data.base, // 追加
-          t: Array.isArray(data.t) ? data.t : [], // 追加
-        };
-        return row;
-      });
-      rows.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
-      setList(rows);
-    });
+    const parts: any[] = [productColRef];
+    if (selectedSectionId !== "all") {
+      parts.push(where("sectionId", "==", selectedSectionId));
+    }
+    const unsub = onSnapshot(
+      query(...(parts as Parameters<typeof query>)),
+      (snap) => {
+        const rows: ProdDoc[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            id: d.id,
+            title: data.title,
+            body: data.body,
+            price: data.price ?? 0,
+            mediaURL: data.mediaURL ?? data.imageURL ?? "",
+            mediaType: (data.mediaType ?? "image") as MediaType,
+            originalFileName: data.originalFileName,
+            taxIncluded: data.taxIncluded ?? true,
+            order: data.order ?? 9999,
+            base: data.base,
+            t: Array.isArray(data.t) ? data.t : [],
+            sectionId: data.sectionId ?? null,
+          };
+        });
+        rows.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
+        setList(rows);
+      }
+    );
     return () => unsub();
-  }, [colRef, jaCollator]);
+  }, [productColRef, jaCollator, selectedSectionId]);
 
+  /* ========== 商品保存（新規追加時にセクションIDを保存） ========== */
   const saveProduct = async () => {
     if (uploading) return;
     if (!title.trim()) return alert("タイトル必須");
@@ -419,6 +511,9 @@ export default function ProductsClient() {
         // 多言語フィールド（追加）
         base: Base;
         t: Tr[];
+
+        // ★ 新規追加時のみセクションIDを保存
+        sectionId?: string | null;
       };
 
       const payload: ProductPayload = {
@@ -439,10 +534,18 @@ export default function ProductsClient() {
         payload.originalFileName = originalFileName;
       }
 
+      // ★ 新規追加時のみセクションIDを反映（編集はここでは触らない）
+      if (formMode === "add") {
+        payload.sectionId = formSectionId ? formSectionId : null;
+      }
+
       if (formMode === "edit" && editing) {
-        await updateDoc(doc(colRef, id), payload);
+        await updateDoc(doc(productColRef, id), payload);
       } else {
-        await addDoc(colRef, { ...payload, createdAt: serverTimestamp() });
+        await addDoc(productColRef, {
+          ...payload,
+          createdAt: serverTimestamp(),
+        });
       }
 
       closeForm();
@@ -459,6 +562,7 @@ export default function ProductsClient() {
   const openAdd = () => {
     if (uploading) return;
     resetFields();
+    setFormSectionId(""); // ★ 新規追加時はセクション未設定で開始
     setFormMode("add");
   };
   // const openEdit = (p: Product) => { ... }
@@ -477,6 +581,7 @@ export default function ProductsClient() {
     setBody("");
     setPrice("");
     setFile(null);
+    setFormSectionId(""); // ★ リセット
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -490,18 +595,170 @@ export default function ProductsClient() {
 
     const batch = writeBatch(db);
     newList.forEach((item, index) => {
-      batch.update(doc(colRef, item.id), { order: index });
+      batch.update(doc(productColRef, item.id), { order: index });
     });
     await batch.commit();
   };
 
+  /* ========== セクション追加（モーダル） ========== */
+  const handleAddSection = async () => {
+    const titleJa = newSecName.trim();
+    if (!titleJa) return;
+    // 重複チェック（原文タイトル）
+    if (sections.some((s) => s.base.title === titleJa)) {
+      alert("同名のセクションが既に存在します");
+      return;
+    }
+    try {
+      setSaving(true);
+      const t = await translateSectionTitleAll(titleJa);
+      await addDoc(sectionColRef, {
+        base: { title: titleJa },
+        t,
+        createdAt: serverTimestamp(),
+      });
+      setNewSecName("");
+      setShowSecModal(false);
+    } catch (e) {
+      console.error(e);
+      alert("セクションの追加に失敗しました");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ========== セクション削除（モーダル） ========== */
+  const handleDeleteSection = async (id: string) => {
+    if (!confirm("このセクションを削除しますか？")) return;
+    try {
+      await deleteDoc(doc(sectionColRef, id));
+      if (selectedSectionId === id) setSelectedSectionId("all");
+      // 新規追加モーダルで選択していた場合も消しておく
+      if (formSectionId === id) setFormSectionId("");
+    } catch (e) {
+      console.error(e);
+      alert("セクションの削除に失敗しました");
+    }
+  };
+
+  const currentSectionLabel = useMemo(() => {
+    if (selectedSectionId === "all") return "全カテゴリー";
+    const hit = sections.find((s) => s.id === selectedSectionId);
+    return hit ? sectionTitleLoc(hit, uiLang) : "";
+  }, [selectedSectionId, sections, uiLang]);
+
   if (!gradient) return null;
 
   return (
-    <main className="max-w-5xl mx-auto p-4 pt-20">
+    <main className="max-w-5xl mx-auto p-4 pt-10">
       {/* BusyOverlay：アップロード中 or 保存中 */}
       <BusyOverlay uploadingPercent={uploadingPercent} saving={saving} />
 
+      <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        {/* セクションピッカー（全員表示） */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm opacity-70">表示カテゴリ:</label>
+
+          {/* 表示だけオーバーレイするラッパー */}
+          <div className="relative inline-block">
+            {/* ネイティブ select（ドロップダウンはそのまま） */}
+            <select
+              className={clsx(
+                "border rounded  px-3 py-2 pr-8", // 右矢印の余白分 pr を少し広めに
+                "text-transparent caret-transparent selection:bg-transparent", // ← ネイティブ表示を不可視化
+                "appearance-none" // 余分な装飾を消したい場合
+              )}
+              value={selectedSectionId}
+              onChange={(e) => setSelectedSectionId(e.target.value)}
+            >
+              <option value="all">全カテゴリー</option>
+              {sections.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {sectionTitleLoc(s, uiLang)}
+                </option>
+              ))}
+            </select>
+
+            {/* ← 常に表示される“見た目用テキスト”だけ白＋アウトラインに */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white text-outline"
+            >
+              {currentSectionLabel}
+            </span>
+
+            {/* ネイティブの矢印を残しつつ、見た目を少し整えたい場合（任意） */}
+            {/* <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm opacity-60">▾</span> */}
+          </div>
+        </div>
+
+        {/* セクション管理（管理者のみ表示） */}
+        {isAdmin && (
+          <button
+            onClick={() => setShowSecModal(true)}
+            className="px-3 py-2 rounded bg-blue-600 text-white shadow hover:bg-blue-700"
+          >
+            セクション管理
+          </button>
+        )}
+      </div>
+
+      {/* ▼ セクション管理モーダル */}
+      {showSecModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md bg-white rounded-lg p-6 space-y-4">
+            <h2 className="text-xl font-bold text-center">セクション管理</h2>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="セクション名（例：クレープ）"
+                value={newSecName}
+                onChange={(e) => setNewSecName(e.target.value)}
+                className="flex-1 border px-3 py-2 rounded"
+              />
+              <button
+                onClick={handleAddSection}
+                disabled={!newSecName.trim() || saving}
+                className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
+              >
+                追加
+              </button>
+            </div>
+
+            <div className="max-h-72 overflow-auto space-y-2">
+              {sections.length === 0 && (
+                <p className="text-sm text-gray-500">
+                  セクションはまだありません。
+                </p>
+              )}
+              {sections.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex justify-between items-center border px-3 py-2 rounded"
+                >
+                  <span className="truncate">{sectionTitleLoc(s, uiLang)}</span>
+                  <button
+                    onClick={() => handleDeleteSection(s.id)}
+                    className="text-red-600 hover:underline"
+                  >
+                    削除
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowSecModal(false)}
+              className="w-full mt-2 px-4 py-2 bg-gray-500 text-white rounded"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ▼ 商品一覧（既存のドラッグ並び替え含む） */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -511,7 +768,7 @@ export default function ProductsClient() {
           items={list.map((p) => p.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-2 items-stretch">
             {list.map((p) => {
               // ▼ 多言語表示：UI言語に応じて見出しを決定
               const loc = displayOf(p, uiLang);
@@ -525,11 +782,10 @@ export default function ProductsClient() {
                       transition={{ duration: 0.3 }}
                       onClick={() => {
                         if (isDragging) return;
-                        // 既存遷移はそのまま
                         router.push(`/products/${p.id}`);
                       }}
                       className={clsx(
-                        "flex flex-col h-full border rounded-lg shadow relative transition-colors duration-200",
+                        "flex flex-col h-full border shadow relative transition-colors duration-200",
                         "bg-gradient-to-b",
                         gradient,
                         isDragging
@@ -538,7 +794,9 @@ export default function ProductsClient() {
                           ? "bg-black/40 text-white"
                           : "bg-white",
                         "cursor-pointer",
-                        !isDragging && "hover:shadow-lg"
+                        !isDragging && "hover:shadow-lg",
+                        // ここには overflow-hidden を付けない！
+                        "rounded-b-lg rounded-t-xl"
                       )}
                     >
                       {auth.currentUser !== null && (
@@ -564,7 +822,7 @@ export default function ProductsClient() {
                       <ProductMedia
                         src={p.mediaURL}
                         type={p.mediaType}
-                        className="shadow-lg"
+                        className="rounded-t-xl"
                       />
 
                       {/* 商品情報（タイトルは多言語化／税込表示は辞書化） */}
@@ -595,6 +853,7 @@ export default function ProductsClient() {
         </SortableContext>
       </DndContext>
 
+      {/* ▼ 既存：新規商品追加ボタン（FAB） */}
       {isAdmin && formMode === null && (
         <button
           onClick={openAdd}
@@ -606,12 +865,32 @@ export default function ProductsClient() {
         </button>
       )}
 
+      {/* ▼ 既存：新規追加/編集モーダル（★新規追加時のみセクションピッカー追加） */}
       {isAdmin && formMode && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md bg-white rounded-lg p-6 space-y-4">
             <h2 className="text-xl font-bold text-center">
               {formMode === "edit" ? "商品を編集" : "新規商品追加"}
             </h2>
+
+            {/* ★ 新規追加時のみ：セクションピッカー */}
+            {formMode === "add" && (
+              <div className="flex flex-col gap-1">
+                <label className="text-sm">セクション（カテゴリー）</label>
+                <select
+                  value={formSectionId}
+                  onChange={(e) => setFormSectionId(e.target.value)}
+                  className="w-full border px-3 py-2 rounded bg-white"
+                >
+                  <option value="">全カテゴリー</option>
+                  {sections.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {sectionTitleLoc(s, uiLang)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* 原文（日本語）入力は既存のまま維持 */}
             <input
@@ -643,7 +922,7 @@ export default function ProductsClient() {
                   checked={taxIncluded}
                   onChange={() => setTaxIncluded(true)}
                 />
-                {/* ← 多言語をやめて日本語固定 */}
+                {/* 日本語固定 */}
                 税込
               </label>
               <label>
@@ -652,7 +931,7 @@ export default function ProductsClient() {
                   checked={!taxIncluded}
                   onChange={() => setTaxIncluded(false)}
                 />
-                {/* ← 多言語をやめて日本語固定 */}
+                {/* 日本語固定 */}
                 税抜
               </label>
             </div>
@@ -745,7 +1024,7 @@ export default function ProductsClient() {
                   URL.revokeObjectURL(blobURL);
                   if (vid.duration > MAX_VIDEO_SEC) {
                     alert(`動画は ${MAX_VIDEO_SEC} 秒以内にしてください`);
-                    e.target.value = "";
+                    (e.target as HTMLInputElement).value = "";
                     return;
                   }
                   setFile(f);

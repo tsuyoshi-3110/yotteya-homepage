@@ -14,7 +14,16 @@ import { type Product } from "@/types/Product";
 
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  deleteDoc,
+  updateDoc,
+  serverTimestamp,
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+} from "firebase/firestore";
 import {
   getStorage,
   ref,
@@ -43,10 +52,18 @@ import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
 
 type MediaType = "image" | "video";
 
-/* ▼ Product に多言語フィールドを拡張（Firestore 互換） */
+/* ▼ セクション（タイトルのみ、多言語対応） */
+type Section = {
+  id: string;
+  base: { title: string };
+  t: Array<{ lang: LangKey; title?: string }>;
+  createdAt?: any;
+};
+
 type ProductDoc = Product & {
   base?: { title: string; body: string };
   t?: Array<{ lang: LangKey; title?: string; body?: string }>;
+  sectionId?: string | null;
 };
 
 /* ▼ 表示用：UI 言語に応じてタイトル/本文を解決 */
@@ -67,6 +84,12 @@ function pickLocalized(
   };
 }
 
+function sectionTitleLoc(s: Section, lang: UILang): string {
+  if (lang === "ja") return s.base?.title ?? "";
+  const hit = s.t?.find((x) => x.lang === lang);
+  return hit?.title ?? s.base?.title ?? "";
+}
+
 /* ▼ 保存時に日本語→各言語へ翻訳（/api/translate を使用） */
 type Tr = { lang: LangKey; title: string; body: string };
 async function translateAll(titleJa: string, bodyJa: string): Promise<Tr[]> {
@@ -84,14 +107,13 @@ async function translateAll(titleJa: string, bodyJa: string): Promise<Tr[]> {
       body: (data.body ?? "").trim(),
     };
   });
-
   const settled = await Promise.allSettled(jobs);
   return settled
     .filter((r): r is PromiseFulfilledResult<Tr> => r.status === "fulfilled")
     .map((r) => r.value);
 }
 
-/* ▼▼▼ 税込/税抜 表示の多言語辞書（追加） ▼▼▼ */
+/* 税込/税抜 表示の多言語辞書（既存） */
 const TAX_T: Record<UILang, { incl: string; excl: string }> = {
   ja: { incl: "税込", excl: "税抜" },
   en: { incl: "tax included", excl: "tax excluded" },
@@ -138,23 +160,51 @@ export default function ProductDetail({ product }: { product: Product }) {
     product as ProductDoc
   );
 
+  /* ---------- セクション一覧（ピッカー用） ---------- */
+  const [sections, setSections] = useState<Section[]>([]);
+
   /* ---------- 編集モーダル用 state ---------- */
   const [showEdit, setShowEdit] = useState(false);
   const [title, setTitle] = useState(product.title);
-  const [body, setBody] = useState(product.body);
+  const [body, setBody] = useState<string>(product.body ?? ""); // ← 空文字で安全化
   const [price, setPrice] = useState<number | "">(product.price);
   const [taxIncluded, setTaxIncluded] = useState(product.taxIncluded);
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const uploading = progress !== null;
 
-  /* ---------- ハンドラ ---------- */
+  // セクション選択（編集モーダルに表示）
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
+    (product as any).sectionId ?? null
+  );
 
+  /* ---------- 初期化 ---------- */
   useEffect(() => {
     setDisplayProduct(product as ProductDoc);
+    setSelectedSectionId((product as any).sectionId ?? null);
+    setBody(product.body ?? ""); // ← 再マウント時も安全化
   }, [product]);
 
-  // 編集保存（※UIやバリデーションはそのまま／多言語フィールドだけ追加保存）
+  /* ---------- セクション購読 ---------- */
+  useEffect(() => {
+    const secRef = collection(db, "siteSections", SITE_KEY, "sections");
+    const q = query(secRef, orderBy("createdAt", "asc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const rows: Section[] = snap.docs.map((d) => {
+        const data = d.data() as any;
+        return {
+          id: d.id,
+          base: data.base ?? { title: data.title ?? "" },
+          t: Array.isArray(data.t) ? data.t : [],
+          createdAt: data.createdAt,
+        };
+      });
+      setSections(rows);
+    });
+    return () => unsub();
+  }, []);
+
+  // 編集保存（本体＋セクションIDを保存）
   const handleSave = async () => {
     if (!title.trim()) return alert("タイトル必須");
     if (price === "") return alert("価格を入力してください");
@@ -163,6 +213,8 @@ export default function ProductDetail({ product }: { product: Product }) {
     try {
       let mediaURL = displayProduct.mediaURL;
       let mediaType: MediaType = displayProduct.mediaType;
+      let originalFileName: string | undefined =
+        displayProduct.originalFileName;
 
       /* 画像 / 動画を差し替える場合のみアップロード */
       if (file) {
@@ -183,8 +235,8 @@ export default function ProductDetail({ product }: { product: Product }) {
           return;
         }
 
-        /* 拡張子は extFromMime で決定。画像は圧縮して JPEG化 */
-        const ext = extFromMime(file.type);
+        // 画像は JPEG で保存するため拡張子は強制的に jpg（元の仕様踏襲）
+        const ext = isVideo ? extFromMime(file.type) : "jpg";
         const uploadFile = isVideo
           ? file
           : await imageCompression(file, {
@@ -216,28 +268,31 @@ export default function ProductDetail({ product }: { product: Product }) {
         await task;
 
         mediaURL = `${await getDownloadURL(storageRef)}?v=${uuid()}`;
+        originalFileName = file.name; // アップ元の名前（表示・参考用）
         setProgress(null);
         setUploadingPercent(null); // BusyOverlay 連動
       }
 
-      /* ▼▼▼ 多言語フィールドの生成と保存 ▼▼▼ */
-      const base = { title: title.trim(), body: body.trim() };
+      /* ▼▼▼ 多言語フィールドの生成と保存（既存） ▼▼▼ */
+      const base = { title: title.trim(), body: (body ?? "").trim() };
       const t = await translateAll(base.title, base.body);
 
-      /* Firestore 更新（既存フィールドは維持しつつ、base/t を追加保存） */
+      /* Firestore 更新（sectionId を追記保存） */
       await updateDoc(doc(db, "siteProducts", SITE_KEY, "items", product.id), {
         title: base.title,
         body: base.body,
-        price,
+        price: Number(price),
         taxIncluded,
         mediaURL,
         mediaType,
         base,
         t,
+        sectionId: selectedSectionId ?? null,
+        originalFileName: originalFileName ?? displayProduct.originalFileName,
         updatedAt: serverTimestamp(),
       });
 
-      /* ★ ローカル表示も即更新（base/t を反映） */
+      /* ローカル表示も即更新 */
       setDisplayProduct((prev) => ({
         ...(prev as ProductDoc),
         title: base.title,
@@ -248,6 +303,8 @@ export default function ProductDetail({ product }: { product: Product }) {
         mediaType,
         base,
         t,
+        sectionId: selectedSectionId ?? null,
+        originalFileName: originalFileName ?? (prev as any).originalFileName,
       }));
 
       setShowEdit(false);
@@ -261,19 +318,43 @@ export default function ProductDetail({ product }: { product: Product }) {
     }
   };
 
-  // 削除（そのまま）
+  // 削除（Storage は mediaURL の拡張子から安全に削除）
+  // 置き換え前:
+  // const ext = displayProduct.mediaType === "video" ? "mp4" : "jpg";
+  // await deleteObject(ref(getStorage(), `products/public/${SITE_KEY}/${product.id}.${ext}`)).catch(() => {});
+
   const handleDelete = async () => {
-    console.log("!sadf");
     if (!confirm(`「${displayProduct.title}」を削除しますか？`)) return;
 
-    await deleteDoc(doc(db, "siteProducts", SITE_KEY, "items", product.id));
+    const storage = getStorage();
 
-    const ext = displayProduct.mediaType === "video" ? "mp4" : "jpg";
-    await deleteObject(
-      ref(getStorage(), `products/public/${SITE_KEY}/${product.id}.${ext}`)
-    ).catch(() => {});
+    try {
+      // 1) 先に Storage を“実URL”から直接削除
+      //    ※ ref は https ダウンロードURLでも OK。クエリ('?token=...')付きでも動きます。
+      if (displayProduct.mediaURL) {
+        const fileRef = ref(storage, displayProduct.mediaURL);
+        try {
+          await deleteObject(fileRef);
+          // console.log("Storage削除OK");
+        } catch (err: any) {
+          // 既に無いなどは無視（404）— UIを止めない
+          if (err?.code === "storage/object-not-found") {
+            console.warn("Storage: 既に削除済みの可能性があります");
+          } else {
+            console.warn("Storage削除エラー（続行します）:", err);
+          }
+        }
+      }
 
-    router.back();
+      // 2) Firestore ドキュメント削除
+      await deleteDoc(doc(db, "siteProducts", SITE_KEY, "items", product.id));
+
+      // 3) 戻る
+      router.back();
+    } catch (e) {
+      console.error(e);
+      alert("削除に失敗しました");
+    }
   };
 
   if (!displayProduct) {
@@ -428,6 +509,28 @@ export default function ProductDetail({ product }: { product: Product }) {
               rows={4}
               disabled={uploading}
             />
+
+            {/* ▼ セクションピッカー（この商品のカテゴリを決める） */}
+            <div className="space-y-1">
+              <label className="text-sm">カテゴリー</label>
+              <select
+                className="w-full border px-3 py-2 rounded bg-white"
+                value={selectedSectionId ?? ""}
+                onChange={(e) =>
+                  setSelectedSectionId(
+                    e.target.value === "" ? null : e.target.value
+                  )
+                }
+                disabled={uploading}
+              >
+                <option value="">全カテゴリー</option>
+                {sections.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {sectionTitleLoc(s, uiLang)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <input
               type="file"
