@@ -362,7 +362,7 @@ export default function Header({ className = "" }: { className?: string }) {
             alt="ロゴ"
             width={48}
             height={48}
-            className="w-12 h-12 object-contain transition-opacity duration-200"
+            className="w-12 h-12 object-contain transition-opacity duration-200 text-outline"
             unoptimized
           />
         )}
@@ -425,7 +425,7 @@ export default function Header({ className = "" }: { className?: string }) {
             )}
           >
             <SheetHeader className="pt-4 px-4">
-              <SheetTitle className="text-center text-xl text-white">
+              <SheetTitle className="text-center text-xl !text-white text-outline">
                 {t.menuTitle}
               </SheetTitle>
             </SheetHeader>
@@ -440,49 +440,49 @@ export default function Header({ className = "" }: { className?: string }) {
                 <Link
                   href="/products"
                   onClick={handleMenuClose}
-                  className="text-lg text-white"
+                  className="text-lg text-white text-outline"
                 >
                   {t.products}
                 </Link>
                 <Link
                   href="/stores"
                   onClick={handleMenuClose}
-                  className="text-lg text-white"
+                  className="text-lg text-white text-outline"
                 >
                   {t.stores}
                 </Link>
                 <Link
                   href="https://www.ubereats.com/store/%E3%81%97%E3%82%85%E3%82%8F%E3%81%A3%E3%81%A8%E8%B4%85%E6%B2%A2%E3%83%8F%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%84%E3%81%BF%E3%81%A4%E3%81%8D%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%95-%E3%82%88%E3%81%A3%E3%81%A6%E5%B1%8B/ycwuMM91VIaoNcZ1oCr_5g?diningMode=DELIVERY"
                   onClick={handleMenuClose}
-                  className="text-lg text-white"
+                  className="text-lg text-white text-outline"
                 >
                   {t.delivery}
                 </Link>
                 <Link
                   href="/about"
                   onClick={handleMenuClose}
-                  className="text-lg text-white"
+                  className="text-lg text-white text-outline"
                 >
                   {t.about}
                 </Link>
                 <Link
                   href="/company"
                   onClick={handleMenuClose}
-                  className="text-lg text-white"
+                  className="text-lg text-white text-outline"
                 >
                   {t.company}
                 </Link>
                 <Link
                   href="/news"
                   onClick={handleMenuClose}
-                  className="text-lg text-white"
+                  className="text-lg text-white text-outline"
                 >
                   {t.news}
                 </Link>
                 <a
                   href="/blog"
                   onClick={handleMenuClose}
-                  className="text-white hover:underline bg-transparent hover:bg-white/10 transition inline-block px-4 py-2 rounded"
+                  className="text-white hover:underline bg-transparent hover:bg-white/10 transition inline-block px-4 py-2 rounded text-outline"
                 >
                   {t.interview}
                 </a>
@@ -500,21 +500,21 @@ export default function Header({ className = "" }: { className?: string }) {
                     <Link
                       href="/postList"
                       onClick={handleMenuClose}
-                      className="block text-center text-lg text-white"
+                      className="block text-center text-lg text-white text-outline"
                     >
                       {t.timeline}
                     </Link>
                     <Link
                       href="/community"
                       onClick={handleMenuClose}
-                      className="block text-center text-lg text-white"
+                      className="block text-center text-lg text-white text-outline"
                     >
                       {t.community}
                     </Link>
                     <Link
                       href="/analytics"
                       onClick={handleMenuClose}
-                      className="block text-center text-lg text-white"
+                      className="block text-center text-lg text-white text-outline"
                     >
                       {t.analytics}
                     </Link>
@@ -525,7 +525,7 @@ export default function Header({ className = "" }: { className?: string }) {
                   <Link
                     href="/login"
                     onClick={handleMenuClose}
-                    className="block text-center text-lg text-white"
+                    className="block text-center text-lg text-white text-outline"
                   >
                     {t.admin}
                   </Link>
