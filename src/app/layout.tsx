@@ -29,6 +29,16 @@ export const metadata: Metadata = {
   title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
   description:
     "大阪市東淀川区のクレープ専門店『甘味処 よって屋』。ふんわり生地とこだわりクリームが自慢です。",
+  keywords: [
+    "甘味処クレープよって屋",
+    "よって屋",
+    "甘味処",
+    "飲食",
+    "クレープ",
+    "大阪",
+    "東淀川区",
+    "下新庄",
+  ],
   openGraph: {
     title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
     description:
@@ -52,8 +62,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-
-
   return (
     <html
       lang="ja"
