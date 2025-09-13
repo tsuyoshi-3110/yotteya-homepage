@@ -380,7 +380,10 @@ export default function AnalyticsPage() {
                     responsive: true,
                     plugins: { tooltip: { enabled: true } },
                     scales: {
-                      y: { beginAtZero: true, title: { display: true, text: "件数" } },
+                      y: {
+                        beginAtZero: true,
+                        title: { display: true, text: "件数" },
+                      },
                     },
                   }}
                 />
@@ -428,7 +431,10 @@ export default function AnalyticsPage() {
                     responsive: true,
                     plugins: { tooltip: { enabled: true } },
                     scales: {
-                      y: { beginAtZero: true, title: { display: true, text: "秒" } },
+                      y: {
+                        beginAtZero: true,
+                        title: { display: true, text: "秒" },
+                      },
                     },
                   }}
                 />
@@ -438,9 +444,15 @@ export default function AnalyticsPage() {
                   <thead>
                     <tr className="bg-gray-200">
                       <th className="p-2 border w-2/5">イベント名</th>
-                      <th className="p-2 border text-right w-1/5">合計秒数</th>
-                      <th className="p-2 border text-right w-1/5">回数</th>
-                      <th className="p-2 border text-right w-1/5">平均秒数</th>
+                      <th className="p-2 border text-right text-xs w-1/5">
+                        合計秒数
+                      </th>
+                      <th className="p-2 border text-right text-xs w-1/5">
+                        回数
+                      </th>
+                      <th className="p-2 border text-right text-xs w-1/5">
+                        平均秒数
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -472,7 +484,10 @@ export default function AnalyticsPage() {
                   responsive: true,
                   plugins: { tooltip: { enabled: true } },
                   scales: {
-                    y: { beginAtZero: true, title: { display: true, text: "アクセス数" } },
+                    y: {
+                      beginAtZero: true,
+                      title: { display: true, text: "アクセス数" },
+                    },
                   },
                 }}
               />
@@ -489,7 +504,10 @@ export default function AnalyticsPage() {
                   responsive: true,
                   plugins: { tooltip: { enabled: true } },
                   scales: {
-                    y: { beginAtZero: true, title: { display: true, text: "アクセス数" } },
+                    y: {
+                      beginAtZero: true,
+                      title: { display: true, text: "アクセス数" },
+                    },
                   },
                 }}
               />
@@ -531,7 +549,10 @@ export default function AnalyticsPage() {
                 },
               ],
             }}
-            options={{ responsive: true, plugins: { tooltip: { enabled: true } } }}
+            options={{
+              responsive: true,
+              plugins: { tooltip: { enabled: true } },
+            }}
           />
         </div>
       )}
@@ -589,7 +610,10 @@ export default function AnalyticsPage() {
               responsive: true,
               plugins: { tooltip: { enabled: true } },
               scales: {
-                y: { beginAtZero: true, title: { display: true, text: "アクセス数" } },
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "アクセス数" },
+                },
               },
             }}
           />
