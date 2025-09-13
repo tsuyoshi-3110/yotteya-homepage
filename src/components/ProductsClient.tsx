@@ -725,7 +725,7 @@ export default function ProductsClient() {
       <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         {/* セクションピッカー（order順で表示） */}
         <div className="flex items-center gap-2">
-          <label className="text-sm opacity-70">表示カテゴリ:</label>
+          <label className="text-sm text-white text-outline opacity-70">表示カテゴリ:</label>
           <div className="relative inline-block">
             <select
               className={clsx(
