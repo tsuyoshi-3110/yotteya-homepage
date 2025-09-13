@@ -52,12 +52,13 @@ import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
 
 type MediaType = "image" | "video";
 
-/* ▼ セクション（タイトルのみ、多言語対応） */
+/* ▼ セクション（タイトルのみ、多言語対応・order対応） */
 type Section = {
   id: string;
   base: { title: string };
   t: Array<{ lang: LangKey; title?: string }>;
   createdAt?: any;
+  order?: number; // ← 並べ替え順を反映
 };
 
 type ProductDoc = Product & {
@@ -65,6 +66,8 @@ type ProductDoc = Product & {
   t?: Array<{ lang: LangKey; title?: string; body?: string }>;
   sectionId?: string | null;
 };
+
+
 
 /* ▼ 表示用：UI 言語に応じてタイトル/本文を解決 */
 function pickLocalized(
@@ -185,10 +188,10 @@ export default function ProductDetail({ product }: { product: Product }) {
     setBody(product.body ?? ""); // ← 再マウント時も安全化
   }, [product]);
 
-  /* ---------- セクション購読 ---------- */
+  /* ---------- セクション購読（← ここを order 順に） ---------- */
   useEffect(() => {
     const secRef = collection(db, "siteSections", SITE_KEY, "sections");
-    const q = query(secRef, orderBy("createdAt", "asc"));
+    const q = query(secRef, orderBy("createdAt", "asc")); // FirestoreはcreatedAtで取得
     const unsub = onSnapshot(q, (snap) => {
       const rows: Section[] = snap.docs.map((d) => {
         const data = d.data() as any;
@@ -197,8 +200,20 @@ export default function ProductDetail({ product }: { product: Product }) {
           base: data.base ?? { title: data.title ?? "" },
           t: Array.isArray(data.t) ? data.t : [],
           createdAt: data.createdAt,
+          order: typeof data.order === "number" ? data.order : undefined, // 追加
         };
       });
+
+      // 並び替えた順に統一（order → createdAt）
+      rows.sort((a, b) => {
+        const ao = a.order ?? 999999;
+        const bo = b.order ?? 999999;
+        if (ao !== bo) return ao - bo;
+        const at = a.createdAt?.toMillis?.() ?? 0;
+        const bt = b.createdAt?.toMillis?.() ?? 0;
+        return at - bt;
+      });
+
       setSections(rows);
     });
     return () => unsub();
@@ -213,8 +228,7 @@ export default function ProductDetail({ product }: { product: Product }) {
     try {
       let mediaURL = displayProduct.mediaURL;
       let mediaType: MediaType = displayProduct.mediaType;
-      let originalFileName: string | undefined =
-        displayProduct.originalFileName;
+      let originalFileName: string | undefined = displayProduct.originalFileName;
 
       /* 画像 / 動画を差し替える場合のみアップロード */
       if (file) {
@@ -335,9 +349,7 @@ export default function ProductDetail({ product }: { product: Product }) {
         const fileRef = ref(storage, displayProduct.mediaURL);
         try {
           await deleteObject(fileRef);
-          // console.log("Storage削除OK");
         } catch (err: any) {
-          // 既に無いなどは無視（404）— UIを止めない
           if (err?.code === "storage/object-not-found") {
             console.warn("Storage: 既に削除済みの可能性があります");
           } else {
@@ -459,6 +471,28 @@ export default function ProductDetail({ product }: { product: Product }) {
           <div className="w-full max-w-md bg-white rounded-lg p-6 space-y-4">
             <h2 className="text-xl font-bold text-center">商品を編集</h2>
 
+             {/* ▼ セクションピッカー（管理画面の order 順を反映） */}
+            <div className="space-y-1">
+              <label className="text-sm">カテゴリー</label>
+              <select
+                className="w-full border px-3 h-10 rounded bg-white"
+                value={selectedSectionId ?? ""}
+                onChange={(e) =>
+                  setSelectedSectionId(
+                    e.target.value === "" ? null : e.target.value
+                  )
+                }
+                disabled={uploading}
+              >
+                <option value="">全カテゴリー</option>
+                {sections.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {sectionTitleLoc(s, uiLang)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <input
               type="text"
               placeholder="商品名"
@@ -510,27 +544,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               disabled={uploading}
             />
 
-            {/* ▼ セクションピッカー（この商品のカテゴリを決める） */}
-            <div className="space-y-1">
-              <label className="text-sm">カテゴリー</label>
-              <select
-                className="w-full border px-3 py-2 rounded bg-white"
-                value={selectedSectionId ?? ""}
-                onChange={(e) =>
-                  setSelectedSectionId(
-                    e.target.value === "" ? null : e.target.value
-                  )
-                }
-                disabled={uploading}
-              >
-                <option value="">全カテゴリー</option>
-                {sections.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {sectionTitleLoc(s, uiLang)}
-                  </option>
-                ))}
-              </select>
-            </div>
+
 
             <input
               type="file"
@@ -563,7 +577,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               <button
                 onClick={() => !uploading && setShowEdit(false)}
                 disabled={uploading}
-                className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+                className="px-4 py-2 bg-gray-500 text白 rounded disabled:opacity-50"
               >
                 閉じる
               </button>

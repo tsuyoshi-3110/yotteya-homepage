@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { Pin, Plus } from "lucide-react";
+import { Pin, Plus, GripVertical } from "lucide-react";
 import { v4 as uuid } from "uuid";
 import imageCompression from "browser-image-compression";
 import {
@@ -44,62 +44,76 @@ import {
   useSensors,
   DragEndEvent,
 } from "@dnd-kit/core";
-
 import {
+  useSortable,
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import {
+  restrictToVerticalAxis,
+  restrictToWindowEdges,
+} from "@dnd-kit/modifiers";
 import SortableItem from "./SortableItem";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import ProductMedia from "./ProductMedia";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
-// ▼ 多言語関連
+// 多言語
 import { LANGS, type LangKey } from "@/lib/langs";
 import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
-
-// 既存型を尊重しつつ、base/t/sectionId を拡張で扱えるようにする
 import { type Product } from "@/types/Product";
-
-// BusyOverlay
 import { BusyOverlay } from "./BusyOverlay";
-
-// ▼ 共通ファイル形式ユーティリティ
 import {
   IMAGE_MIME_TYPES,
   VIDEO_MIME_TYPES,
   extFromMime,
 } from "@/lib/fileTypes";
 
-/* ===================== 多言語用型・ユーティリティ ===================== */
 type MediaType = "image" | "video";
 
 type Base = { title: string; body: string };
 type Tr = { lang: LangKey; title?: string; body?: string };
 
-/* ▼▼▼ セクション（タイトルのみ、多言語対応） ▼▼▼ */
+/** ▼ セクション（order 追加） */
 type Section = {
   id: string;
-  base: { title: string }; // body なし（タイトルのみ）
+  base: { title: string };
   t: Array<{ lang: LangKey; title?: string }>;
   createdAt?: any;
+  order?: number; // 並び順
 };
 
-// 表示用：UI言語に応じて title/body を解決（既存 title/body も後方互換で参照）
+type ProdDoc = Product & { base?: Base; t?: Tr[]; sectionId?: string | null };
+
+  const ALL_CATEGORY_T: Record<UILang, string> = {
+    ja: "全カテゴリー",
+    en: "All categories",
+    zh: "全部分类",
+    "zh-TW": "全部分類",
+    ko: "모든 카테고리",
+    fr: "Toutes les catégories",
+    es: "Todas las categorías",
+    de: "Alle Kategorien",
+    pt: "Todas as categorias",
+    it: "Tutte le categorie",
+    ru: "Все категории",
+    th: "ทุกหมวดหมู่",
+    vi: "Tất cả danh mục",
+    id: "Semua kategori",
+    hi: "सभी श्रेणियाँ",
+    ar: "كل الفئات",
+  };
+
+/** 表示テキスト多言語解決 */
 function displayOf(p: Product & { base?: Base; t?: Tr[] }, lang: UILang): Base {
   const fallback: Base = {
     title: (p as any)?.title ?? "",
     body: (p as any)?.body ?? "",
   };
-
-  // base/t を持たない古いデータは既存の title/body をそのまま表示
   if (!p.base && !p.t) return fallback;
-
-  if (lang === "ja") {
-    return p.base ?? fallback;
-  }
+  if (lang === "ja") return p.base ?? fallback;
   const hit = p.t?.find((x) => x.lang === lang);
   return {
     title: (hit?.title ?? p.base?.title ?? fallback.title) || "",
@@ -107,14 +121,12 @@ function displayOf(p: Product & { base?: Base; t?: Tr[] }, lang: UILang): Base {
   };
 }
 
-// セクション表示用ローカライズ（タイトルのみ）
 function sectionTitleLoc(s: Section, lang: UILang): string {
   if (lang === "ja") return s.base?.title ?? "";
   const hit = s.t?.find((x) => x.lang === lang);
   return hit?.title ?? s.base?.title ?? "";
 }
 
-// 本体の一括翻訳（/api/translate を各言語へ）
 async function translateAll(titleJa: string, bodyJa: string): Promise<Tr[]> {
   const tasks = LANGS.map(async (l) => {
     const res = await fetch("/api/translate", {
@@ -133,7 +145,6 @@ async function translateAll(titleJa: string, bodyJa: string): Promise<Tr[]> {
   return Promise.all(tasks);
 }
 
-// セクション（タイトルのみ）の一括翻訳（allSettledではなくallで型を揃える）
 type SectionTr = { lang: LangKey; title: string };
 async function translateSectionTitleAll(titleJa: string): Promise<SectionTr[]> {
   const jobs: Promise<SectionTr>[] = LANGS.map(async (l) => {
@@ -149,7 +160,6 @@ async function translateSectionTitleAll(titleJa: string): Promise<SectionTr[]> {
   return Promise.all(jobs);
 }
 
-/* ===================== 税込/税抜の多言語辞書 ===================== */
 const TAX_T: Record<UILang, { incl: string; excl: string }> = {
   ja: { incl: "税込", excl: "税抜" },
   en: { incl: "tax included", excl: "tax excluded" },
@@ -169,12 +179,71 @@ const TAX_T: Record<UILang, { incl: string; excl: string }> = {
   ar: { incl: "شامل الضريبة", excl: "غير شامل الضريبة" },
 };
 
-/* ===================== 既存コードの定数 ===================== */
-
 const PAGE_SIZE = 20;
 const MAX_VIDEO_SEC = 30;
 
-type ProdDoc = Product & { base?: Base; t?: Tr[]; sectionId?: string | null };
+/** ───────── セクション行（DnD用・削除ボタン付き） ───────── */
+function SortableSectionRow({
+  section,
+  onDelete,
+  children,
+}: {
+  section: Section;
+  onDelete: (id: string) => void;
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style: React.CSSProperties = {
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      : undefined,
+    transition: transition || undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        className={clsx(
+          "flex items-center justify-between border px-3 py-2 rounded bg-white",
+          isDragging && "opacity-80 shadow"
+        )}
+      >
+        {/* ドラッグハンドル（スマホ最適化） */}
+        <button
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.preventDefault()}
+          className="flex items-center gap-2 text-gray-500 cursor-grab active:cursor-grabbing p-2 -ml-2"
+          aria-label="並べ替え"
+          type="button"
+          style={{ touchAction: "none" }} // ← iOS Safari で必須
+        >
+          <GripVertical className="w-5 h-5" />
+        </button>
+
+        {/* ラベル */}
+        <div className="flex-1 px-2 truncate">{children}</div>
+
+        {/* 削除 */}
+        <button
+          onClick={() => onDelete(section.id)}
+          className="text-red-600 hover:underline"
+          type="button"
+        >
+          削除
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function ProductsClient() {
   // ▼ 商品
@@ -190,7 +259,7 @@ export default function ProductsClient() {
   const [price, setPrice] = useState<number | "">("");
   const [taxIncluded, setTaxIncluded] = useState(true);
 
-  // ▼ 新規追加用：セクション選択（★追加）
+  // ▼ 新規追加用：セクション選択
   const [formSectionId, setFormSectionId] = useState<string>("");
 
   // 既存アップロード表示
@@ -207,7 +276,7 @@ export default function ProductsClient() {
   const [hasMore, setHasMore] = useState(true);
   const isFetchingMore = useRef(false);
 
-  // ▼ セクション（カテゴリ）
+  // ▼ セクション（DnD 順序付き）
   const [sections, setSections] = useState<Section[]>([]);
   const [selectedSectionId, setSelectedSectionId] = useState<string>("all");
 
@@ -218,14 +287,26 @@ export default function ProductsClient() {
   const gradient = useThemeGradient();
   const router = useRouter();
 
+
+
   // UI言語
   const { uiLang } = useUILang();
   const taxT = TAX_T[uiLang] ?? TAX_T.ja;
 
+  // 一覧/カード用センサー（PC/スマホ共通）
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    // 長押し気味にして誤スクロール減らす
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 5 },
+      activationConstraint: { delay: 120, tolerance: 8 },
+    })
+  );
+
+  // セクション管理モーダル用センサー（より掴みやすく）
+  const sectionSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 140, tolerance: 6 },
     })
   );
 
@@ -235,25 +316,20 @@ export default function ProductsClient() {
     return darkThemes.some((key) => gradient === THEMES[key]);
   }, [gradient]);
 
-  const productColRef: CollectionReference = useMemo(
+  const productColRef: CollectionReference<DocumentData> = useMemo(
     () => collection(db, "siteProducts", SITE_KEY, "items"),
     []
   );
-  const sectionColRef: CollectionReference = useMemo(
+  const sectionColRef: CollectionReference<DocumentData> = useMemo(
     () => collection(db, "siteSections", SITE_KEY, "sections"),
-    []
-  );
-
-  const jaCollator = useMemo(
-    () => new Intl.Collator("ja-JP", { numeric: true, sensitivity: "base" }),
     []
   );
 
   useEffect(() => onAuthStateChanged(auth, (u) => setIsAdmin(!!u)), []);
 
-  /* ========== セクション購読（左上ピッカー & 新規追加モーダル用） ========== */
+  /* ========== セクション購読（order→createdAt の順でクライアントソート） ========== */
   useEffect(() => {
-    const qSec = query(sectionColRef, orderBy("createdAt", "asc"));
+    const qSec = query(sectionColRef, orderBy("createdAt", "asc")); // 取得
     const unsub = onSnapshot(qSec, (snap) => {
       const items: Section[] = snap.docs.map((d) => {
         const data = d.data() as any;
@@ -262,9 +338,22 @@ export default function ProductsClient() {
           base: data.base ?? { title: data.title ?? "" },
           t: Array.isArray(data.t) ? data.t : [],
           createdAt: data.createdAt,
+          order: typeof data.order === "number" ? data.order : undefined,
         };
       });
+
+      // order 昇順 → createdAt 昇順の安定ソート（order 無しは末尾）
+      items.sort((a, b) => {
+        const ao = a.order ?? 999999;
+        const bo = b.order ?? 999999;
+        if (ao !== bo) return ao - bo;
+        const at = a.createdAt?.toMillis?.() ?? 0;
+        const bt = b.createdAt?.toMillis?.() ?? 0;
+        return at - bt;
+      });
+
       setSections(items);
+
       // 選択中が消された場合は "all" に戻す
       if (
         selectedSectionId !== "all" &&
@@ -278,7 +367,6 @@ export default function ProductsClient() {
 
   /* ========== 初回/フィルタ変更で最初のページを購読 ========== */
   useEffect(() => {
-    // リセット
     setList([]);
     setLastDoc(null);
     setHasMore(true);
@@ -373,14 +461,14 @@ export default function ProductsClient() {
         !uploading &&
         window.innerHeight + window.scrollY >= document.body.offsetHeight - 150
       ) {
-        fetchNextPage(); // lastDoc を使用
+        fetchNextPage();
       }
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [fetchNextPage, hasMore, uploading]);
 
-  /* ========== 並び順リアルタイム（order 反映） ========== */
+  /* ========== 並び順リアルタイム（商品） ========== */
   useEffect(() => {
     const parts: any[] = [productColRef];
     if (selectedSectionId !== "all") {
@@ -411,7 +499,7 @@ export default function ProductsClient() {
       }
     );
     return () => unsub();
-  }, [productColRef, jaCollator, selectedSectionId]);
+  }, [productColRef, selectedSectionId]);
 
   /* ========== 商品保存（新規追加時にセクションIDを保存） ========== */
   const saveProduct = async () => {
@@ -426,16 +514,11 @@ export default function ProductsClient() {
       let mediaURL = editing?.mediaURL ?? "";
       let mediaType: MediaType = editing?.mediaType ?? "image";
 
-      if (formMode === "add" && !file)
-        return alert("メディアを選択してください");
-
       if (file) {
         const isVideo = file.type.startsWith("video/");
         mediaType = isVideo ? "video" : "image";
-
         const isValidVideo = VIDEO_MIME_TYPES.includes(file.type);
         const isValidImage = IMAGE_MIME_TYPES.includes(file.type);
-
         if (!isValidImage && !isValidVideo) {
           alert(
             "対応形式：画像（JPEG, PNG, WEBP, GIF）／動画（MP4, MOV など）"
@@ -443,29 +526,23 @@ export default function ProductsClient() {
           setSaving(false);
           return;
         }
-
-        // 画像は JPEG へ圧縮・変換するため拡張子は jpg、動画は MIME から拡張子を得る
         const ext = isVideo ? extFromMime(file.type) : "jpg";
-
         const uploadFile = isVideo
           ? file
           : await imageCompression(file, {
               maxWidthOrHeight: 1200,
               maxSizeMB: 0.7,
               useWebWorker: true,
-              fileType: "image/jpeg", // JPEGでアップロード
+              fileType: "image/jpeg",
               initialQuality: 0.8,
             });
-
         const storageRef = ref(
           getStorage(),
           `products/public/${SITE_KEY}/${id}.${ext}`
         );
-
         const task = uploadBytesResumable(storageRef, uploadFile, {
           contentType: isVideo ? file.type : "image/jpeg",
         });
-
         setProgress(0);
         setUploadingPercent(0);
         task.on("state_changed", (s) => {
@@ -474,16 +551,11 @@ export default function ProductsClient() {
           setUploadingPercent(pct);
         });
         await task;
-
         const downloadURL = await getDownloadURL(storageRef);
         if (!downloadURL) throw new Error("画像URLの取得に失敗しました");
-
-        // キャッシュバスターで強制更新
         mediaURL = `${downloadURL}?v=${uuid()}`;
         setProgress(null);
         setUploadingPercent(null);
-
-        // 拡張子変更に伴う旧ファイル削除（既存は mp4/jpg 想定のまま）
         if (formMode === "edit" && editing) {
           const oldExt = editing.mediaType === "video" ? "mp4" : "jpg";
           if (oldExt !== ext) {
@@ -494,30 +566,10 @@ export default function ProductsClient() {
         }
       }
 
-      // ▼ 多言語保存：原文（日本語）→ 全言語翻訳して base/t を保存
       const base: Base = { title: title.trim(), body: body.trim() };
       const t: Tr[] = await translateAll(base.title, base.body);
 
-      type ProductPayload = {
-        // 既存互換フィールド（UIは変えない）
-        title: string;
-        body: string;
-        price: number;
-        mediaURL: string;
-        mediaType: "image" | "video";
-        originalFileName?: string;
-        taxIncluded: boolean;
-
-        // 多言語フィールド（追加）
-        base: Base;
-        t: Tr[];
-
-        // ★ 新規追加時のみセクションIDを保存
-        sectionId?: string | null;
-      };
-
-      const payload: ProductPayload = {
-        // 既存互換として title/body に原文（日本語）を維持
+      const payload: any = {
         title: base.title,
         body: base.body,
         price: Number(price),
@@ -527,17 +579,9 @@ export default function ProductsClient() {
         base,
         t,
       };
-
-      // originalFileName があるときだけ追加
       const originalFileName = file?.name || editing?.originalFileName;
-      if (originalFileName) {
-        payload.originalFileName = originalFileName;
-      }
-
-      // ★ 新規追加時のみセクションIDを反映（編集はここでは触らない）
-      if (formMode === "add") {
-        payload.sectionId = formSectionId ? formSectionId : null;
-      }
+      if (originalFileName) payload.originalFileName = originalFileName;
+      if (formMode === "add") payload.sectionId = formSectionId || null;
 
       if (formMode === "edit" && editing) {
         await updateDoc(doc(productColRef, id), payload);
@@ -547,7 +591,6 @@ export default function ProductsClient() {
           createdAt: serverTimestamp(),
         });
       }
-
       closeForm();
     } catch (e) {
       console.error(e);
@@ -562,10 +605,9 @@ export default function ProductsClient() {
   const openAdd = () => {
     if (uploading) return;
     resetFields();
-    setFormSectionId(""); // ★ 新規追加時はセクション未設定で開始
+    setFormSectionId("");
     setFormMode("add");
   };
-  // const openEdit = (p: Product) => { ... }
 
   const closeForm = () => {
     if (uploading) return;
@@ -581,18 +623,16 @@ export default function ProductsClient() {
     setBody("");
     setPrice("");
     setFile(null);
-    setFormSectionId(""); // ★ リセット
+    setFormSectionId("");
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-
     const oldIndex = list.findIndex((item) => item.id === active.id);
     const newIndex = list.findIndex((item) => item.id === over.id);
     const newList = arrayMove(list, oldIndex, newIndex);
     setList(newList);
-
     const batch = writeBatch(db);
     newList.forEach((item, index) => {
       batch.update(doc(productColRef, item.id), { order: index });
@@ -600,11 +640,10 @@ export default function ProductsClient() {
     await batch.commit();
   };
 
-  /* ========== セクション追加（モーダル） ========== */
+  /* ========== セクション追加 ========== */
   const handleAddSection = async () => {
     const titleJa = newSecName.trim();
     if (!titleJa) return;
-    // 重複チェック（原文タイトル）
     if (sections.some((s) => s.base.title === titleJa)) {
       alert("同名のセクションが既に存在します");
       return;
@@ -612,10 +651,18 @@ export default function ProductsClient() {
     try {
       setSaving(true);
       const t = await translateSectionTitleAll(titleJa);
+      // 末尾に来る order を採番（既存max+1）
+      const nextOrder =
+        Math.max(
+          -1,
+          ...sections.map((s) => (typeof s.order === "number" ? s.order : -1))
+        ) + 1;
+
       await addDoc(sectionColRef, {
         base: { title: titleJa },
         t,
         createdAt: serverTimestamp(),
+        order: nextOrder,
       });
       setNewSecName("");
       setShowSecModal(false);
@@ -627,13 +674,12 @@ export default function ProductsClient() {
     }
   };
 
-  /* ========== セクション削除（モーダル） ========== */
+  /* ========== セクション削除 ========== */
   const handleDeleteSection = async (id: string) => {
     if (!confirm("このセクションを削除しますか？")) return;
     try {
       await deleteDoc(doc(sectionColRef, id));
       if (selectedSectionId === id) setSelectedSectionId("all");
-      // 新規追加モーダルで選択していた場合も消しておく
       if (formSectionId === id) setFormSectionId("");
     } catch (e) {
       console.error(e);
@@ -641,8 +687,28 @@ export default function ProductsClient() {
     }
   };
 
+  /* ========== セクション DnD 並べ替え（モーダル内） ========== */
+  const handleSectionDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sections.findIndex((s) => s.id === active.id);
+
+    const newIndex = sections.findIndex((s) => s.id === over.id);
+    const newList = arrayMove(sections, oldIndex, newIndex);
+
+    // 再採番（0,1,2,...）
+    const batch = writeBatch(db);
+    newList.forEach((s, idx) => {
+      batch.update(doc(sectionColRef, s.id), { order: idx });
+    });
+
+    setSections(newList.map((s, idx) => ({ ...s, order: idx }))); // 先にローカル反映
+    await batch.commit();
+  };
+
   const currentSectionLabel = useMemo(() => {
-    if (selectedSectionId === "all") return "全カテゴリー";
+  if (selectedSectionId === "all") return ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja;
     const hit = sections.find((s) => s.id === selectedSectionId);
     return hit ? sectionTitleLoc(hit, uiLang) : "";
   }, [selectedSectionId, sections, uiLang]);
@@ -651,48 +717,38 @@ export default function ProductsClient() {
 
   return (
     <main className="max-w-5xl mx-auto p-4 pt-10">
-      {/* BusyOverlay：アップロード中 or 保存中 */}
       <BusyOverlay uploadingPercent={uploadingPercent} saving={saving} />
 
       <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        {/* セクションピッカー（全員表示） */}
+        {/* セクションピッカー（order順で表示） */}
         <div className="flex items-center gap-2">
           <label className="text-sm opacity-70">表示カテゴリ:</label>
-
-          {/* 表示だけオーバーレイするラッパー */}
           <div className="relative inline-block">
-            {/* ネイティブ select（ドロップダウンはそのまま） */}
             <select
               className={clsx(
-                "border rounded  px-3 py-2 pr-8", // 右矢印の余白分 pr を少し広めに
-                "text-transparent caret-transparent selection:bg-transparent", // ← ネイティブ表示を不可視化
-                "appearance-none" // 余分な装飾を消したい場合
+                "border rounded  px-3 py-2 pr-8",
+                "text-transparent caret-transparent selection:bg-transparent",
+                "appearance-none"
               )}
               value={selectedSectionId}
               onChange={(e) => setSelectedSectionId(e.target.value)}
             >
-              <option value="all">全カテゴリー</option>
+              <option value="all">{ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja}</option>
               {sections.map((s) => (
                 <option key={s.id} value={s.id}>
                   {sectionTitleLoc(s, uiLang)}
                 </option>
               ))}
             </select>
-
-            {/* ← 常に表示される“見た目用テキスト”だけ白＋アウトラインに */}
             <span
               aria-hidden
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white text-outline"
             >
               {currentSectionLabel}
             </span>
-
-            {/* ネイティブの矢印を残しつつ、見た目を少し整えたい場合（任意） */}
-            {/* <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm opacity-60">▾</span> */}
           </div>
         </div>
 
-        {/* セクション管理（管理者のみ表示） */}
         {isAdmin && (
           <button
             onClick={() => setShowSecModal(true)}
@@ -703,66 +759,92 @@ export default function ProductsClient() {
         )}
       </div>
 
-      {/* ▼ セクション管理モーダル */}
+      {/* ▼ セクション管理モーダル（DnD対応・スマホ最適化） */}
       {showSecModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md bg-white rounded-lg p-6 space-y-4">
-            <h2 className="text-xl font-bold text-center">セクション管理</h2>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-3 overscroll-contain">
+          <div
+            className={clsx(
+              "w-full max-w-sm sm:max-w-md",
+              "max-h-[90vh]",
+              "bg-white rounded-lg flex flex-col"
+            )}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="px-4 py-3 border-b">
+              <h2 className="text-lg font-bold text-center sm:text-left">
+                セクション管理
+              </h2>
+            </div>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="セクション名（例：クレープ）"
-                value={newSecName}
-                onChange={(e) => setNewSecName(e.target.value)}
-                className="flex-1 border px-3 py-2 rounded"
-              />
-              <button
-                onClick={handleAddSection}
-                disabled={!newSecName.trim() || saving}
-                className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
+            <div className="px-4 py-4 space-y-4 overflow-y-auto min-h-0 overscroll-contain">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  placeholder="セクション名（例：クレープ）"
+                  value={newSecName}
+                  onChange={(e) => setNewSecName(e.target.value)}
+                  className="flex-1 border px-3 py-2 rounded"
+                />
+                <button
+                  onClick={handleAddSection}
+                  disabled={!newSecName.trim() || saving}
+                  className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50 w-full sm:w-auto"
+                >
+                  追加
+                </button>
+              </div>
+
+              {/* 並び替え可能リスト */}
+              <DndContext
+                sensors={sectionSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleSectionDragEnd}
+                modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
               >
-                追加
+                <SortableContext
+                  items={sections.map((s) => s.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {sections.length === 0 && (
+                      <p className="text-sm text-gray-500">
+                        セクションはまだありません。
+                      </p>
+                    )}
+
+                    {sections.map((s) => (
+                      <SortableSectionRow
+                        key={s.id}
+                        section={s}
+                        onDelete={handleDeleteSection}
+                      >
+                        {sectionTitleLoc(s, uiLang)}
+                      </SortableSectionRow>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+
+            <div className="px-4 py-3 border-t">
+              <button
+                onClick={() => setShowSecModal(false)}
+                className="w-full px-4 py-2 bg-gray-500 text-white rounded"
+              >
+                閉じる
               </button>
             </div>
-
-            <div className="max-h-72 overflow-auto space-y-2">
-              {sections.length === 0 && (
-                <p className="text-sm text-gray-500">
-                  セクションはまだありません。
-                </p>
-              )}
-              {sections.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex justify-between items-center border px-3 py-2 rounded"
-                >
-                  <span className="truncate">{sectionTitleLoc(s, uiLang)}</span>
-                  <button
-                    onClick={() => handleDeleteSection(s.id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    削除
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setShowSecModal(false)}
-              className="w-full mt-2 px-4 py-2 bg-gray-500 text-white rounded"
-            >
-              閉じる
-            </button>
           </div>
         </div>
       )}
 
-      {/* ▼ 商品一覧（既存のドラッグ並び替え含む） */}
+      {/* ▼ 商品一覧（DnD：縦拘束で誤操作減） */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
+        modifiers={[restrictToVerticalAxis]}
       >
         <SortableContext
           items={list.map((p) => p.id)}
@@ -770,7 +852,6 @@ export default function ProductsClient() {
         >
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-2 items-stretch">
             {list.map((p) => {
-              // ▼ 多言語表示：UI言語に応じて見出しを決定
               const loc = displayOf(p, uiLang);
               return (
                 <SortableItem key={p.id} product={p}>
@@ -795,7 +876,6 @@ export default function ProductsClient() {
                           : "bg-white",
                         "cursor-pointer",
                         !isDragging && "hover:shadow-lg",
-                        // ここには overflow-hidden を付けない！
                         "rounded-b-lg rounded-t-xl"
                       )}
                     >
@@ -803,29 +883,26 @@ export default function ProductsClient() {
                         <div
                           {...attributes}
                           {...listeners}
-                          onClick={(e) => e.stopPropagation()} // カード遷移を防止
-                          onTouchStart={(e) => e.preventDefault()} // ロングタップ誤作動防止
-                          onContextMenu={(e) => e.preventDefault()} // 右クリックメニュー抑止
-                          draggable={false} // ネイティブD&D無効化
-                          className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 z-30 cursor-grab active:cursor-grabbing touch-none select-none p-3"
+                          onClick={(e) => e.stopPropagation()}
+                          onContextMenu={(e) => e.preventDefault()}
+                          draggable={false}
+                          className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 z-30 cursor-grab active:cursor-grabbing select-none p-3"
                           role="button"
                           aria-label="並び替え"
+                          style={{ touchAction: "none" }} // ← スマホで必須
                         >
-                          {/* 白い丸い土台（影付き） */}
                           <div className="w-10 h-10 rounded-full bg-white/95 flex items-center justify-center shadow pointer-events-none">
                             <Pin />
                           </div>
                         </div>
                       )}
 
-                      {/* メディア表示（既存のまま） */}
                       <ProductMedia
                         src={p.mediaURL}
                         type={p.mediaType}
                         className="rounded-t-xl"
                       />
 
-                      {/* 商品情報（タイトルは多言語化／税込表示は辞書化） */}
                       <div className="p-1 space-y-1">
                         <h2
                           className={clsx("text-sm font-bold", {
@@ -834,7 +911,6 @@ export default function ProductsClient() {
                         >
                           {loc.title || p.title || "（無題）"}
                         </h2>
-
                         <p
                           className={clsx("font-semibold", {
                             "text-white": isDark,
@@ -853,7 +929,7 @@ export default function ProductsClient() {
         </SortableContext>
       </DndContext>
 
-      {/* ▼ 既存：新規商品追加ボタン（FAB） */}
+      {/* 新規商品追加ボタン */}
       {isAdmin && formMode === null && (
         <button
           onClick={openAdd}
@@ -865,7 +941,7 @@ export default function ProductsClient() {
         </button>
       )}
 
-      {/* ▼ 既存：新規追加/編集モーダル（★新規追加時のみセクションピッカー追加） */}
+      {/* 新規/編集モーダル（既存そのまま運用） */}
       {isAdmin && formMode && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md bg-white rounded-lg p-6 space-y-4">
@@ -873,16 +949,17 @@ export default function ProductsClient() {
               {formMode === "edit" ? "商品を編集" : "新規商品追加"}
             </h2>
 
-            {/* ★ 新規追加時のみ：セクションピッカー */}
             {formMode === "add" && (
               <div className="flex flex-col gap-1">
                 <label className="text-sm">セクション（カテゴリー）</label>
                 <select
                   value={formSectionId}
                   onChange={(e) => setFormSectionId(e.target.value)}
-                  className="w-full border px-3 py-2 rounded bg-white"
+                  className="w-full border px-3 h-10 rounded bg-white"
                 >
-                  <option value="">全カテゴリー</option>
+                  <option value="">
+                    {ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja}
+                  </option>
                   {sections.map((s) => (
                     <option key={s.id} value={s.id}>
                       {sectionTitleLoc(s, uiLang)}
@@ -892,7 +969,6 @@ export default function ProductsClient() {
               </div>
             )}
 
-            {/* 原文（日本語）入力は既存のまま維持 */}
             <input
               type="text"
               placeholder="商品名"
@@ -922,7 +998,6 @@ export default function ProductsClient() {
                   checked={taxIncluded}
                   onChange={() => setTaxIncluded(true)}
                 />
-                {/* 日本語固定 */}
                 税込
               </label>
               <label>
@@ -931,10 +1006,10 @@ export default function ProductsClient() {
                   checked={!taxIncluded}
                   onChange={() => setTaxIncluded(false)}
                 />
-                {/* 日本語固定 */}
                 税抜
               </label>
             </div>
+
             <textarea
               placeholder="紹介文"
               value={body}
@@ -944,7 +1019,6 @@ export default function ProductsClient() {
               disabled={uploading}
             />
 
-            {/* 既存の AI 生成ボタンはそのまま（結果は日本語本文へ） */}
             <button
               onClick={async () => {
                 if (!title) return alert("タイトルを入力してください");
@@ -955,7 +1029,6 @@ export default function ProductsClient() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ title, price }),
                   });
-
                   const data = await res.json();
                   if (data.body) {
                     setBody(data.body);
@@ -971,33 +1044,7 @@ export default function ProductsClient() {
               disabled={uploading || aiLoading}
               className="w-full mt-2 px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {aiLoading ? (
-                <>
-                  <svg
-                    className="animate-spin h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                  <span>生成中…</span>
-                </>
-              ) : (
-                "AIで紹介文を生成"
-              )}
+              {aiLoading ? "生成中…" : "AIで紹介文を生成"}
             </button>
 
             <input
@@ -1007,14 +1054,12 @@ export default function ProductsClient() {
                 const f = e.target.files?.[0];
                 if (!f) return;
 
-                /* --- 動画かどうか判定 --- */
                 const isVideo = f.type.startsWith("video/");
                 if (!isVideo) {
                   setFile(f);
                   return;
                 }
 
-                /* --- <video> でメタデータだけ読む --- */
                 const blobURL = URL.createObjectURL(f);
                 const vid = document.createElement("video");
                 vid.preload = "metadata";
@@ -1033,6 +1078,7 @@ export default function ProductsClient() {
               className="bg-gray-500 text-white w-full h-10 px-3 py-1 rounded"
               disabled={uploading}
             />
+
             {formMode === "edit" && editing?.originalFileName && (
               <p className="text-sm text-gray-600">
                 現在のファイル: {editing.originalFileName}
