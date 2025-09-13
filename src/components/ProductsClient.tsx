@@ -49,6 +49,7 @@ import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
   restrictToVerticalAxis,
@@ -691,7 +692,6 @@ export default function ProductsClient() {
     if (!over || active.id === over.id) return;
 
     const oldIndex = sections.findIndex((s) => s.id === active.id);
-
     const newIndex = sections.findIndex((s) => s.id === over.id);
     const newList = arrayMove(sections, oldIndex, newIndex);
 
@@ -705,12 +705,16 @@ export default function ProductsClient() {
     await batch.commit();
   };
 
-  const currentSectionLabel = useMemo(() => {
-    if (selectedSectionId === "all")
-      return ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja;
-    const hit = sections.find((s) => s.id === selectedSectionId);
-    return hit ? sectionTitleLoc(hit, uiLang) : "";
-  }, [selectedSectionId, sections, uiLang]);
+  // ラベル（メニュー上部の現在表示カテゴリ）
+  const currentSectionLabel =
+    selectedSectionId === "all"
+      ? ALL_CATEGORY_T[uiLang] ?? ALL_CATEGORY_T.ja
+      : sections.find((s) => s.id === selectedSectionId)
+      ? sectionTitleLoc(
+          sections.find((s) => s.id === selectedSectionId)!,
+          uiLang
+        )
+      : "";
 
   if (!gradient) return null;
 
@@ -760,7 +764,7 @@ export default function ProductsClient() {
         )}
       </div>
 
-      {/* ▼ セクション管理モーダル（DnD対応・スマホ最適化） */}
+      {/* ▼ セクション管理モーダル（DnD対応・スマホ最適化：縦のみ） */}
       {showSecModal && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-3 overscroll-contain">
           <div
@@ -796,7 +800,7 @@ export default function ProductsClient() {
                 </button>
               </div>
 
-              {/* 並び替え可能リスト */}
+              {/* 並び替え可能リスト（縦ソート） */}
               <DndContext
                 sensors={sectionSensors}
                 collisionDetection={closestCenter}
@@ -820,7 +824,8 @@ export default function ProductsClient() {
                         section={s}
                         onDelete={handleDeleteSection}
                       >
-                        {sectionTitleLoc(s, uiLang)}
+                        {/* モーダルは原文表示に固定（多言語にしない） */}
+                        {s.base?.title ?? ""}
                       </SortableSectionRow>
                     ))}
                   </div>
@@ -840,16 +845,19 @@ export default function ProductsClient() {
         </div>
       )}
 
-      {/* ▼ 商品一覧（DnD：縦拘束で誤操作減） */}
+      {/* ▼ 商品一覧（DnD：グリッド対応・横移動OK） */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
-        modifiers={[restrictToVerticalAxis]}
+        // 横移動可能にするため縦拘束は外す
+        // modifiers={[restrictToVerticalAxis]}
+        modifiers={[restrictToWindowEdges]} // 画面外へのはみ出しのみ抑制
       >
         <SortableContext
           items={list.map((p) => p.id)}
-          strategy={verticalListSortingStrategy}
+          // グリッドの並べ替えに最適
+          strategy={rectSortingStrategy}
         >
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-2 items-stretch">
             {list.map((p) => {
@@ -956,7 +964,7 @@ export default function ProductsClient() {
                 <select
                   value={formSectionId}
                   onChange={(e) => setFormSectionId(e.target.value)}
-                  className="w-full border px-3 h-10 rounded bg-white"
+                  className="w-full border px-3 h-10 rounded bg白"
                 >
                   {/* 多言語辞書は使わず日本語固定 */}
                   <option value="">未設定</option>
