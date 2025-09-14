@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
 
- 
+
 
   return (
     <main className="w-full overflow-x-hidden">
@@ -44,13 +44,13 @@ export default function HomePage() {
         <TopFixedText />
 
         {/* SEO 用見出しとリード文 */}
-        <h1 className="text-3xl lg:text-4xl font-extrabold text-center leading-tight mb-6">
+        <h1 className="text-3xl lg:text-4xl font-extrabold text-center leading-tight mb-6 text-outline">
           甘味処 よって屋
           <br />
           サクサク生地のクレープ
         </h1>
 
-        <p className="max-w-3xl mx-auto text-center leading-relaxed ">
+        <p className="max-w-3xl mx-auto text-center leading-relaxed text-outline">
           大阪市東淀川区で開業１年。独自ブレンドのオリジナル粉で焼き上げる
           “外サクサク・中モチモチ”クレープが評判です。下新庄店ではアイスクリーム、
           淡路店ではふわふわかき氷も提供。テイクアウト・イートインどちらも歓迎。

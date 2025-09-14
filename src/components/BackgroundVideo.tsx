@@ -15,8 +15,8 @@ import { ThemeKey } from "@/lib/themes";
 import { Button } from "@/components/ui/button";
 import Slideshow from "./Slideshow";
 import CrepeLoader from "./CrepeLoader";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
-const SITE_KEY = "yotteya";
 const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 const POSTER_EXT = ".jpg";
 
@@ -41,6 +41,11 @@ export default function BackgroundMedia() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isPortrait, setIsPortrait] = useState<boolean | null>(null);
 
+  // 型も追加しておくと便利
+  const [status, setStatus] = useState<
+    "loading" | "paid" | "unpaid" | "pending" | "canceled" | "setup"
+  >("loading");
+
   const uploading = progress !== null;
 
   const loading =
@@ -49,6 +54,38 @@ export default function BackgroundMedia() {
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => setIsAdmin(!!user));
+  }, []);
+
+  useEffect(() => {
+    const checkPayment = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get("session_id");
+
+      const apiUrl = sessionId
+        ? `/api/stripe/verify-subscription?session_id=${sessionId}`
+        : `/api/stripe/check-subscription?siteKey=${SITE_KEY}`;
+
+      console.log("🔍 checkPayment called:", apiUrl);
+
+      const res = await fetch(apiUrl);
+      const json = await res.json();
+
+      console.log("✅ サブスクステータス:", json.status);
+
+      if (json.status === "active") setStatus("paid");
+      else if (json.status === "pending_cancel") setStatus("pending");
+      else if (json.status === "canceled") setStatus("canceled");
+      else if (json.status === "setup_mode") setStatus("setup");
+      else setStatus("unpaid");
+
+      if (sessionId) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("session_id");
+        window.history.replaceState({}, "", url.toString());
+      }
+    };
+
+    checkPayment();
   }, []);
 
   useEffect(() => {
@@ -279,10 +316,36 @@ export default function BackgroundMedia() {
     return null;
   };
 
+  const pendingButton = status === "pending" &&
+    isAdmin && ( // ← isAdmin は「ログイン済み」の意味で使っている
+      <Button
+        className="fixed bottom-4 right-4 z-50 bg-yellow-500 text-white shadow-lg"
+        onClick={async () => {
+          try {
+            const res = await fetch("/api/stripe/resume-subscription", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ siteKey: SITE_KEY }),
+            });
+            if (res.ok) {
+              alert("解約予約を取り消しました！");
+              location.reload();
+            } else {
+              alert("再開に失敗しました");
+            }
+          } catch {
+            alert("再開に失敗しました");
+          }
+        }}
+      >
+        解約を取り消す
+      </Button>
+    );
+
   return (
     <div className="fixed inset-0 top-12">
+      {pendingButton}
       {renderMedia()}
-
       {loading && <CrepeLoader />}
 
       {isAdmin && (

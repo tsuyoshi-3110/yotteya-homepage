@@ -324,7 +324,7 @@ function InlineMediaViewer({
   return (
     <div className="px-6 md:px-8 pb-2">
       <div
-        className="relative w-full overflow-hidden rounded-2xl border bg-black/5"
+        className="relative w-full overflow-hidden rounded border bg-black/5"
         style={{ aspectRatio: "21 / 9" }}
       >
         {type === "video" ? (
@@ -507,7 +507,7 @@ function InlineMediaEditor({
     <div className="px-6 md:px-8 pb-2">
       <div
         className={[
-          "relative w-full overflow-hidden rounded-2xl border bg-slate-100",
+          "relative w-full overflow-hidden rounded border bg-slate-100",
           isOver ? "ring-2 ring-purple-500" : "ring-1 ring-black/5",
         ].join(" ")}
         style={{ aspectRatio: "21 / 9" }}
@@ -541,7 +541,7 @@ function InlineMediaEditor({
 
         {/* アクションバー */}
         <div className="absolute bottom-3 right-3 flex items-center gap-2">
-          <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur border shadow cursor-pointer text-sm">
+          <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-white/90 backdrop-blur border shadow cursor-pointer text-sm">
             <Upload className="h-4 w-4" />
             <span>ファイル選択</span>
             <input type="file" accept="image/*,video/*" className="hidden" onChange={onInputChange} />
@@ -661,7 +661,7 @@ function AiGenerateModal({
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white/90 shadow-2xl border border-white/40 ring-1 ring-black/5">
+      <div className="w-full max-w-lg rounded bg-white/90 shadow-2xl border border-white/40 ring-1 ring-black/5">
         <div className="p-5 border-b bg-gradient-to-r from-purple-600/10 to-fuchsia-600/10">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Wand2 className="h-5 w-5 text-purple-600" />
@@ -921,7 +921,7 @@ export default function CompanyOverview() {
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto">
-        <div className="relative rounded-3xl bg-white/60 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
+        <div className="relative rounded bg-white/60 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
           <CardSpinner />
           <div className="p-8">読み込み中…</div>
         </div>
@@ -932,7 +932,7 @@ export default function CompanyOverview() {
   return (
     <div className="max-w-5xl mx-auto">
       {/* ===== 会社概要カード ===== */}
-      <div className="relative rounded-3xl bg-white/60 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
+      <div className="relative rounded bg-white/60 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
         {saving && <CardSpinner />}
 
         {/* 先頭：編集/保存ボタン */}
@@ -958,7 +958,7 @@ export default function CompanyOverview() {
         {/* ヘッダー帯（タイトル） */}
         <div className="px-6 md:px-8 pb-4 pt-2 text-slate-900">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-white/60 flex items-center justify-center ring-1 ring-black/5">
+            <div className="h-10 w-10 rounded bg-white/60 flex items-center justify-center ring-1 ring-black/5">
               <Building2 className="h-6 w-6 text-slate-700" />
             </div>
             <div>
@@ -1027,7 +1027,7 @@ function ReadOnlyView({ data }: { data: CompanyProfileView }) {
   return (
     <div className="space-y-10">
       {data.about && (
-        <section className="rounded-2xl border border-gray-200 p-4 md:p-5 bg-white/70 mb-5">
+        <section className="rounded border border-gray-200 p-4 md:p-5 bg-white/70 mb-5">
           <h3 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
             <UserIcon className="h-4 w-4" />
             会社情報
@@ -1050,7 +1050,7 @@ function ReadOnlyView({ data }: { data: CompanyProfileView }) {
 
       {/* 事業内容 */}
       {Array.isArray(data.business) && data.business.length > 0 && (
-        <section className="rounded-2xl border border-gray-200 p-4 md:p-5 bg-white/70">
+        <section className="rounded border border-gray-200 p-4 md:p-5 bg-white/70">
           <h3 className="font-medium text-gray-700 mb-3">事業内容</h3>
           <ul className="list-disc pl-5 space-y-1">
             {data.business
@@ -1066,7 +1066,7 @@ function ReadOnlyView({ data }: { data: CompanyProfileView }) {
 
       {/* アクセス（マップ） */}
       {embedSrc && (
-        <section className="rounded-2xl overflow-hidden border border-gray-200 bg-white/70">
+        <section className="rounded overflow-hidden border border-gray-200 bg-white/70">
           <h3 className="font-medium text-gray-700 mb-2 p-4 flex items-center gap-2">
             <LinkIcon className="h-4 w-4 text-blue-600" />
             アクセス
@@ -1098,7 +1098,7 @@ function Field({
 }) {
   if (!value) return null;
   return (
-    <div className="rounded-xl border border-gray-200 p-4 bg-white/70">
+    <div className="rounded border border-gray-200 p-4 bg-white/70">
       <div className="text-xs text-gray-500 mb-1 flex items-center gap-2">
         {icon}
         {label}
@@ -1198,7 +1198,7 @@ function EditView({
         <div className="mt-2 text-xs text-gray-500">※ 短縮URL（maps.app.goo.gl）や通常URLでもOK。自動で埋め込み形式に変換します。</div>
 
         {previewSrc && (
-          <div className="mt-4 aspect-video w-full overflow-hidden rounded-lg border">
+          <div className="mt-4 aspect-video w-full overflow-hidden rounded border">
             <iframe src={previewSrc} className="w-full h-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
           </div>
         )}
