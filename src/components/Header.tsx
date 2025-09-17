@@ -1,4 +1,3 @@
-// components/common/Header.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -16,11 +15,13 @@ import Image from "next/image";
 import clsx from "clsx";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { useHeaderLogoUrl } from "../hooks/useHeaderLogoUrl";
-import { auth } from "@/lib/firebase";
-
-// ▼ 追加：多言語ピッカー & 言語Atom
+import { auth, db } from "@/lib/firebase";
 import UILangFloatingPicker from "./UILangFloatingPicker";
 import { useUILang, type UILang as UILangType } from "@/lib/atoms/uiLangAtom";
+import { doc, onSnapshot } from "firebase/firestore";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+
+const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 
 const SNS = [
   {
@@ -31,8 +32,6 @@ const SNS = [
 ];
 
 const HEADER_H = "3rem";
-
-// ▼ 3タップ検出
 const TRIPLE_TAP_INTERVAL_MS = 500;
 const IGNORE_SELECTOR = "a,button,input,select,textarea,[role='button']";
 
@@ -278,38 +277,88 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
 };
 
+// メニューキー（Loginと揃える）
+type MenuKey =
+  | "products"
+  | "stores"
+  | "delivery"
+  | "about"
+  | "company"
+  | "news"
+  | "interview"
+  | "timeline"
+  | "community"
+  | "analytics"
+  | "admin";
+
+type MenuItem = {
+  key: MenuKey;
+  href: string;
+  external?: boolean;
+};
+
+const MENU_ITEMS: MenuItem[] = [
+  { key: "products", href: "/products" },
+  { key: "stores", href: "/stores" },
+  {
+    key: "delivery",
+    href: "https://www.ubereats.com/store/%E3%81%97%E3%82%85%E3%82%8F%E3%81%A3%E3%81%A8%E8%B4%85%E6%B2%A2%E3%83%8F%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%84%E3%81%BF%E3%81%A4%E3%81%8D%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%95-%E3%82%88%E3%81%A3%E3%81%A6%E5%B1%8B/ycwuMM91VIaoNcZ1oCr_5g?diningMode=DELIVERY",
+    external: true,
+  },
+  { key: "about", href: "/about" },
+  { key: "company", href: "/company" },
+  { key: "news", href: "/news" },
+  { key: "interview", href: "/blog" },
+];
+
+const FOOTER_ITEMS: MenuItem[] = [
+  { key: "timeline", href: "/postList" },
+  { key: "community", href: "/community" },
+  { key: "analytics", href: "/analytics" },
+  { key: "admin", href: "/login" },
+];
+
 export default function Header({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // ▼ UI言語
+  // UI言語
   const { uiLang } = useUILang();
   const t = T[uiLang] ?? T.ja;
   const rtl = uiLang === "ar";
 
-  // 3タップ状態
-  const [showAdminLink, setShowAdminLink] = useState(false);
-  const tapCountRef = useRef(0);
-  const lastTapAtRef = useRef(0);
-
+  // 表示対象メニュー（Firestore購読）
+  const [visibleMenuKeys, setVisibleMenuKeys] = useState<MenuKey[]>(
+    [...MENU_ITEMS, ...FOOTER_ITEMS].map((m) => m.key)
+  );
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setIsLoggedIn(!!user);
+    const unsub = onSnapshot(META_REF, (snap) => {
+      const data = snap.data() as { visibleMenuKeys?: MenuKey[] } | undefined;
+      if (Array.isArray(data?.visibleMenuKeys) && data!.visibleMenuKeys.length) {
+        setVisibleMenuKeys(data!.visibleMenuKeys);
+      }
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  const handleMenuClose = () => {
-    setOpen(false);
-  };
+  // ログイン状態
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((user) => setIsLoggedIn(!!user));
+    return () => unsub();
+  }, []);
 
   const gradientClass = gradient
-    ? `bg-gradient-to-b ${gradient}`
+    ? gradient.startsWith("bg-[")
+      ? gradient // 単色
+      : `bg-gradient-to-b ${gradient}` // グラデーション
     : "bg-gray-100";
 
   // Sheetが閉じたら3タップ状態をリセット
+  const [showAdminLink, setShowAdminLink] = useState(false);
+  const tapCountRef = useRef(0);
+  const lastTapAtRef = useRef(0);
   useEffect(() => {
     if (!open) {
       setShowAdminLink(false);
@@ -331,7 +380,6 @@ export default function Header({ className = "" }: { className?: string }) {
       lastTapAtRef.current = now;
       return;
     }
-
     tapCountRef.current += 1;
     lastTapAtRef.current = now;
 
@@ -342,6 +390,8 @@ export default function Header({ className = "" }: { className?: string }) {
     }
   };
 
+  const handleMenuClose = () => setOpen(false);
+
   return (
     <header
       className={clsx(
@@ -351,6 +401,7 @@ export default function Header({ className = "" }: { className?: string }) {
       )}
       style={{ "--header-h": HEADER_H } as React.CSSProperties}
     >
+      {/* ロゴ */}
       <Link
         href="/"
         className="text-md text-white text-outline font-bold flex items-center gap-2 py-2 hover:opacity-50"
@@ -362,14 +413,15 @@ export default function Header({ className = "" }: { className?: string }) {
             alt="ロゴ"
             width={48}
             height={48}
-            className="w-12 h-12 object-contain transition-opacity duration-200 text-outline"
+            className="w-12 h-12 object-contain transition-opacity duration-200"
             unoptimized
           />
         )}
         甘味処 クレープよって屋
       </Link>
 
-      <nav className="flex gap-4 ml-auto mr-2">
+      {/* SNS */}
+      <nav className={clsx("flex gap-4 ml-auto mr-2", rtl && "flex-row-reverse")}>
         {SNS.map(({ name, href, icon: Icon }) => (
           <a
             key={name}
@@ -385,6 +437,7 @@ export default function Header({ className = "" }: { className?: string }) {
         ))}
       </nav>
 
+      {/* 外部リンク（サイト） */}
       <Link
         href="https://tayotteya.com/"
         className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
@@ -392,7 +445,7 @@ export default function Header({ className = "" }: { className?: string }) {
       >
         <Image
           src="/images/tayotteya_circle_image.png"
-          alt="ロゴ"
+          alt="Home"
           width={32}
           height={32}
           className="w-7 h-7 object-contain transition-opacity duration-200 mr-2"
@@ -400,6 +453,7 @@ export default function Header({ className = "" }: { className?: string }) {
         />
       </Link>
 
+      {/* ハンバーガー */}
       <div>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
@@ -417,9 +471,9 @@ export default function Header({ className = "" }: { className?: string }) {
             side="right"
             dir={rtl ? "rtl" : "ltr"}
             className={clsx(
-              "flex flex-col bg-gray-100",
-              gradient && "bg-gradient-to-b",
-              gradient,
+              "flex flex-col",
+              gradient && (gradient.startsWith("bg-[") ? gradient : `bg-gradient-to-b ${gradient}`),
+              // Closeボタンのサイズ調整（任意）
               "[&_[data-radix-sheet-close]]:w-10 [&_[data-radix-sheet-close]]:h-10",
               "[&_[data-radix-sheet-close]_svg]:w-6 [&_[data-radix-sheet-close]_svg]:h-6"
             )}
@@ -435,101 +489,68 @@ export default function Header({ className = "" }: { className?: string }) {
               className="flex-1 flex flex-col justify-between"
               onPointerDown={handleSecretTap}
             >
-              {/* 上段：メニュー（文言のみ多言語化） */}
+              {/* 上段：メニュー（表示/非表示 制御） */}
               <div className="flex-1 flex flex-col justify-center items-center space-y-4 text-center">
-                <Link
-                  href="/products"
-                  onClick={handleMenuClose}
-                  className="text-lg text-white text-outline"
-                >
-                  {t.products}
-                </Link>
-                <Link
-                  href="/stores"
-                  onClick={handleMenuClose}
-                  className="text-lg text-white text-outline"
-                >
-                  {t.stores}
-                </Link>
-                <Link
-                  href="https://www.ubereats.com/store/%E3%81%97%E3%82%85%E3%82%8F%E3%81%A3%E3%81%A8%E8%B4%85%E6%B2%A2%E3%83%8F%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%84%E3%81%BF%E3%81%A4%E3%81%8D%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%95-%E3%82%88%E3%81%A3%E3%81%A6%E5%B1%8B/ycwuMM91VIaoNcZ1oCr_5g?diningMode=DELIVERY"
-                  onClick={handleMenuClose}
-                  className="text-lg text-white text-outline"
-                >
-                  {t.delivery}
-                </Link>
-                <Link
-                  href="/about"
-                  onClick={handleMenuClose}
-                  className="text-lg text-white text-outline"
-                >
-                  {t.about}
-                </Link>
-                <Link
-                  href="/company"
-                  onClick={handleMenuClose}
-                  className="text-lg text-white text-outline"
-                >
-                  {t.company}
-                </Link>
-                <Link
-                  href="/news"
-                  onClick={handleMenuClose}
-                  className="text-lg text-white text-outline"
-                >
-                  {t.news}
-                </Link>
-                <a
-                  href="/blog"
-                  onClick={handleMenuClose}
-                  className="text-white hover:underline bg-transparent hover:bg-white/10 transition inline-block px-4 py-2 rounded text-outline"
-                >
-                  {t.interview}
-                </a>
+                {MENU_ITEMS.filter((m) => visibleMenuKeys.includes(m.key)).map(
+                  ({ key, href, external }) =>
+                    external ? (
+                      <a
+                        key={key}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={handleMenuClose}
+                        className="text-lg text-white text-outline hover:underline"
+                      >
+                        {t[key]}
+                      </a>
+                    ) : (
+                      <Link
+                        key={key}
+                        href={href}
+                        onClick={handleMenuClose}
+                        className="text-lg text-white text-outline"
+                      >
+                        {t[key]}
+                      </Link>
+                    )
+                )}
               </div>
 
-              {/* 言語ピッカー（既存UIに影響しない位置） */}
+              {/* 言語ピッカー */}
               <div className="flex flex-col items-center gap-3 px-4 pb-2">
                 <UILangFloatingPicker />
               </div>
 
-              {/* 下段：フッターリンク（ログイン or 3タップで管理者表示） */}
-              <div className="p-4 space-y-2">
-                {isLoggedIn && (
-                  <>
-                    <Link
-                      href="/postList"
-                      onClick={handleMenuClose}
-                      className="block text-center text-lg text-white text-outline"
-                    >
-                      {t.timeline}
-                    </Link>
-                    <Link
-                      href="/community"
-                      onClick={handleMenuClose}
-                      className="block text-center text-lg text-white text-outline"
-                    >
-                      {t.community}
-                    </Link>
-                    <Link
-                      href="/analytics"
-                      onClick={handleMenuClose}
-                      className="block text-center text-lg text-white text-outline"
-                    >
-                      {t.analytics}
-                    </Link>
-                  </>
-                )}
+              {/* 下段：フッターリンク（表示/非表示 + ログイン/3タップ制御） */}
+              <div className="px-4 py-6">
+                <div className="flex flex-col items-center gap-3">
+                  {isLoggedIn &&
+                    FOOTER_ITEMS.filter((m) =>
+                      ["timeline", "community", "analytics"].includes(m.key) &&
+                      visibleMenuKeys.includes(m.key as MenuKey)
+                    ).map(({ key, href }) => (
+                      <Link
+                        key={key}
+                        href={href}
+                        onClick={handleMenuClose}
+                        className="text-center text-lg text-white text-outline"
+                      >
+                        {t[key as Keys]}
+                      </Link>
+                    ))}
 
-                {(showAdminLink || isLoggedIn) && (
-                  <Link
-                    href="/login"
-                    onClick={handleMenuClose}
-                    className="block text-center text-lg text-white text-outline"
-                  >
-                    {t.admin}
-                  </Link>
-                )}
+                  {(showAdminLink || isLoggedIn) &&
+                    visibleMenuKeys.includes("admin") && (
+                      <Link
+                        href="/login"
+                        onClick={handleMenuClose}
+                        className="text-center text-lg text-white text-outline"
+                      >
+                        {t.admin}
+                      </Link>
+                    )}
+                </div>
               </div>
             </div>
           </SheetContent>
@@ -538,3 +559,8 @@ export default function Header({ className = "" }: { className?: string }) {
     </header>
   );
 }
+
+
+
+
+
