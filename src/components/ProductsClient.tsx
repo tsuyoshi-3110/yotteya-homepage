@@ -859,7 +859,7 @@ export default function ProductsClient() {
           // グリッドの並べ替えに最適
           strategy={rectSortingStrategy}
         >
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-2 items-stretch">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {list.map((p) => {
               const loc = displayOf(p, uiLang);
               return (

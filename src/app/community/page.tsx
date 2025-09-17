@@ -184,6 +184,19 @@ function scorePartner(
   return 0.6 * industry + 0.4 * dist;
 }
 
+// ② ユーティリティを追加（ファイル先頭の関数群のそばに置くと見通し良いです）
+const normalizeJa = (s: string) =>
+  (s || "")
+    .toString()
+    .normalize("NFKC") // 全角→半角など正規化
+    .toLowerCase()
+    .trim();
+
+const toTokens = (q: string) =>
+  normalizeJa(q)
+    .split(/\s+/) // スペース/改行で区切り
+    .filter(Boolean); // 空要素除去
+
 /* ----------  Component ---------- */
 export default function CommunityPage() {
   const [owners, setOwners] = useState<SiteOwner[]>([]);
@@ -285,9 +298,21 @@ export default function CommunityPage() {
   }, []);
 
   const filteredOwners = useMemo(() => {
-    if (!query.trim()) return owners;
-    const q = query.trim().toLowerCase();
-    return owners.filter((o) => o.siteName.toLowerCase().includes(q));
+    const tokens = toTokens(query);
+    if (tokens.length === 0) return owners;
+
+    return owners.filter((o) => {
+      const haystack = [
+        o.siteName ?? "",
+        o.ownerName ?? "",
+        o.industry?.name ?? "",
+        o.industry?.key ?? "",
+      ]
+        .map((s) => normalizeJa(s)) // ← string のみが渡るのでOK
+        .join(" ");
+
+      return tokens.every((t) => haystack.includes(t));
+    });
   }, [owners, query]);
 
   const handleChange = useCallback(
@@ -373,82 +398,81 @@ export default function CommunityPage() {
   }, [owners, myIndustryName]);
 
   /* ===== カード個別：AIが協業案 ===== */
- const proposeLocal = useCallback(
-  (partner: SiteOwner) => {
-    const myGroup = groupOf({ key: "", name: myIndustryName });
-    const pg = groupOf(partner.industry);
-    const distTxt =
-      partner.distanceKm != null
-        ? formatDistance(partner.distanceKm)
-        : "距離不明";
+  const proposeLocal = useCallback(
+    (partner: SiteOwner) => {
+      const myGroup = groupOf({ key: "", name: myIndustryName });
+      const pg = groupOf(partner.industry);
+      const distTxt =
+        partner.distanceKm != null
+          ? formatDistance(partner.distanceKm)
+          : "距離不明";
 
-    const relation =
-      myGroup === pg
-        ? "同ジャンルの相乗効果が期待できます"
-        : COMPLEMENTS[myGroup]?.includes(pg)
-        ? "互いを補完する関係です"
-        : "関連度は高くありませんが距離面で取り組みやすいです";
+      const relation =
+        myGroup === pg
+          ? "同ジャンルの相乗効果が期待できます"
+          : COMPLEMENTS[myGroup]?.includes(pg)
+          ? "互いを補完する関係です"
+          : "関連度は高くありませんが距離面で取り組みやすいです";
 
-    const ideas = [
-      `相互SNS紹介（ストーリーズ/リール）で近隣ユーザーに訴求（${distTxt}）`,
-      `店頭QRで相互送客：「${partner.siteName}」×「${myIndustryName}」コラボ特典`,
-      `季節の共同キャンペーン（${myIndustryName}×${
-        partner.industry?.name ?? "相手業種"
-      }）`,
-      partner.distanceKm != null && partner.distanceKm < 3
-        ? "徒歩圏“ハシゴ割”（同日利用で双方5%OFF）"
-        : "近隣マップ（Web）で相互紹介・回遊促進",
-      "共同インスタライブ or ショート動画撮影で“体験”訴求",
-    ].filter(Boolean) as string[];
+      const ideas = [
+        `相互SNS紹介（ストーリーズ/リール）で近隣ユーザーに訴求（${distTxt}）`,
+        `店頭QRで相互送客：「${partner.siteName}」×「${myIndustryName}」コラボ特典`,
+        `季節の共同キャンペーン（${myIndustryName}×${
+          partner.industry?.name ?? "相手業種"
+        }）`,
+        partner.distanceKm != null && partner.distanceKm < 3
+          ? "徒歩圏“ハシゴ割”（同日利用で双方5%OFF）"
+          : "近隣マップ（Web）で相互紹介・回遊促進",
+        "共同インスタライブ or ショート動画撮影で“体験”訴求",
+      ].filter(Boolean) as string[];
 
-    return {
-      reason: `距離は${distTxt}、${relation}。`,
-      ideas: ideas.slice(0, 5),
-    };
-  },
-  [myIndustryName] // ← myIndustryNameに依存
-);
+      return {
+        reason: `距離は${distTxt}、${relation}。`,
+        ideas: ideas.slice(0, 5),
+      };
+    },
+    [myIndustryName] // ← myIndustryNameに依存
+  );
 
-const handleProposeForCard = useCallback(
-  async (partner: SiteOwner) => {
-    setGeneratingCardId(partner.id);
-    try {
-      const res = await fetch("/api/collab-ideas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          my: { industry: myIndustryName || "未設定" },
-          partner: {
-            id: partner.id,
-            siteName: partner.siteName,
-            industry: partner.industry?.name ?? "未設定",
-            distanceKm: partner.distanceKm ?? null,
+  const handleProposeForCard = useCallback(
+    async (partner: SiteOwner) => {
+      setGeneratingCardId(partner.id);
+      try {
+        const res = await fetch("/api/collab-ideas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            my: { industry: myIndustryName || "未設定" },
+            partner: {
+              id: partner.id,
+              siteName: partner.siteName,
+              industry: partner.industry?.name ?? "未設定",
+              distanceKm: partner.distanceKm ?? null,
+            },
+          }),
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        const j = await res.json();
+
+        setCardProposals((prev) => ({
+          ...prev,
+          [partner.id]: {
+            reason: typeof j.reason === "string" ? j.reason : "",
+            ideas: Array.isArray(j.ideas) ? j.ideas.slice(0, 5) : [],
           },
-        }),
-      });
-
-      if (!res.ok) throw new Error(await res.text());
-      const j = await res.json();
-
-      setCardProposals((prev) => ({
-        ...prev,
-        [partner.id]: {
-          reason: typeof j.reason === "string" ? j.reason : "",
-          ideas: Array.isArray(j.ideas) ? j.ideas.slice(0, 5) : [],
-        },
-      }));
-      setOpenCards((prev) => ({ ...prev, [partner.id]: true }));
-    } catch {
-      const fb = proposeLocal(partner);
-      setCardProposals((prev) => ({ ...prev, [partner.id]: fb }));
-      setOpenCards((prev) => ({ ...prev, [partner.id]: true }));
-    } finally {
-      setGeneratingCardId(null);
-    }
-  },
-  [myIndustryName, proposeLocal] // ← proposeLocalがuseCallback化されてるのでOK
-);
-
+        }));
+        setOpenCards((prev) => ({ ...prev, [partner.id]: true }));
+      } catch {
+        const fb = proposeLocal(partner);
+        setCardProposals((prev) => ({ ...prev, [partner.id]: fb }));
+        setOpenCards((prev) => ({ ...prev, [partner.id]: true }));
+      } finally {
+        setGeneratingCardId(null);
+      }
+    },
+    [myIndustryName, proposeLocal] // ← proposeLocalがuseCallback化されてるのでOK
+  );
 
   return (
     <main className="mx-auto max-w-3xl p-4 pt-20">
@@ -456,14 +480,11 @@ const handleProposeForCard = useCallback(
       <div className="mb-4 flex gap-2 items-center">
         <input
           type="text"
-          placeholder="店舗名で検索…"
+          placeholder="店舗名/業種で検索…" // ← 変更
           value={query}
           onChange={handleChange}
           className={clsx(
-            "flex-1 bg-white/50 rounded border px-3 py-2 text-sm focus:outline-none",
-            isDark
-              ? "text-white placeholder-gray-300 border-gray-600"
-              : "text-black"
+            "flex-1 bg-white/50 rounded border px-3 py-2 text-sm focus:outline-none"
           )}
         />
         <button
