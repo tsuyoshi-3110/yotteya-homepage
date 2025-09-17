@@ -901,7 +901,7 @@ export default function ProductsClient() {
                           style={{ touchAction: "none" }} // ← スマホで必須
                         >
                           <div className="w-10 h-10 rounded-full bg-white/95 flex items-center justify-center shadow pointer-events-none">
-                            <Pin />
+                            <Pin className="text-black"/>
                           </div>
                         </div>
                       )}

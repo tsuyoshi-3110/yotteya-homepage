@@ -38,6 +38,7 @@ import {
   fetchWeekdayByPeriod,
 } from "@/lib/logAnalytics";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import Link from "next/link";
 
 Chart.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
@@ -295,7 +296,9 @@ export default function AnalyticsPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
-      <h2 className="text-xl font-bold text-white">アクセス解析</h2>
+      <h2 className="text-xl font-bold text-white text-outline">
+        アクセス解析
+      </h2>
 
       {/* 期間プリセット */}
       <div className="flex flex-wrap gap-2 mb-4">
@@ -320,6 +323,10 @@ export default function AnalyticsPage() {
             </Button>
           );
         })}
+
+        <Button asChild className="ml-auto rounded-full">
+          <Link href="/analytics-guide">?</Link>
+        </Button>
       </div>
 
       {/* AI改善提案 */}

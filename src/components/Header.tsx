@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
-import { Menu, Instagram } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -20,14 +20,14 @@ import UILangFloatingPicker from "./UILangFloatingPicker";
 import { useUILang, type UILang as UILangType } from "@/lib/atoms/uiLangAtom";
 import { doc, onSnapshot } from "firebase/firestore";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
-
+import { ThemeKey, THEMES } from "@/lib/themes";
 const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 
 const SNS = [
   {
     name: "Instagram",
     href: "https://www.instagram.com/yotteya.crape/",
-    icon: Instagram,
+    image: "/images/instagram-logo.png", // ← ここにSNSアイコン画像を用意しておく
   },
 ];
 
@@ -324,6 +324,12 @@ export default function Header({ className = "" }: { className?: string }) {
   const logoUrl = useHeaderLogoUrl();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const isDark = useMemo(() => {
+    const darkThemes: ThemeKey[] = ["brandG", "brandH", "brandI"];
+    if (!gradient) return false;
+    return darkThemes.some((k) => gradient === THEMES[k]);
+  }, [gradient]);
+
   // UI言語
   const { uiLang } = useUILang();
   const t = T[uiLang] ?? T.ja;
@@ -336,7 +342,10 @@ export default function Header({ className = "" }: { className?: string }) {
   useEffect(() => {
     const unsub = onSnapshot(META_REF, (snap) => {
       const data = snap.data() as { visibleMenuKeys?: MenuKey[] } | undefined;
-      if (Array.isArray(data?.visibleMenuKeys) && data!.visibleMenuKeys.length) {
+      if (
+        Array.isArray(data?.visibleMenuKeys) &&
+        data!.visibleMenuKeys.length
+      ) {
         setVisibleMenuKeys(data!.visibleMenuKeys);
       }
     });
@@ -421,18 +430,26 @@ export default function Header({ className = "" }: { className?: string }) {
       </Link>
 
       {/* SNS */}
-      <nav className={clsx("flex gap-4 ml-auto mr-2", rtl && "flex-row-reverse")}>
-        {SNS.map(({ name, href, icon: Icon }) => (
+      <nav
+        className={clsx("flex gap-4 ml-auto mr-2", rtl && "flex-row-reverse")}
+      >
+        {SNS.map(({ name, href, image }) => (
           <a
             key={name}
             href={href}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={name}
-            className="text-white hover:text-pink-600 transition"
+            className="hover:opacity-80 transition"
             onClick={handleMenuClose}
           >
-            <Icon size={26} strokeWidth={1.8} />
+            <Image
+              src={image}
+              alt={name}
+              width={26}
+              height={26}
+              className="w-7 h-7 object-contain"
+            />
           </a>
         ))}
       </nav>
@@ -460,7 +477,10 @@ export default function Header({ className = "" }: { className?: string }) {
             <Button
               variant="ghost"
               size="icon"
-              className="w-7 h-7 text-white border-2 border-white"
+              className={clsx(
+                "w-7 h-7 border-2",
+                isDark ? "text-white border-white" : "text-black border-black"
+              )}
               aria-label={t.menuTitle}
             >
               <Menu size={26} />
@@ -472,7 +492,10 @@ export default function Header({ className = "" }: { className?: string }) {
             dir={rtl ? "rtl" : "ltr"}
             className={clsx(
               "flex flex-col",
-              gradient && (gradient.startsWith("bg-[") ? gradient : `bg-gradient-to-b ${gradient}`),
+              gradient &&
+                (gradient.startsWith("bg-[")
+                  ? gradient
+                  : `bg-gradient-to-b ${gradient}`),
               // Closeボタンのサイズ調整（任意）
               "[&_[data-radix-sheet-close]]:w-10 [&_[data-radix-sheet-close]]:h-10",
               "[&_[data-radix-sheet-close]_svg]:w-6 [&_[data-radix-sheet-close]_svg]:h-6"
@@ -526,9 +549,11 @@ export default function Header({ className = "" }: { className?: string }) {
               <div className="px-4 py-6">
                 <div className="flex flex-col items-center gap-3">
                   {isLoggedIn &&
-                    FOOTER_ITEMS.filter((m) =>
-                      ["timeline", "community", "analytics"].includes(m.key) &&
-                      visibleMenuKeys.includes(m.key as MenuKey)
+                    FOOTER_ITEMS.filter(
+                      (m) =>
+                        ["timeline", "community", "analytics"].includes(
+                          m.key
+                        ) && visibleMenuKeys.includes(m.key as MenuKey)
                     ).map(({ key, href }) => (
                       <Link
                         key={key}
@@ -559,8 +584,3 @@ export default function Header({ className = "" }: { className?: string }) {
     </header>
   );
 }
-
-
-
-
-

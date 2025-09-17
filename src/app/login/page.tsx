@@ -177,7 +177,7 @@ export default function LoginPage() {
           ) : (
             <div className="w-full max-w-lg space-y-6">
               {/* 表示設定 */}
-              <Card className="shadow-xl bg-transparent">
+              <Card className="shadow-xl bg-transparent bg-white/50">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold">
                     表示設定
@@ -236,7 +236,7 @@ export default function LoginPage() {
               </Card>
 
               {/* アカウント操作 */}
-              <Card className="shadow-xl">
+              <Card className="shadow-xl bg-white/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg font-semibold">
                     <LogOut size={20} /> ログアウト
