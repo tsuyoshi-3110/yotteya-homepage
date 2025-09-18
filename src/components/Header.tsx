@@ -38,6 +38,7 @@ const IGNORE_SELECTOR = "a,button,input,select,textarea,[role='button']";
 /* ===== 多言語辞書 ===== */
 type Keys =
   | "menuTitle"
+  | "home"
   | "products"
   | "stores"
   | "delivery"
@@ -53,6 +54,7 @@ type Keys =
 const T: Record<UILangType, Record<Keys, string>> = {
   ja: {
     menuTitle: "メニュー",
+    home: "ホーム",
     products: "商品一覧",
     stores: "アクセス",
     delivery: "デリバリー",
@@ -67,6 +69,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   en: {
     menuTitle: "Menu",
+    home: "Home",
     products: "Products",
     stores: "Access",
     delivery: "Delivery",
@@ -81,6 +84,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   zh: {
     menuTitle: "菜单",
+    home: "首页",
     products: "商品一览",
     stores: "交通/访问",
     delivery: "外送",
@@ -95,6 +99,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   "zh-TW": {
     menuTitle: "選單",
+    home: "首頁",
     products: "商品一覽",
     stores: "交通/位置",
     delivery: "外送",
@@ -109,6 +114,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   ko: {
     menuTitle: "메뉴",
+    home: "홈",
     products: "상품 목록",
     stores: "오시는 길",
     delivery: "딜리버리",
@@ -123,6 +129,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   fr: {
     menuTitle: "Menu",
+    home: "Accueil",
     products: "Produits",
     stores: "Accès",
     delivery: "Livraison",
@@ -137,6 +144,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   es: {
     menuTitle: "Menú",
+    home: "Inicio",
     products: "Productos",
     stores: "Acceso",
     delivery: "Entrega",
@@ -151,6 +159,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   de: {
     menuTitle: "Menü",
+    home: "Startseite",
     products: "Produkte",
     stores: "Anfahrt",
     delivery: "Lieferung",
@@ -165,6 +174,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   pt: {
     menuTitle: "Menu",
+    home: "Início",
     products: "Produtos",
     stores: "Acesso",
     delivery: "Delivery",
@@ -179,6 +189,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   it: {
     menuTitle: "Menu",
+    home: "Home",
     products: "Prodotti",
     stores: "Accesso",
     delivery: "Consegna",
@@ -193,6 +204,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   ru: {
     menuTitle: "Меню",
+    home: "Главная",
     products: "Товары",
     stores: "Как добраться",
     delivery: "Доставка",
@@ -207,6 +219,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   th: {
     menuTitle: "เมนู",
+    home: "หน้าแรก",
     products: "รายการสินค้า",
     stores: "การเดินทาง",
     delivery: "เดลิเวอรี่",
@@ -221,6 +234,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   vi: {
     menuTitle: "Menu",
+    home: "Trang chủ",
     products: "Danh mục",
     stores: "Đường đi",
     delivery: "Giao hàng",
@@ -235,6 +249,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   id: {
     menuTitle: "Menu",
+    home: "Beranda",
     products: "Daftar produk",
     stores: "Akses",
     delivery: "Delivery",
@@ -249,6 +264,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   hi: {
     menuTitle: "मेनू",
+    home: "होम",
     products: "उत्पाद सूची",
     stores: "पहुँच",
     delivery: "डिलीवरी",
@@ -263,6 +279,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
   },
   ar: {
     menuTitle: "القائمة",
+    home: "الصفحة الرئيسية",
     products: "قائمة المنتجات",
     stores: "الوصول",
     delivery: "التوصيل",
@@ -280,6 +297,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
 // メニューキー（Loginと揃える）
 type MenuKey =
   | "products"
+  | "home"
   | "stores"
   | "delivery"
   | "about"
@@ -298,6 +316,7 @@ type MenuItem = {
 };
 
 const MENU_ITEMS: MenuItem[] = [
+  { key: "home", href: "/" },
   { key: "products", href: "/products" },
   { key: "stores", href: "/stores" },
   {

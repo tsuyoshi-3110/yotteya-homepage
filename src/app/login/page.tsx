@@ -29,13 +29,14 @@ const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 
 // メニューキー（Header側と揃える）
 type MenuKey =
+  | "home"
   | "products"
   | "stores"
   | "delivery"
   | "about"
   | "company"
   | "news"
-  | "interview"
+  | "interview";
 
 type MetaDoc = {
   themeGradient?: ThemeKey;
@@ -43,6 +44,7 @@ type MetaDoc = {
 };
 
 const MENU_ITEMS: { key: MenuKey; label: string }[] = [
+  { key: "home", label: "ホーム" },
   { key: "products", label: "商品一覧" },
   { key: "stores", label: "アクセス" },
   { key: "delivery", label: "デリバリー" },
@@ -177,7 +179,7 @@ export default function LoginPage() {
           ) : (
             <div className="w-full max-w-lg space-y-6">
               {/* 表示設定 */}
-              <Card className="shadow-xl bg-transparent bg-white/50">
+              <Card className="shadow-xl bg-white/50">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold">
                     表示設定
@@ -203,7 +205,7 @@ export default function LoginPage() {
                     <FontSwitcher />
                   </div>
 
-                    {/* ▼ メニュー表示設定 */}
+                  {/* ▼ メニュー表示設定 */}
                   <div>
                     <p className="text-sm mb-2">メニュー表示設定</p>
                     <div className="space-y-1">

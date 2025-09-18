@@ -324,8 +324,13 @@ export default function AnalyticsPage() {
           );
         })}
 
-        <Button asChild className="ml-auto rounded-full">
-          <Link href="/analytics-guide">?</Link>
+        <Button
+          asChild
+          className="fixed top-15 right-5 z-50 w-10 h-10 rounded-full bg-blue-600 text-white text-2xl leading-none flex items-center justify-center shadow-lg hover:bg-blue-700 active:scale-95"
+        >
+          <Link href="/analytics-guide" className="text-md">
+            ?
+          </Link>
         </Button>
       </div>
 

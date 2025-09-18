@@ -5,13 +5,13 @@ import BackgroundVideo from "@/components/BackgroundVideo";
 import TopFixedText from "@/components/TopFixedText";
 
 export const metadata: Metadata = {
-  title: "甘味処 よって屋｜サクサク生地のクレープ店",
+  title: "甘味処 よって屋｜大阪市のクレープ専門店",
   description:
-    "大阪市東淀川区と北区に店舗を構えるクレープ専門店『甘味処 よって屋』。サクサク生地と北海道産生クリームが自慢です。季節限定クレープやかき氷も提供。",
+    "大阪市東淀川区と北区に店舗を構えるクレープ専門店『甘味処 よって屋』。独自の生地とこだわりのクリームを使ったクレープをご提供しています。",
   openGraph: {
-    title: "甘味処 よって屋｜サクサク生地のクレープ専門店",
+    title: "甘味処 よって屋｜大阪市のクレープ専門店",
     description:
-      "大阪市東淀川区・北区のクレープ専門店『甘味処 よって屋』。旬のフルーツを使った限定クレープやアイス、かき氷をご紹介。",
+      "大阪市東淀川区・北区に展開する『甘味処 よって屋』。サクサクとモチモチの食感を楽しめるクレープが人気です。",
     url: "https://yotteya.shop/",
     siteName: "甘味処 よって屋",
     images: [
@@ -28,9 +28,6 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-
-
-
   return (
     <main className="w-full overflow-x-hidden">
       {/* ① ファーストビュー：背景動画のみ */}
@@ -47,14 +44,32 @@ export default function HomePage() {
         <h1 className="text-3xl lg:text-4xl font-extrabold text-center leading-tight mb-6 text-outline">
           甘味処 よって屋
           <br />
-          サクサク生地のクレープ
+          大阪市のクレープ専門店
         </h1>
 
-        <p className="max-w-3xl mx-auto text-center leading-relaxed text-outline">
-          大阪市東淀川区で開業１年。独自ブレンドのオリジナル粉で焼き上げる
-          “外サクサク・中モチモチ”クレープが評判です。下新庄店ではアイスクリーム、
-          淡路店ではふわふわかき氷も提供。テイクアウト・イートインどちらも歓迎。
-        </p>
+        <div className="max-w-3xl mx-auto space-y-6 text-center leading-relaxed text-outline">
+          <p>
+            『甘味処 よって屋』は、大阪市東淀川区・北区に展開するクレープ専門店です。
+            独自の配合で焼き上げた生地と、相性の良いクリームを組み合わせ、
+            幅広い世代のお客様に楽しんでいただけるクレープをご提供しています。
+          </p>
+
+          <p>
+            テイクアウトはもちろん、店舗によってはイートインもご利用いただけます。
+            お買い物や学校帰りなど、さまざまなシーンで気軽に立ち寄れる場所として
+            ご利用いただいています。
+          </p>
+
+          <p>
+            定番の組み合わせに加え、店舗ごとに工夫したメニューを取り入れることもあります。
+            詳細はご来店時や店頭にてご確認ください。
+          </p>
+
+          <p>
+            東淀川区・北区を中心に、地域のお客様に親しまれるお店を目指して営業しています。
+            大阪でクレープを楽しみたい方は、ぜひ一度お立ち寄りください。
+          </p>
+        </div>
       </section>
 
       {/* ③ 構造化データ (JSON-LD) */}
