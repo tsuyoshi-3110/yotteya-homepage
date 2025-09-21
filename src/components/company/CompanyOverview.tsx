@@ -98,9 +98,9 @@ type CompanyDoc = {
   t?: TranslatedPack[];
 
   // 非翻訳（共通）
-  founded?: string | null;   // 設立
-  ceo?: string | null;       // 代表者名
-  capital?: string | null;   // 資本金
+  founded?: string | null; // 設立
+  ceo?: string | null; // 代表者名
+  capital?: string | null; // 資本金
   employees?: string | null; // 従業員数
   phone?: string | null;
   email?: string | null;
@@ -183,7 +183,11 @@ function buildSimpleEmbedSrc(input?: string | null) {
 }
 
 /** CompanyProfile から埋め込みURLを決定（mapEmbedUrl 優先、なければ address → name） */
-function computeMapEmbedSrc(data: { mapEmbedUrl?: string | null; address?: string | null; name: string }) {
+function computeMapEmbedSrc(data: {
+  mapEmbedUrl?: string | null;
+  address?: string | null;
+  name: string;
+}) {
   return (
     buildSimpleEmbedSrc(data.mapEmbedUrl) ||
     buildSimpleEmbedSrc(data.address) ||
@@ -220,14 +224,17 @@ function readBaseFromDoc(
     business: Array.isArray(base.business)
       ? base.business
       : Array.isArray(d?.business)
-        ? (d!.business as string[])
-        : [],
+      ? (d!.business as string[])
+      : [],
     address: (base.address ?? d?.address ?? "") || "",
   };
 }
 
 /** ロケールに応じて表示内容を合成（見つからなければ原文(base)） */
-function pickLocalizedCompany(d: CompanyDoc | null | undefined, lang: string): CompanyProfileView {
+function pickLocalizedCompany(
+  d: CompanyDoc | null | undefined,
+  lang: string
+): CompanyProfileView {
   const base = readBaseFromDoc(d);
   const t = Array.isArray(d?.t) ? (d!.t as TranslatedPack[]) : [];
   const hit = lang === "ja" ? null : t.find((x) => x.lang === lang);
@@ -235,7 +242,10 @@ function pickLocalizedCompany(d: CompanyDoc | null | undefined, lang: string): C
   const name = (hit?.name ?? base.name).toString();
   const tagline = (hit?.tagline ?? base.tagline) || "";
   const about = (hit?.about ?? base.about) || "";
-  const business = Array.isArray(hit?.business) && hit!.business!.length > 0 ? hit!.business! : base.business;
+  const business =
+    Array.isArray(hit?.business) && hit!.business!.length > 0
+      ? hit!.business!
+      : base.business;
   const address = (hit?.address ?? base.address) || "";
 
   return {
@@ -325,7 +335,7 @@ function InlineMediaViewer({
     <div className="px-6 md:px-8 pb-2">
       <div
         className="relative w-full overflow-hidden rounded border bg-black/5"
-        style={{ aspectRatio: "21 / 9" }}
+        style={{ aspectRatio: "1 / 1" }}
       >
         {type === "video" ? (
           <video
@@ -452,7 +462,9 @@ function InlineMediaEditor({
       onChange({ ...data, heroMediaUrl: url, heroMediaType: kind });
     } catch (e) {
       console.error(e);
-      alert("アップロードに失敗しました。権限またはネットワークをご確認ください。");
+      alert(
+        "アップロードに失敗しました。権限またはネットワークをご確認ください。"
+      );
     } finally {
       setUploading(false);
       setProgress(0);
@@ -472,7 +484,9 @@ function InlineMediaEditor({
     e.preventDefault();
     e.stopPropagation();
     setIsOver(false);
-    const dropped = e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : [];
+    const dropped = e.dataTransfer?.files
+      ? Array.from(e.dataTransfer.files)
+      : [];
     await onFilesArray(dropped);
   };
 
@@ -482,7 +496,9 @@ function InlineMediaEditor({
     void (async () => {
       await onFilesArray(picked);
       if (typeof input.value !== "undefined") {
-        try { input.value = ""; } catch {}
+        try {
+          input.value = "";
+        } catch {}
       }
     })();
   };
@@ -497,28 +513,33 @@ function InlineMediaEditor({
         const r = sRef(storage, pathOld);
         await deleteObject(r);
       }
-    } catch {}
-    finally {
+    } catch {
+    } finally {
       onChange({ ...data, heroMediaUrl: "", heroMediaType: null });
     }
   };
 
   return (
-    <div className="px-6 md:px-8 pb-2">
+    <div className="px-6 md:px-8 pb-2 bg-white/50 backdrop-blur-md rounded">
       <div
         className={[
           "relative w-full overflow-hidden rounded border bg-slate-100",
           isOver ? "ring-2 ring-purple-500" : "ring-1 ring-black/5",
         ].join(" ")}
-        style={{ aspectRatio: "21 / 9" }}
-        onDragOver={(e) => { e.preventDefault(); setIsOver(true); }}
+        style={{ aspectRatio: "1 / 1" }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsOver(true);
+        }}
         onDragLeave={() => setIsOver(false)}
         onDrop={onDrop}
       >
         {!data.heroMediaUrl ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
             <Upload className="h-8 w-8 mb-2" />
-            <div className="text-xs mt-1">画像または60秒以内の動画（最大200MB）</div>
+            <div className="text-xs mt-1">
+              画像または60秒以内の動画（最大200MB）
+            </div>
           </div>
         ) : data.heroMediaType === "video" ? (
           <video
@@ -544,10 +565,19 @@ function InlineMediaEditor({
           <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-white/90 backdrop-blur border shadow cursor-pointer text-sm">
             <Upload className="h-4 w-4" />
             <span>ファイル選択</span>
-            <input type="file" accept="image/*,video/*" className="hidden" onChange={onInputChange} />
+            <input
+              type="file"
+              accept="image/*,video/*"
+              className="hidden"
+              onChange={onInputChange}
+            />
           </label>
           {data.heroMediaUrl && (
-            <Button variant="secondary" onClick={removeMedia} className="bg-white/90 text-red-600 hover:text-red-700">
+            <Button
+              variant="secondary"
+              onClick={removeMedia}
+              className="bg-white/90 text-red-600 hover:text-red-700"
+            >
               <Trash2 className="h-4 w-4 mr-1" />
               削除
             </Button>
@@ -557,12 +587,17 @@ function InlineMediaEditor({
         {/* 進捗バー */}
         {uploading && (
           <div className="absolute left-0 right-0 bottom-0 h-1 bg-white/50">
-            <div className="h-1 bg-purple-600 transition-all" style={{ width: `${progress}%` }} />
+            <div
+              className="h-1 bg-purple-600 transition-all"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         )}
       </div>
 
-      <p className="mt-2 text-xs text-gray-500">※ タイトル下のメディアは保存後に公開画面へ反映。</p>
+      <p className="mt-2 text-xs text-white text-outline">
+        ※ タイトル下のメディアは保存後に公開画面へ反映。
+      </p>
     </div>
   );
 }
@@ -602,7 +637,10 @@ function AiGenerateModal({
 
   useEffect(() => {
     if (!open) {
-      setK1(""); setK2(""); setK3(""); setLoading(false);
+      setK1("");
+      setK2("");
+      setK3("");
+      setLoading(false);
     }
   }, [open]);
 
@@ -636,22 +674,32 @@ function AiGenerateModal({
 
       if (target === "about") {
         if (typeof data.about !== "string" || !data.about.trim()) {
-          alert("AIから有効な『会社説明』が返りませんでした。キーワードや文脈を見直してください。");
+          alert(
+            "AIから有効な『会社説明』が返りませんでした。キーワードや文脈を見直してください。"
+          );
           return;
         }
         onGenerate({ about: data.about.trim() });
       } else {
         if (!Array.isArray(data.business) || data.business.length === 0) {
-          alert("AIから有効な『事業内容』が返りませんでした。キーワードや文脈を見直してください。");
+          alert(
+            "AIから有効な『事業内容』が返りませんでした。キーワードや文脈を見直してください。"
+          );
           return;
         }
-        onGenerate({ business: data.business.map((s: any) => String(s).trim()).filter(Boolean) });
+        onGenerate({
+          business: data.business
+            .map((s: any) => String(s).trim())
+            .filter(Boolean),
+        });
       }
 
       onClose();
     } catch (e) {
       console.error(e);
-      alert("AI生成リクエストでエラーが発生しました。ネットワークをご確認ください。");
+      alert(
+        "AI生成リクエストでエラーが発生しました。ネットワークをご確認ください。"
+      );
     } finally {
       setLoading(false);
     }
@@ -667,18 +715,38 @@ function AiGenerateModal({
             <Wand2 className="h-5 w-5 text-purple-600" />
             {target === "about" ? "会社説明をAIで生成" : "事業内容をAIで生成"}
           </h3>
-          <p className="text-xs text-gray-500 mt-1">キーワードを最大3つまで入力（1つ以上で開始可能）</p>
+          <p className="text-xs  text-white text-outline mt-1">
+            キーワードを最大3つまで入力（1つ以上で開始可能）
+          </p>
         </div>
 
         <div className="p-5 space-y-3">
-          <Input value={k1} onChange={(e) => setK1(e.target.value)} placeholder="キーワード1（例：短納期／CMS構築 など）" />
-          <Input value={k2} onChange={(e) => setK2(e.target.value)} placeholder="キーワード2（任意）" />
-          <Input value={k3} onChange={(e) => setK3(e.target.value)} placeholder="キーワード3（任意）" />
+          <Input
+            value={k1}
+            onChange={(e) => setK1(e.target.value)}
+            placeholder="キーワード1（例：短納期／CMS構築 など）"
+          />
+          <Input
+            value={k2}
+            onChange={(e) => setK2(e.target.value)}
+            placeholder="キーワード2（任意）"
+          />
+          <Input
+            value={k3}
+            onChange={(e) => setK3(e.target.value)}
+            placeholder="キーワード3（任意）"
+          />
         </div>
 
         <div className="p-5 pt-0 flex items-center justify-end gap-2">
-          <Button variant="secondary" onClick={onClose} disabled={loading}>キャンセル</Button>
-          <Button onClick={start} disabled={!canStart || loading} className="bg-purple-600 hover:bg-purple-700 text-white">
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
+            キャンセル
+          </Button>
+          <Button
+            onClick={start}
+            disabled={!canStart || loading}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
             {loading ? "生成中..." : "生成開始"}
           </Button>
         </div>
@@ -688,7 +756,10 @@ function AiGenerateModal({
 }
 
 /* ========= 多言語翻訳（原文 → target へ一括） ========= */
-async function translateCompany(base: Required<TranslatableFields>, target: LangKey): Promise<TranslatedPack> {
+async function translateCompany(
+  base: Required<TranslatableFields>,
+  target: LangKey
+): Promise<TranslatedPack> {
   // name / tagline / about / business[n]... / address
   const SEP = "\n---\n";
   type Item =
@@ -701,11 +772,18 @@ async function translateCompany(base: Required<TranslatableFields>, target: Lang
   const items: Item[] = [];
   const payload: string[] = [];
 
-  items.push({ kind: "name" });    payload.push(base.name || "");
-  items.push({ kind: "tagline" }); payload.push(base.tagline || "");
-  items.push({ kind: "about" });   payload.push(base.about || "");
-  (base.business || []).forEach((s, i) => { items.push({ kind: "business", idx: i }); payload.push(s || ""); });
-  items.push({ kind: "address" }); payload.push(base.address || "");
+  items.push({ kind: "name" });
+  payload.push(base.name || "");
+  items.push({ kind: "tagline" });
+  payload.push(base.tagline || "");
+  items.push({ kind: "about" });
+  payload.push(base.about || "");
+  (base.business || []).forEach((s, i) => {
+    items.push({ kind: "business", idx: i });
+    payload.push(s || "");
+  });
+  items.push({ kind: "address" });
+  payload.push(base.address || "");
 
   const res = await fetch("/api/translate", {
     method: "POST",
@@ -717,7 +795,14 @@ async function translateCompany(base: Required<TranslatableFields>, target: Lang
   const parts = String(data.body ?? "").split(SEP);
 
   let p = 0;
-  const out: TranslatedPack = { lang: target, name: "", tagline: "", about: "", business: [], address: "" };
+  const out: TranslatedPack = {
+    lang: target,
+    name: "",
+    tagline: "",
+    about: "",
+    business: [],
+    address: "",
+  };
 
   for (const it of items) {
     const text = (parts[p++] ?? "").trim();
@@ -744,7 +829,10 @@ export default function CompanyOverview() {
   const { uiLang } = useUILang();
 
   // Firebase App & Services
-  const app = useMemo(() => (getApps().length ? getApp() : initializeApp(firebaseConfig)), []);
+  const app = useMemo(
+    () => (getApps().length ? getApp() : initializeApp(firebaseConfig)),
+    []
+  );
   const db = useMemo(() => getFirestore(app), [app]);
   const auth = useMemo(() => getAuth(app), [app]);
   const storage = useMemo(() => getStorage(app), [app]);
@@ -757,11 +845,33 @@ export default function CompanyOverview() {
   const [docData, setDocData] = useState<CompanyDoc | null>(null);
 
   // 編集用（原文=ja のみ編集）
-  const [editBase, setEditBase] = useState<Required<TranslatableFields>>(EMPTY_EDIT_BASE);
-  const [editCommon, setEditCommon] = useState<Pick<CompanyDoc,
-    "founded" | "ceo" | "capital" | "employees" | "phone" | "email" | "website" | "mapEmbedUrl" | "heroMediaUrl" | "heroMediaType"
-  >>({
-    founded: "", ceo: "", capital: "", employees: "", phone: "", email: "", website: "", mapEmbedUrl: "", heroMediaUrl: "", heroMediaType: null
+  const [editBase, setEditBase] =
+    useState<Required<TranslatableFields>>(EMPTY_EDIT_BASE);
+  const [editCommon, setEditCommon] = useState<
+    Pick<
+      CompanyDoc,
+      | "founded"
+      | "ceo"
+      | "capital"
+      | "employees"
+      | "phone"
+      | "email"
+      | "website"
+      | "mapEmbedUrl"
+      | "heroMediaUrl"
+      | "heroMediaType"
+    >
+  >({
+    founded: "",
+    ceo: "",
+    capital: "",
+    employees: "",
+    phone: "",
+    email: "",
+    website: "",
+    mapEmbedUrl: "",
+    heroMediaUrl: "",
+    heroMediaType: null,
   });
   const [isEditing, setIsEditing] = useState(false);
 
@@ -804,9 +914,16 @@ export default function CompanyOverview() {
           });
           setEditBase({ ...EMPTY_EDIT_BASE });
           setEditCommon({
-            founded: "", ceo: "", capital: "", employees: "",
-            phone: "", email: "", website: "", mapEmbedUrl: "",
-            heroMediaUrl: "", heroMediaType: null,
+            founded: "",
+            ceo: "",
+            capital: "",
+            employees: "",
+            phone: "",
+            email: "",
+            website: "",
+            mapEmbedUrl: "",
+            heroMediaUrl: "",
+            heroMediaType: null,
           });
         }
       } finally {
@@ -855,7 +972,9 @@ export default function CompanyOverview() {
     try {
       // 全言語翻訳（ja は base に保持、その他は t へ）
       const targets: LangKey[] = LANGS.map((l) => l.key) as LangKey[];
-      const tAll = await Promise.all(targets.map((lang) => translateCompany(editBase, lang)));
+      const tAll = await Promise.all(
+        targets.map((lang) => translateCompany(editBase, lang))
+      );
 
       const ref = doc(db, "siteMeta", SITE_KEY, "company", "profile");
 
@@ -896,7 +1015,7 @@ export default function CompanyOverview() {
       };
 
       await setDoc(ref, payload, { merge: true });
-      setDocData(payload);         // ローカルにも反映
+      setDocData(payload); // ローカルにも反映
       setIsEditing(false);
     } catch (e) {
       console.error(e);
@@ -909,19 +1028,22 @@ export default function CompanyOverview() {
   // AI結果の反映
   const [aiOpen, setAiOpen] = useState(false);
   const [aiTarget, setAiTarget] = useState<AiTarget>("about");
-  const applyAiResult = useCallback((result: { about?: string; business?: string[] }) => {
-    if (result.about != null) {
-      setEditBase((prev) => ({ ...prev, about: result.about ?? "" }));
-    }
-    if (result.business != null) {
-      setEditBase((prev) => ({ ...prev, business: result.business ?? [] }));
-    }
-  }, []);
+  const applyAiResult = useCallback(
+    (result: { about?: string; business?: string[] }) => {
+      if (result.about != null) {
+        setEditBase((prev) => ({ ...prev, about: result.about ?? "" }));
+      }
+      if (result.business != null) {
+        setEditBase((prev) => ({ ...prev, business: result.business ?? [] }));
+      }
+    },
+    []
+  );
 
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto">
-        <div className="relative rounded bg-white/60 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
+        <div className="relative rounded bg-white/10 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
           <CardSpinner />
           <div className="p-8">読み込み中…</div>
         </div>
@@ -932,7 +1054,7 @@ export default function CompanyOverview() {
   return (
     <div className="max-w-5xl mx-auto">
       {/* ===== 会社概要カード ===== */}
-      <div className="relative rounded bg-white/60 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
+      <div className="relative rounded bg-white/10 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
         {saving && <CardSpinner />}
 
         {/* 先頭：編集/保存ボタン */}
@@ -940,13 +1062,27 @@ export default function CompanyOverview() {
           <div className="px-6 md:px-8 pt-4">
             <div className="flex justify-end gap-2">
               {!isEditing ? (
-                <Button onClick={startEdit} className="bg-blue-500 hover:bg-blue-400">編集</Button>
+                <Button
+                  onClick={startEdit}
+                  className="bg-blue-500 hover:bg-blue-400"
+                >
+                  編集
+                </Button>
               ) : (
                 <>
-                  <Button variant="secondary" onClick={cancelEdit} disabled={saving} className="bg-white/70 text-slate-700 hover:bg-white">
+                  <Button
+                    variant="secondary"
+                    onClick={cancelEdit}
+                    disabled={saving}
+                    className="bg-white/70 text-slate-700 hover:bg-white"
+                  >
                     キャンセル
                   </Button>
-                  <Button onClick={saveEdit} disabled={saving} className="bg-blue-500 hover:bg-blue-400">
+                  <Button
+                    onClick={saveEdit}
+                    disabled={saving}
+                    className="bg-blue-500 hover:bg-blue-400"
+                  >
                     保存
                   </Button>
                 </>
@@ -962,11 +1098,16 @@ export default function CompanyOverview() {
               <Building2 className="h-6 w-6 text-slate-700" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-semibold">
-                {(!isEditing ? (displayData?.name ?? "") : editBase.name) || "（会社名未設定）"}
+              <h1 className="text-xl md:text-2xl font-semibold text-white text-outline">
+                {(!isEditing ? displayData?.name ?? "" : editBase.name) ||
+                  "（会社名未設定）"}
               </h1>
-              {(!isEditing ? (displayData?.tagline ?? "") : (editBase.tagline ?? "")) && (
-                <p className="text-gray-600 mt-1">{!isEditing ? displayData?.tagline : editBase.tagline}</p>
+              {(!isEditing
+                ? displayData?.tagline ?? ""
+                : editBase.tagline ?? "") && (
+                <p className="text-white text-outline mt-1 ">
+                  {!isEditing ? displayData?.tagline : editBase.tagline}
+                </p>
               )}
             </div>
           </div>
@@ -975,15 +1116,26 @@ export default function CompanyOverview() {
         {/* タイトル直下のメディア（編集 or 閲覧） */}
         {isEditing ? (
           <InlineMediaEditor
-            data={{
-              heroMediaUrl: editCommon.heroMediaUrl ?? "",
-              heroMediaType: editCommon.heroMediaType ?? null,
-            } as CompanyDoc}
-            onChange={(v) => setEditCommon((prev) => ({ ...prev, heroMediaUrl: v.heroMediaUrl ?? "", heroMediaType: v.heroMediaType ?? null }))}
+            data={
+              {
+                heroMediaUrl: editCommon.heroMediaUrl ?? "",
+                heroMediaType: editCommon.heroMediaType ?? null,
+              } as CompanyDoc
+            }
+            onChange={(v) =>
+              setEditCommon((prev) => ({
+                ...prev,
+                heroMediaUrl: v.heroMediaUrl ?? "",
+                heroMediaType: v.heroMediaType ?? null,
+              }))
+            }
             storage={storage}
           />
         ) : (
-          <InlineMediaViewer url={displayData?.heroMediaUrl} type={displayData?.heroMediaType ?? null} />
+          <InlineMediaViewer
+            url={displayData?.heroMediaUrl}
+            type={displayData?.heroMediaType ?? null}
+          />
         )}
 
         {/* 本体 */}
@@ -996,7 +1148,10 @@ export default function CompanyOverview() {
               common={editCommon}
               onBaseChange={setEditBase}
               onCommonChange={setEditCommon}
-              onOpenAi={(target) => { setAiTarget(target); setAiOpen(true); }}
+              onOpenAi={(target) => {
+                setAiTarget(target);
+                setAiOpen(true);
+              }}
             />
           )}
         </div>
@@ -1022,12 +1177,16 @@ export default function CompanyOverview() {
 
 /* ===================== ReadOnly ===================== */
 function ReadOnlyView({ data }: { data: CompanyProfileView }) {
-  const embedSrc = computeMapEmbedSrc({ name: data.name, address: data.address, mapEmbedUrl: data.mapEmbedUrl });
+  const embedSrc = computeMapEmbedSrc({
+    name: data.name,
+    address: data.address,
+    mapEmbedUrl: data.mapEmbedUrl,
+  });
 
   return (
     <div className="space-y-10">
       {data.about && (
-        <section className="rounded border border-gray-200 p-4 md:p-5 bg-white/70 mb-5">
+        <section className="rounded border border-gray-200 p-4 md:p-5 bg-white/30 mb-5">
           <h3 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
             <UserIcon className="h-4 w-4" />
             会社情報
@@ -1038,19 +1197,52 @@ function ReadOnlyView({ data }: { data: CompanyProfileView }) {
 
       {/* 会社情報グリッド */}
       <section className="grid md:grid-cols-2 gap-6 mb-5">
-        <Field icon={<UserIcon className="h-4 w-4" />} label="代表者" value={data.ceo ?? undefined} />
-        <Field icon={<Calendar className="h-4 w-4" />} label="設立" value={data.founded ?? undefined} />
-        <Field icon={<Sparkles className="h-4 w-4" />} label="資本金" value={data.capital ?? undefined} />
-        <Field icon={<Users className="h-4 w-4" />} label="従業員数" value={data.employees ?? undefined} />
-        <Field icon={<MapPin className="h-4 w-4" />} label="所在地" value={data.address ?? undefined} />
-        <Field icon={<Phone className="h-4 w-4" />} label="電話番号" value={data.phone ?? undefined} />
-        <Field icon={<Mail className="h-4 w-4" />} label="メール" value={data.email ?? undefined} />
-        <Field icon={<Globe className="h-4 w-4" />} label="Webサイト" value={data.website ?? undefined} isLink />
+        <Field
+          icon={<UserIcon className="h-4 w-4" />}
+          label="代表者"
+          value={data.ceo ?? undefined}
+        />
+        <Field
+          icon={<Calendar className="h-4 w-4" />}
+          label="設立"
+          value={data.founded ?? undefined}
+        />
+        <Field
+          icon={<Sparkles className="h-4 w-4" />}
+          label="資本金"
+          value={data.capital ?? undefined}
+        />
+        <Field
+          icon={<Users className="h-4 w-4" />}
+          label="従業員数"
+          value={data.employees ?? undefined}
+        />
+        <Field
+          icon={<MapPin className="h-4 w-4" />}
+          label="所在地"
+          value={data.address ?? undefined}
+        />
+        <Field
+          icon={<Phone className="h-4 w-4" />}
+          label="電話番号"
+          value={data.phone ?? undefined}
+        />
+        <Field
+          icon={<Mail className="h-4 w-4" />}
+          label="メール"
+          value={data.email ?? undefined}
+        />
+        <Field
+          icon={<Globe className="h-4 w-4" />}
+          label="Webサイト"
+          value={data.website ?? undefined}
+          isLink
+        />
       </section>
 
       {/* 事業内容 */}
       {Array.isArray(data.business) && data.business.length > 0 && (
-        <section className="rounded border border-gray-200 p-4 md:p-5 bg-white/70">
+        <section className="rounded border border-gray-200 p-4 md:p-5 bg-white/30">
           <h3 className="font-medium text-gray-700 mb-3">事業内容</h3>
           <ul className="list-disc pl-5 space-y-1">
             {data.business
@@ -1066,7 +1258,7 @@ function ReadOnlyView({ data }: { data: CompanyProfileView }) {
 
       {/* アクセス（マップ） */}
       {embedSrc && (
-        <section className="rounded overflow-hidden border border-gray-200 bg-white/70">
+        <section className="rounded overflow-hidden border border-gray-200 bg-white/30">
           <h3 className="font-medium text-gray-700 mb-2 p-4 flex items-center gap-2">
             <LinkIcon className="h-4 w-4 text-blue-600" />
             アクセス
@@ -1098,17 +1290,24 @@ function Field({
 }) {
   if (!value) return null;
   return (
-    <div className="rounded border border-gray-200 p-4 bg-white/70">
-      <div className="text-xs text-gray-500 mb-1 flex items-center gap-2">
+    <div className="rounded border border-gray-200 p-4 bg-white/30">
+      <div className="text-xs text-gray-800 mb-1 flex items-center gap-2">
         {icon}
         {label}
       </div>
       {isLink ? (
-        <a href={value} target="_blank" rel="noreferrer" className="text-blue-700 underline break-all">
+        <a
+          href={value}
+          target="_blank"
+          rel="noreferrer"
+          className="text-blue-700 underline break-all"
+        >
           {value}
         </a>
       ) : (
-        <div className="text-gray-900 break-words whitespace-pre-wrap">{value}</div>
+        <div className="text-gray-900 break-words whitespace-pre-wrap">
+          {value}
+        </div>
       )}
     </div>
   );
@@ -1123,42 +1322,111 @@ function EditView({
   onOpenAi,
 }: {
   base: Required<TranslatableFields>;
-  common: Pick<CompanyDoc, "founded" | "ceo" | "capital" | "employees" | "phone" | "email" | "website" | "mapEmbedUrl" | "heroMediaUrl" | "heroMediaType">;
+  common: Pick<
+    CompanyDoc,
+    | "founded"
+    | "ceo"
+    | "capital"
+    | "employees"
+    | "phone"
+    | "email"
+    | "website"
+    | "mapEmbedUrl"
+    | "heroMediaUrl"
+    | "heroMediaType"
+  >;
   onBaseChange: (v: Required<TranslatableFields>) => void;
   onCommonChange: (v: typeof common) => void;
   onOpenAi: (target: "about" | "business") => void;
 }) {
-  const previewSrc = computeMapEmbedSrc({ name: base.name, address: base.address, mapEmbedUrl: common.mapEmbedUrl });
+  const previewSrc = computeMapEmbedSrc({
+    name: base.name,
+    address: base.address,
+    mapEmbedUrl: common.mapEmbedUrl,
+  });
 
   return (
     <div className="space-y-8">
       {/* 必須は会社名のみ（原文=ja） */}
       <div className="grid md:grid-cols-2 gap-4">
-        <LabeledInput label="会社名 *" value={base.name} onChange={(v) => onBaseChange({ ...base, name: v })} />
-        <LabeledInput label="キャッチコピー（任意）" value={base.tagline ?? ""} onChange={(v) => onBaseChange({ ...base, tagline: v })} />
+        <LabeledInput
+          label="会社名 *"
+          value={base.name}
+          onChange={(v) => onBaseChange({ ...base, name: v })}
+        />
+        <LabeledInput
+          label="キャッチコピー（任意）"
+          value={base.tagline ?? ""}
+          onChange={(v) => onBaseChange({ ...base, tagline: v })}
+        />
       </div>
 
       {/* 会社情報（代表者・設立・資本金・従業員数） */}
       <div className="grid md:grid-cols-2 gap-4">
-        <LabeledInput label="代表者（任意）" value={common.ceo ?? ""} onChange={(v) => onCommonChange({ ...common, ceo: v })} placeholder="例）山田 太郎" />
-        <LabeledInput label="設立（任意）" value={common.founded ?? ""} onChange={(v) => onCommonChange({ ...common, founded: v })} placeholder="例）2020年4月" />
-        <LabeledInput label="資本金（任意）" value={common.capital ?? ""} onChange={(v) => onCommonChange({ ...common, capital: v })} placeholder="例）1,000万円" />
-        <LabeledInput label="従業員数（任意）" value={common.employees ?? ""} onChange={(v) => onCommonChange({ ...common, employees: v })} placeholder="例）25名（アルバイト含む）" />
+        <LabeledInput
+          label="代表者（任意）"
+          value={common.ceo ?? ""}
+          onChange={(v) => onCommonChange({ ...common, ceo: v })}
+          placeholder="例）山田 太郎"
+        />
+        <LabeledInput
+          label="設立（任意）"
+          value={common.founded ?? ""}
+          onChange={(v) => onCommonChange({ ...common, founded: v })}
+          placeholder="例）2020年4月"
+        />
+        <LabeledInput
+          label="資本金（任意）"
+          value={common.capital ?? ""}
+          onChange={(v) => onCommonChange({ ...common, capital: v })}
+          placeholder="例）1,000万円"
+        />
+        <LabeledInput
+          label="従業員数（任意）"
+          value={common.employees ?? ""}
+          onChange={(v) => onCommonChange({ ...common, employees: v })}
+          placeholder="例）25名（アルバイト含む）"
+        />
       </div>
 
       {/* 連絡先（住所・電話・メール・Web） */}
       <div className="grid md:grid-cols-2 gap-4">
-        <LabeledInput label="所在地（任意・翻訳対象）" value={base.address ?? ""} onChange={(v) => onBaseChange({ ...base, address: v })} placeholder="住所または地名" />
-        <LabeledInput label="電話番号（任意）" value={common.phone ?? ""} onChange={(v) => onCommonChange({ ...common, phone: v })} placeholder="例）03-1234-5678" />
-        <LabeledInput label="メール（任意）" value={common.email ?? ""} onChange={(v) => onCommonChange({ ...common, email: v })} placeholder="info@example.com" />
-        <LabeledInput label="Webサイト（任意）" value={common.website ?? ""} onChange={(v) => onCommonChange({ ...common, website: v })} placeholder="https://example.com" />
+        <LabeledInput
+          label="所在地（任意・翻訳対象）"
+          value={base.address ?? ""}
+          onChange={(v) => onBaseChange({ ...base, address: v })}
+          placeholder="住所または地名"
+        />
+        <LabeledInput
+          label="電話番号（任意）"
+          value={common.phone ?? ""}
+          onChange={(v) => onCommonChange({ ...common, phone: v })}
+          placeholder="例）03-1234-5678"
+        />
+        <LabeledInput
+          label="メール（任意）"
+          value={common.email ?? ""}
+          onChange={(v) => onCommonChange({ ...common, email: v })}
+          placeholder="info@example.com"
+        />
+        <LabeledInput
+          label="Webサイト（任意）"
+          value={common.website ?? ""}
+          onChange={(v) => onCommonChange({ ...common, website: v })}
+          placeholder="https://example.com"
+        />
       </div>
 
       {/* 会社説明 + AI（自動伸縮） */}
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-sm text-gray-600">会社説明（任意・翻訳対象）</div>
-          <Button onClick={() => onOpenAi("about")} className="bg-purple-600 hover:bg-purple-700 text-white">
+          <div className="text-sm text-white text-outline">
+            会社説明（任意・翻訳対象）
+          </div>
+          <Button
+            onClick={() => onOpenAi("about")}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
             <Wand2 className="h-4 w-4 mr-1" />
             AIで生成
           </Button>
@@ -1175,16 +1443,23 @@ function EditView({
 
       {/* 事業内容（自動伸縮 / 空行・末尾改行を保持） */}
       <div className="space-y-2">
-        <div className="text-sm text-gray-600">事業内容（任意・翻訳対象 / 1行につき1項目 / 空行OK）</div>
+        <div className="text-sm text-white text-outline">
+          事業内容（任意・翻訳対象 / 1行につき1項目 / 空行OK）
+        </div>
         <AutoResizeTextarea
           value={arrayToLinesPreserve(base.business)}
-          onValueChange={(v) => onBaseChange({ ...base, business: linesToArrayPreserve(v) })}
+          onValueChange={(v) =>
+            onBaseChange({ ...base, business: linesToArrayPreserve(v) })
+          }
           minRows={6}
           maxRows={50}
           placeholder={"例：\n主要サービスA\nCMS構築\n運用サポート\n"}
           className="bg-white/80"
         />
-        <p className="text-xs text-gray-500">※ Enter での空行や、最後の改行も保持されます（閲覧表示では空行は表示されません）。</p>
+        <p className="text-xs  text-white text-outline">
+          ※ Enter
+          での空行や、最後の改行も保持されます（閲覧表示では空行は表示されません）。
+        </p>
       </div>
 
       {/* Googleマップ：住所から自動生成 & ライブプレビュー */}
@@ -1195,11 +1470,19 @@ function EditView({
           onChange={(v) => onCommonChange({ ...common, mapEmbedUrl: v })}
           placeholder="https://www.google.com/maps/embed?..."
         />
-        <div className="mt-2 text-xs text-gray-500">※ 短縮URL（maps.app.goo.gl）や通常URLでもOK。自動で埋め込み形式に変換します。</div>
+        <div className="mt-2 text-xs  text-white text-outline">
+          ※
+          短縮URL（maps.app.goo.gl）や通常URLでもOK。自動で埋め込み形式に変換します。
+        </div>
 
         {previewSrc && (
           <div className="mt-4 aspect-video w-full overflow-hidden rounded border">
-            <iframe src={previewSrc} className="w-full h-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+            <iframe
+              src={previewSrc}
+              className="w-full h-full"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
           </div>
         )}
       </div>
@@ -1220,8 +1503,13 @@ function LabeledInput({
 }) {
   return (
     <label className="block">
-      <div className="mb-1 text-sm text-gray-600">{label}</div>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="bg-white/80" />
+      <div className="mb-1 text-sm text-white text-outline">{label}</div>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="bg-white/80"
+      />
     </label>
   );
 }
