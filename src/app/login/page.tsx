@@ -37,6 +37,9 @@ type MenuKey =
   | "company"
   | "news"
   | "interview";
+// | "cart"
+// | "productEC"
+// | "orders";
 
 type MetaDoc = {
   themeGradient?: ThemeKey;
@@ -52,7 +55,13 @@ const MENU_ITEMS: { key: MenuKey; label: string }[] = [
   { key: "company", label: "会社概要" },
   { key: "news", label: "お知らせ" },
   { key: "interview", label: "取材はこちら" },
+  // { key: "cart", label: "カート" },
+  // { key: "productEC", label: "商品販売 (EC)" },
+  // { key: "orders", label: "注文履歴" },
 ];
+
+// --- ECセットキー ---
+// const EC_KEYS: MenuKey[] = ["cart", "productEC", "orders"];
 
 export default function LoginPage() {
   // 共通state
@@ -209,6 +218,7 @@ export default function LoginPage() {
                   <div>
                     <p className="text-sm mb-2">メニュー表示設定</p>
                     <div className="space-y-1">
+                      {/* 通常のメニュー */}
                       {MENU_ITEMS.map((item) => {
                         const checked = visibleKeys.includes(item.key);
                         return (
@@ -232,6 +242,58 @@ export default function LoginPage() {
                           </label>
                         );
                       })}
+
+                      {/* {MENU_ITEMS.filter(
+                        (item) => !EC_KEYS.includes(item.key)
+                      ).map((item) => {
+                        const checked = visibleKeys.includes(item.key);
+                        return (
+                          <label
+                            key={item.key}
+                            className="flex items-center gap-2"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? ([...visibleKeys, item.key] as MenuKey[])
+                                  : (visibleKeys.filter(
+                                      (k) => k !== item.key
+                                    ) as MenuKey[]);
+                                handleVisibleKeysChange(next);
+                              }}
+                            />
+                            {item.label}
+                          </label>
+                        );
+                      })} */}
+
+                      {/* EC機能セット */}
+                      {/* <label className="flex items-center gap-2 font-bold">
+                        <input
+                          type="checkbox"
+                          checked={EC_KEYS.every((k) =>
+                            visibleKeys.includes(k)
+                          )}
+                          onChange={(e) => {
+                            let next: MenuKey[];
+                            if (e.target.checked) {
+                              // まとめてON
+                              next = Array.from(
+                                new Set([...visibleKeys, ...EC_KEYS])
+                              ) as MenuKey[];
+                            } else {
+                              // まとめてOFF
+                              next = visibleKeys.filter(
+                                (k) => !EC_KEYS.includes(k)
+                              ) as MenuKey[];
+                            }
+                            handleVisibleKeysChange(next);
+                          }}
+                        />
+                        EC機能セット（カート・商品販売・注文履歴）
+                      </label> */}
                     </div>
                   </div>
                 </CardContent>

@@ -21,13 +21,14 @@ import { useUILang, type UILang as UILangType } from "@/lib/atoms/uiLangAtom";
 import { doc, onSnapshot } from "firebase/firestore";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import { ThemeKey, THEMES } from "@/lib/themes";
+
 const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 
 const SNS = [
   {
     name: "Instagram",
     href: "https://www.instagram.com/yotteya.crape/",
-    image: "/images/instagram-logo.png", // ← ここにSNSアイコン画像を用意しておく
+    image: "/images/instagram-logo.png",
   },
 ];
 
@@ -36,6 +37,8 @@ const TRIPLE_TAP_INTERVAL_MS = 500;
 const IGNORE_SELECTOR = "a,button,input,select,textarea,[role='button']";
 
 /* ===== 多言語辞書 ===== */
+// 省略なく原文のまま
+// --- start i18n ---
 type Keys =
   | "menuTitle"
   | "home"
@@ -49,6 +52,9 @@ type Keys =
   | "timeline"
   | "community"
   | "analytics"
+  // | "cart"
+  // | "productEC"
+  // | "orders"
   | "admin";
 
 const T: Record<UILangType, Record<Keys, string>> = {
@@ -56,7 +62,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
     menuTitle: "メニュー",
     home: "ホーム",
     products: "商品一覧",
-    stores: "アクセス",
+    stores: "店舗一覧",
     delivery: "デリバリー",
     about: "当店の思い",
     company: "会社概要",
@@ -65,6 +71,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "タイムライン",
     community: "コミュニティ",
     analytics: "分析",
+    // cart: "カート",
+    // productEC: "商品販売",
+    // orders: "注文履歴",
     admin: "管理者ログイン",
   },
   en: {
@@ -80,6 +89,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "Timeline",
     community: "Community",
     analytics: "Analytics",
+    // cart: "Cart",
+    // productEC: "Shop",
+    // orders: "Orders",
     admin: "Administrator Login",
   },
   zh: {
@@ -95,6 +107,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "时间线",
     community: "社区",
     analytics: "分析",
+    // cart: "购物车",
+    // productEC: "商品销售",
+    // orders: "订单历史",
     admin: "管理员登录",
   },
   "zh-TW": {
@@ -110,6 +125,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "時間軸",
     community: "社群",
     analytics: "分析",
+    // cart: "購物車",
+    // productEC: "商品銷售",
+    // orders: "訂單歷史",
     admin: "管理者登入",
   },
   ko: {
@@ -125,6 +143,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "타임라인",
     community: "커뮤니티",
     analytics: "분석",
+    // cart: "장바구니",
+    // productEC: "상품 판매",
+    // orders: "주문 내역",
     admin: "관리자 로그인",
   },
   fr: {
@@ -140,6 +161,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "Timeline",
     community: "Communauté",
     analytics: "Analyses",
+    // cart: "Panier",
+    // productEC: "Boutique",
+    // orders: "Commandes",
     admin: "Connexion administrateur",
   },
   es: {
@@ -155,6 +179,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "Cronología",
     community: "Comunidad",
     analytics: "Analítica",
+    // cart: "Carrito",
+    // productEC: "Tienda",
+    // orders: "Pedidos",
     admin: "Inicio de sesión administrador",
   },
   de: {
@@ -170,6 +197,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "Timeline",
     community: "Community",
     analytics: "Analytik",
+    // cart: "Warenkorb",
+    // productEC: "Shop",
+    // orders: "Bestellungen",
     admin: "Admin-Anmeldung",
   },
   pt: {
@@ -185,6 +215,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "Linha do tempo",
     community: "Comunidade",
     analytics: "Análises",
+    // cart: "Carrinho",
+    // productEC: "Loja",
+    // orders: "Pedidos",
     admin: "Login do administrador",
   },
   it: {
@@ -200,6 +233,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "Timeline",
     community: "Community",
     analytics: "Analitiche",
+    // cart: "Carrello",
+    // productEC: "Negozio",
+    // orders: "Ordini",
     admin: "Accesso amministratore",
   },
   ru: {
@@ -215,6 +251,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "Лента",
     community: "Сообщество",
     analytics: "Аналитика",
+    // cart: "Корзина",
+    // productEC: "Магазин",
+    // orders: "Заказы",
     admin: "Вход администратора",
   },
   th: {
@@ -230,6 +269,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "ไทม์ไลน์",
     community: "คอมมูนิตี้",
     analytics: "วิเคราะห์",
+    // cart: "ตะกร้า",
+    // productEC: "ร้านค้า",
+    // orders: "คำสั่งซื้อ",
     admin: "เข้าสู่ระบบผู้ดูแล",
   },
   vi: {
@@ -245,6 +287,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "Dòng thời gian",
     community: "Cộng đồng",
     analytics: "Phân tích",
+    // cart: "Giỏ hàng",
+    // productEC: "Cửa hàng",
+    // orders: "Đơn hàng",
     admin: "Đăng nhập quản trị",
   },
   id: {
@@ -260,6 +305,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "Linimasa",
     community: "Komunitas",
     analytics: "Analitik",
+    // cart: "Keranjang",
+    // productEC: "Toko",
+    // orders: "Pesanan",
     admin: "Masuk admin",
   },
   hi: {
@@ -275,6 +323,9 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "टाइमलाइन",
     community: "समुदाय",
     analytics: "विश्लेषण",
+    // cart: "कार्ट",
+    // productEC: "दुकान",
+    // orders: "आदेश",
     admin: "प्रशासक लॉगिन",
   },
   ar: {
@@ -290,11 +341,15 @@ const T: Record<UILangType, Record<Keys, string>> = {
     timeline: "الخط الزمني",
     community: "المجتمع",
     analytics: "التحليلات",
+    // cart: "عربة التسوق",
+    // productEC: "المتجر",
+    // orders: "الطلبات",
     admin: "تسجيل دخول المسؤول",
   },
 };
+// --- end i18n ---
 
-// メニューキー（Loginと揃える）
+/* ===== メニューキー ===== */
 type MenuKey =
   | "products"
   | "home"
@@ -307,6 +362,9 @@ type MenuKey =
   | "timeline"
   | "community"
   | "analytics"
+  // | "cart"
+  // | "productEC"
+  // | "orders"
   | "admin";
 
 type MenuItem = {
@@ -318,10 +376,12 @@ type MenuItem = {
 const MENU_ITEMS: MenuItem[] = [
   { key: "home", href: "/" },
   { key: "products", href: "/products" },
+  // { key: "productEC", href: "/productsEC" },
+  // { key: "cart", href: "/cart" },
   { key: "stores", href: "/stores" },
   {
     key: "delivery",
-    href: "https://www.ubereats.com/store/%E3%81%97%E3%82%85%E3%82%8F%E3%81%A3%E3%81%A8%E8%B4%85%E6%B2%A2%E3%83%8F%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%84%E3%81%BF%E3%81%A4%E3%81%8D%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%95-%E3%82%88%E3%81%A3%E3%81%A6%E5%B1%8B/ycwuMM91VIaoNcZ1oCr_5g?diningMode=DELIVERY",
+    href: "https://www.ubereats.com/store/...",
     external: true,
   },
   { key: "about", href: "/about" },
@@ -334,6 +394,7 @@ const FOOTER_ITEMS: MenuItem[] = [
   { key: "timeline", href: "/postList" },
   { key: "community", href: "/community" },
   { key: "analytics", href: "/analytics" },
+  // { key: "orders", href: "/orders" },
   { key: "admin", href: "/login" },
 ];
 
@@ -349,23 +410,19 @@ export default function Header({ className = "" }: { className?: string }) {
     return darkThemes.some((k) => gradient === THEMES[k]);
   }, [gradient]);
 
-  // UI言語
   const { uiLang } = useUILang();
   const t = T[uiLang] ?? T.ja;
   const rtl = uiLang === "ar";
 
-  // 表示対象メニュー（Firestore購読）
+  // Firestore のメニュー表示制御
   const [visibleMenuKeys, setVisibleMenuKeys] = useState<MenuKey[]>(
     [...MENU_ITEMS, ...FOOTER_ITEMS].map((m) => m.key)
   );
   useEffect(() => {
     const unsub = onSnapshot(META_REF, (snap) => {
       const data = snap.data() as { visibleMenuKeys?: MenuKey[] } | undefined;
-      if (
-        Array.isArray(data?.visibleMenuKeys) &&
-        data!.visibleMenuKeys.length
-      ) {
-        setVisibleMenuKeys(data!.visibleMenuKeys);
+      if (Array.isArray(data?.visibleMenuKeys) && data.visibleMenuKeys.length) {
+        setVisibleMenuKeys(data.visibleMenuKeys);
       }
     });
     return () => unsub();
@@ -377,13 +434,14 @@ export default function Header({ className = "" }: { className?: string }) {
     return () => unsub();
   }, []);
 
+  // グラデーション適用
   const gradientClass = gradient
     ? gradient.startsWith("bg-[")
-      ? gradient // 単色
-      : `bg-gradient-to-b ${gradient}` // グラデーション
+      ? gradient
+      : `bg-gradient-to-b ${gradient}`
     : "bg-gray-100";
 
-  // Sheetが閉じたら3タップ状態をリセット
+  // 秘密の3タップ → 管理者リンク表示
   const [showAdminLink, setShowAdminLink] = useState(false);
   const tapCountRef = useRef(0);
   const lastTapAtRef = useRef(0);
@@ -395,14 +453,11 @@ export default function Header({ className = "" }: { className?: string }) {
     }
   }, [open]);
 
-  // Sheet内で3タップ検出
   const handleSecretTap = (e: React.PointerEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.closest(IGNORE_SELECTOR)) return;
-
     const now = Date.now();
     const last = lastTapAtRef.current;
-
     if (now - last > TRIPLE_TAP_INTERVAL_MS) {
       tapCountRef.current = 1;
       lastTapAtRef.current = now;
@@ -410,7 +465,6 @@ export default function Header({ className = "" }: { className?: string }) {
     }
     tapCountRef.current += 1;
     lastTapAtRef.current = now;
-
     if (tapCountRef.current >= 3) {
       setShowAdminLink(true);
       tapCountRef.current = 0;
@@ -432,7 +486,10 @@ export default function Header({ className = "" }: { className?: string }) {
       {/* ロゴ */}
       <Link
         href="/"
-        className="text-md text-white text-outline font-bold flex items-center gap-2 py-2 hover:opacity-50"
+        className={clsx(
+          "text-md font-bold flex items-center gap-2 py-2 hover:opacity-50",
+          isDark ? "text-white text-outline" : "text-black"
+        )}
         onClick={handleMenuClose}
       >
         {logoUrl && logoUrl.trim() !== "" && (
@@ -473,10 +530,13 @@ export default function Header({ className = "" }: { className?: string }) {
         ))}
       </nav>
 
-      {/* 外部リンク（サイト） */}
+      {/* 外部リンク */}
       <Link
         href="https://tayotteya.com/"
-        className="text-xl text-white font-bold flex items-center gap-2 py-2 hover:opacity-50"
+        className={clsx(
+          "text-xl font-bold flex items-center gap-2 py-2 hover:opacity-50",
+          isDark ? "text-white" : "text-black"
+        )}
         onClick={handleMenuClose}
       >
         <Image
@@ -497,42 +557,47 @@ export default function Header({ className = "" }: { className?: string }) {
               variant="ghost"
               size="icon"
               className={clsx(
-                "w-7 h-7 border-2",
+                "w-8 h-8 border-2",
                 isDark ? "text-white border-white" : "text-black border-black"
               )}
               aria-label={t.menuTitle}
             >
-              <Menu size={26} />
+              <Menu size={22} />
             </Button>
           </SheetTrigger>
 
+          {/* === スマホで下が見切れる問題対策 ===
+              - h-dvh: 端末の表示領域の高さを正しく反映
+              - overflow-hidden + 内側に overflow-y-auto のスクロール領域
+              - pb-[env(safe-area-inset-bottom)] でホームバー回避
+          */}
           <SheetContent
             side="right"
             dir={rtl ? "rtl" : "ltr"}
             className={clsx(
-              "flex flex-col",
+              "flex h-dvh flex-col overflow-hidden p-0",
               gradient &&
                 (gradient.startsWith("bg-[")
                   ? gradient
                   : `bg-gradient-to-b ${gradient}`),
-              // Closeボタンのサイズ調整（任意）
+              // Close ボタンのサイズはそのまま
               "[&_[data-radix-sheet-close]]:w-10 [&_[data-radix-sheet-close]]:h-10",
               "[&_[data-radix-sheet-close]_svg]:w-6 [&_[data-radix-sheet-close]_svg]:h-6"
             )}
           >
             <SheetHeader className="pt-4 px-4">
-              <SheetTitle className="text-center text-xl !text-white text-outline">
+              <SheetTitle className="text-center text-xl text-white text-outline">
                 {t.menuTitle}
               </SheetTitle>
             </SheetHeader>
 
-            {/* ▼ このラッパーで3タップ検出 */}
+            {/* スクロール本体 */}
             <div
-              className="flex-1 flex flex-col justify-between"
+              className="flex-1 overflow-y-auto [scrollbar-width:thin] px-6 pb-6"
               onPointerDown={handleSecretTap}
             >
-              {/* 上段：メニュー（表示/非表示 制御） */}
-              <div className="flex-1 flex flex-col justify-center items-center space-y-4 text-center">
+              {/* メインメニュー（中央寄せ） */}
+              <div className="min-h-[60vh] flex flex-col justify-center items-center space-y-4 text-center">
                 {MENU_ITEMS.filter((m) => visibleMenuKeys.includes(m.key)).map(
                   ({ key, href, external }) =>
                     external ? (
@@ -560,30 +625,43 @@ export default function Header({ className = "" }: { className?: string }) {
               </div>
 
               {/* 言語ピッカー */}
-              <div className="flex flex-col items-center gap-3 px-4 pb-2">
+              <div className="flex flex-col items-center gap-3 py-4">
                 <UILangFloatingPicker />
               </div>
 
-              {/* 下段：フッターリンク（表示/非表示 + ログイン/3タップ制御） */}
-              <div className="px-4 py-6">
+              {/* フッターメニュー（ログイン状況に応じて表示） */}
+              <div className="py-6">
                 <div className="flex flex-col items-center gap-3">
+                  {/* timeline / community / analytics は要ログイン */}
                   {isLoggedIn &&
-                    FOOTER_ITEMS.filter(
-                      (m) =>
-                        ["timeline", "community", "analytics"].includes(
-                          m.key
-                        ) && visibleMenuKeys.includes(m.key as MenuKey)
-                    ).map(({ key, href }) => (
-                      <Link
-                        key={key}
-                        href={href}
-                        onClick={handleMenuClose}
-                        className="text-center text-lg text-white text-outline"
-                      >
-                        {t[key as Keys]}
-                      </Link>
-                    ))}
+                    FOOTER_ITEMS.filter((m) =>
+                      ["timeline", "community", "analytics"].includes(m.key)
+                    )
+                      .filter((m) => visibleMenuKeys.includes(m.key as MenuKey))
+                      .map(({ key, href }) => (
+                        <Link
+                          key={key}
+                          href={href}
+                          onClick={handleMenuClose}
+                          className="text-center text-lg text-white text-outline"
+                        >
+                          {t[key as Keys]}
+                        </Link>
+                      ))}
 
+                  {/* 注文履歴: ★ FIX - 表示されない問題の修正
+                      条件: ログイン済み かつ Firestore の visibleMenuKeys に含まれる */}
+                  {/* {isLoggedIn && visibleMenuKeys.includes("orders") && (
+                    <Link
+                      href="/orders"
+                      onClick={handleMenuClose}
+                      className="text-center text-lg text-white text-outline"
+                    >
+                      {t.orders}
+                    </Link>
+                  )} */}
+
+                  {/* 管理者リンク（3タップ or ログイン） */}
                   {(showAdminLink || isLoggedIn) &&
                     visibleMenuKeys.includes("admin") && (
                       <Link

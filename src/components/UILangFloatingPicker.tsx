@@ -5,16 +5,14 @@ import clsx from "clsx";
 import { LANGS } from "@/lib/langs";
 import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
 
-type LangOption = {
-  key: UILang;
-  label: string;
-  emoji: string;
-};
-
+type LangOption = { key: UILang; label: string; emoji: string };
 const ALL_OPTIONS: ReadonlyArray<LangOption> = LANGS;
 
 const TAP_MOVE_THRESHOLD = 8;   // px 未満ならタップ
 const TAP_TIME_THRESHOLD = 500; // ms 未満ならタップ
+
+// ★ 幅をここで一括管理（お好みで 200〜260 に調整）
+const PICKER_W = 220; // px
 
 export default function UILangFloatingPicker() {
   const { uiLang, setUiLang } = useUILang();
@@ -33,20 +31,15 @@ export default function UILangFloatingPicker() {
   const decidePlacementAndSize = () => {
     if (!btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
-    const gutter = 6; // トリガーとの隙間
+    const gutter = 6;
     const vh = window.innerHeight;
-
     const spaceAbove = Math.max(0, rect.top - gutter);
     const spaceBelow = Math.max(0, vh - rect.bottom - gutter);
+    const nextPlacement: "down" | "up" = spaceBelow >= spaceAbove ? "down" : "up";
 
-    // どちらに余裕があるかで配置を決定
-    const nextPlacement: "down" | "up" =
-      spaceBelow >= spaceAbove ? "down" : "up";
-
-    // メニューの最大高さ: 画面の 60vh を上限としつつ、実際の余白にフィット
     const capacity = nextPlacement === "down" ? spaceBelow : spaceAbove;
     const logicalMax = Math.floor(vh * 0.6); // 60vh
-    const px = Math.max(Math.min(capacity, logicalMax), 160); // 最低 160px は確保
+    const px = Math.max(Math.min(capacity, logicalMax), 160);
     setPlacement(nextPlacement);
     setMenuMaxH(`${px}px`);
   };
@@ -93,16 +86,16 @@ export default function UILangFloatingPicker() {
   const toggle = () => setOpen((v) => !v);
 
   return (
-    <div className="pointer-events-auto mx-auto w-full flex justify-center">
+    <div className="pointer-events-auto mx-auto w-auto flex justify-center">
       <div
         className={clsx(
           "relative inline-flex items-center",
           "rounded-xl border bg-transparent backdrop-blur shadow-lg",
-          "text-white" // ← トリガーは白を継承
+          "text-white"
         )}
         style={{ WebkitTapHighlightColor: "transparent" }}
       >
-        {/* トリガーボタン（ラベル・矢印を白に） */}
+        {/* トリガーボタン（幅固定） */}
         <button
           ref={btnRef}
           type="button"
@@ -112,9 +105,10 @@ export default function UILangFloatingPicker() {
             "rounded-lg border bg-transparent",
             "px-3 py-2",
             "text-[16px]",
-            "min-h-[44px] min-w-[200px]",
+            "min-h-[44px]",
             "cursor-pointer select-none"
           )}
+          style={{ width: PICKER_W }} // ★ 幅を固定
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-label="表示言語を選択"
@@ -126,7 +120,7 @@ export default function UILangFloatingPicker() {
           <span className="ml-auto text-white/70">▾</span>
         </button>
 
-        {/* メニュー */}
+        {/* メニュー（幅もボタンに合わせて固定） */}
         {open && (
           <div
             ref={menuRef}
@@ -137,16 +131,16 @@ export default function UILangFloatingPicker() {
                 ? "top-[calc(100%+6px)]"
                 : "bottom-[calc(100%+6px)]",
               "z-[9999]",
-              "w-[min(92vw,420px)] overflow-auto rounded-xl border",
-              "bg-white",
-              "text-gray-900",
-              "shadow-xl"
+              "overflow-auto rounded-xl border",
+              "bg-white text-gray-900 shadow-xl"
             )}
             style={{
               WebkitOverflowScrolling: "touch",
               overscrollBehavior: "contain",
               touchAction: "pan-y",
               maxHeight: menuMaxH,
+              width: PICKER_W, // ★ 幅を固定（ボタンと同じ）
+              maxWidth: "92vw", // 画面が狭いときは縮む
             }}
           >
             {ALL_OPTIONS.map((o) => (
@@ -184,9 +178,7 @@ function LangRow({
       type="button"
       role="option"
       aria-selected={active}
-      // マウスは通常クリック
       onClick={() => onSelect(option.key)}
-      // タッチは移動・時間で“タップ”判定
       onTouchStart={(e) => {
         const t = e.changedTouches[0];
         touchStart.current = { y: t.clientY, x: t.clientX, t: Date.now() };
@@ -198,14 +190,9 @@ function LangRow({
         const dy = Math.abs(t.clientY - start.y);
         const dx = Math.abs(t.clientX - start.x);
         const dt = Date.now() - start.t;
-
-        const isTap =
-          dy < TAP_MOVE_THRESHOLD &&
-          dx < TAP_MOVE_THRESHOLD &&
-          dt < TAP_TIME_THRESHOLD;
-
+        const isTap = dy < TAP_MOVE_THRESHOLD && dx < TAP_MOVE_THRESHOLD && dt < TAP_TIME_THRESHOLD;
         if (isTap) {
-          e.preventDefault(); // 300ms 後の click 抑止
+          e.preventDefault();
           onSelect(option.key);
         }
         touchStart.current = null;
@@ -215,11 +202,12 @@ function LangRow({
         "hover:bg-gray-100 active:bg-gray-200",
         active && "bg-gray-100"
       )}
-      // iOS の誤爆抑止（横パンは無効）
       style={{ touchAction: "pan-y" }}
     >
-      <span className="mr-2">{option.emoji}</span>
-      {option.label} / {option.key}
+      <div className="flex items-center gap-2">
+        <span className="shrink-0">{option.emoji}</span>
+        <span className="truncate">{option.label} / {option.key}</span>
+      </div>
     </button>
   );
 }

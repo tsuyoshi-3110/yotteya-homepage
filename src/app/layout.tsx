@@ -1,14 +1,19 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
 import Header from "@/components/Header";
 import Script from "next/script";
-import ThemeBackground from "@/components/ThemeBackground"; // 新規追加
-import WallpaperBackground from "@/components/WallpaperBackground"; // ← 追加
+import ThemeBackground from "@/components/ThemeBackground";
+import WallpaperBackground from "@/components/WallpaperBackground";
 import AnalyticsLogger from "@/components/AnalyticsLogger";
 import FontLoader from "@/components/FontLoader";
 import SubscriptionOverlay from "@/components/SubscriptionOverlay";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+
+// ▼ カート全体提供（追加）
+import { CartProvider } from "@/lib/cart/CartContext";
 
 import {
   kosugiMaru,
@@ -43,7 +48,7 @@ export const metadata: Metadata = {
     title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
     description:
       "ふんわり生地とこだわりクリームが自慢のクレープ屋さん。大阪市東淀川区で営業中。",
-    url: "https://www.yotteya.shop/",
+    url: "https://www.kikaikintots.shop/",
     siteName: "甘味処 よって屋",
     images: [
       {
@@ -62,34 +67,40 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+
   return (
     <html
       lang="ja"
+      suppressHydrationWarning
       className={`
         ${geistSans.variable} ${geistMono.variable}
         ${kosugiMaru.variable} ${notoSansJP.variable}
-        ${yomogi.variable} ${hachiMaruPop.variable} ${reggaeOne.variable} ${shipporiMincho.variable}
+        ${yomogi.variable} ${hachiMaruPop.variable}
+        ${reggaeOne.variable} ${shipporiMincho.variable}
         antialiased
       `}
     >
       <head>
-        {/* Google Analytics */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="gtag-init" strategy="afterInteractive">
-          {`
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-      page_path: window.location.pathname,
-    });
-  `}
-        </Script>
+        {/* Google Analytics（IDがあるときだけ読み込み） */}
+        {GA_ID ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="gtag-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}', { page_path: window.location.pathname });
+              `}
+            </Script>
+          </>
+        ) : null}
 
-        {/* その他のmeta */}
+        {/* 画像の先読み（壁紙） */}
         <link
           rel="preload"
           as="image"
@@ -97,6 +108,8 @@ export default function RootLayout({
           type="image/webp"
         />
         <meta name="theme-color" content="#ffffff" />
+
+        {/* サーチコンソール用（複数可） */}
         <meta
           name="google-site-verification"
           content="UcH7-5B4bwpJxxSjIpBskahFhBRTSLRJUZ8A3LAnnFE"
@@ -108,16 +121,25 @@ export default function RootLayout({
       </head>
 
       <body className="relative min-h-screen">
-        <SubscriptionOverlay siteKey={SITE_KEY} />
-        <AnalyticsLogger />
+        {/* 背景レイヤー（下層） */}
         <WallpaperBackground />
         <ThemeBackground />
-        {/* ヘッダー・コンテンツ */}
-        <Header />
-        <FontLoader />
-        {children}
 
-        {/* 構造化データ */}
+        {/* 計測（ページ表示時のログなど） */}
+        <AnalyticsLogger />
+
+        {/* サイト全体をCartProviderでラップ */}
+        <CartProvider>
+          {/* 上位オーバーレイ（サブスク状態によるブロック等） */}
+          <SubscriptionOverlay siteKey={SITE_KEY} />
+
+          {/* UI本体 */}
+          <Header />
+          <FontLoader />
+          {children}
+        </CartProvider>
+
+        {/* 構造化データ（店舗情報） */}
         <Script
           id="ld-json"
           type="application/ld+json"
@@ -129,7 +151,7 @@ export default function RootLayout({
             name: "甘味処 よって屋",
             address: {
               "@type": "PostalAddress",
-              addressLocality: "大阪市〇〇区",
+              addressLocality: "大阪市東淀川区",
               streetAddress: "〇〇町1-2-3",
             },
             telephone: "06-1234-5678",
