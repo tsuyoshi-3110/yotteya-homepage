@@ -1,9 +1,11 @@
+// components/StoreReviews.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { THEMES, ThemeKey } from "@/lib/themes";
 
+/* ===== Types ===== */
 type Review = {
   author: string;
   rating: number;
@@ -27,7 +29,16 @@ type ApiShape = {
   error?: string;
 };
 
-/* ---------------- 画像URL・テキストの正規化 ---------------- */
+type Props = {
+  placeId: string;
+  googleEnabled: boolean;
+  /** 任意: JSON-LD用の店舗名（未指定なら document.title） */
+  businessName?: string;
+  /** 任意: JSON-LD用のページURL（未指定なら location.href） */
+  pageUrl?: string;
+};
+
+/* ===== Utils ===== */
 function normalizeReviews(list: ApiShape["reviews"] | undefined): Review[] {
   if (!Array.isArray(list)) return [];
   const fixUrl = (u?: string) => {
@@ -58,7 +69,6 @@ function normalizeReviews(list: ApiShape["reviews"] | undefined): Review[] {
   });
 }
 
-/* ---------------- Avatar（ローカル定義） ---------------- */
 function Avatar({ author, url }: { author: string; url?: string }) {
   const initial = (author || "？").trim().charAt(0);
   return (
@@ -73,7 +83,6 @@ function Avatar({ author, url }: { author: string; url?: string }) {
             referrerPolicy="no-referrer"
             loading="lazy"
             onError={(e) => {
-              // 画像失敗時は非表示→直後のフォールバックを表示
               e.currentTarget.style.display = "none";
               const sib = e.currentTarget.nextElementSibling as HTMLElement | null;
               if (sib) sib.style.display = "flex";
@@ -92,30 +101,105 @@ function Avatar({ author, url }: { author: string; url?: string }) {
   );
 }
 
-/* ---------------- 本体 ---------------- */
+/* ===== Component ===== */
 export default function StoreReviews({
   placeId,
   googleEnabled,
-}: {
-  placeId: string;
-  /** 連携がONのときだけ読み込み・表示する */
-  googleEnabled: boolean;
-}) {
+  businessName,
+  pageUrl,
+}: Props) {
+  // State hooks（必ずトップレベル）
   const [reviews, setReviews] = useState<Review[] | null>(null);
   const [total, setTotal] = useState<number | null>(null);
   const [avg, setAvg] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false); // ← オフ時は起動しないので初期 false
+  const [loading, setLoading] = useState(false); // 連携OFF時は発火させない
   const [error, setError] = useState<string | null>(null);
 
-  // テーマが暗いか判定
+  // Theme hooks（必ずトップレベル）
   const gradient = useThemeGradient();
   const isDark = useMemo(() => {
     const darks: ThemeKey[] = ["brandG", "brandH", "brandI"];
     return !!gradient && darks.some((k) => gradient === THEMES[k]);
   }, [gradient]);
 
+  // ここもトップレベルでOK（値はいつでも算出可能）
+  const mapPlaceUrl = `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(
+    placeId
+  )}`;
+
+  // JSON-LD（構造化データ）— useMemo内で条件を処理
+  const jsonLd = useMemo(() => {
+    // 口コミ無効・データ不足なら script は出さない
+    if (!googleEnabled) return null;
+
+    const hasSomeData =
+      (Array.isArray(reviews) && reviews.length > 0) ||
+      typeof avg === "number" ||
+      typeof total === "number";
+    if (!hasSomeData) return null;
+
+    const ratingValue =
+      typeof avg === "number"
+        ? avg.toFixed(1)
+        : reviews && reviews.length > 0
+        ? (reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length).toFixed(1)
+        : undefined;
+
+    const reviewCount =
+      typeof total === "number" ? total : reviews ? reviews.length : undefined;
+
+    const reviewList =
+      reviews && reviews.length > 0
+        ? reviews.slice(0, 10).map((r) => ({
+            "@type": "Review",
+            author: r.author || "匿名ユーザー",
+            reviewBody: r.text || "",
+            reviewRating: {
+              "@type": "Rating",
+              ratingValue: r.rating || 0,
+              bestRating: "5",
+              worstRating: "1",
+            },
+          }))
+        : undefined;
+
+    const name =
+      businessName && businessName.trim()
+        ? businessName.trim()
+        : typeof document !== "undefined"
+        ? document.title.trim()
+        : "";
+    const url =
+      pageUrl && pageUrl.trim()
+        ? pageUrl.trim()
+        : typeof window !== "undefined"
+        ? window.location.href
+        : "";
+
+    const data: any = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      ...(name ? { name } : {}),
+      ...(url ? { url } : {}),
+      sameAs: [mapPlaceUrl],
+    };
+
+    if (ratingValue && reviewCount != null) {
+      data.aggregateRating = {
+        "@type": "AggregateRating",
+        ratingValue,
+        reviewCount,
+      };
+    }
+    if (reviewList && reviewList.length > 0) {
+      data.review = reviewList;
+    }
+
+    return JSON.stringify(data);
+  }, [googleEnabled, reviews, avg, total, businessName, pageUrl, mapPlaceUrl]);
+
+  // データ取得（hookはトップレベル、内側で条件分岐）
   useEffect(() => {
-    // 連携OFFのときは一切フェッチしない & 状態もリセット
     if (!googleEnabled) {
       setReviews(null);
       setTotal(null);
@@ -147,25 +231,43 @@ export default function StoreReviews({
         if (!aborted) setLoading(false);
       }
     })();
+
     return () => {
       aborted = true;
     };
   }, [placeId, googleEnabled]);
 
-  // 連携OFFのときは非表示（DOMごと描画しない）
+  /* ===== Render（ここで早期returnしてもOK：hooksはすでに呼ばれている） ===== */
   if (!googleEnabled) return null;
 
   if (loading) return <p>読み込み中...</p>;
   if (error) return <p className="text-red-500">エラー: {error}</p>;
+
   if (!reviews || reviews.length === 0)
     return (
-      <div className="mt-3 rounded-md border bg-transparent p-4 text-sm">
-        口コミはまだありません
-      </div>
+      <>
+        {jsonLd && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: jsonLd }}
+          />
+        )}
+        <div className="mt-3 rounded-md border bg-transparent p-4 text-sm">
+          口コミはまだありません
+        </div>
+      </>
     );
 
   return (
     <div className="space-y-4">
+      {/* 構造化データ */}
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd }}
+        />
+      )}
+
       {/* ヘッダ */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -180,9 +282,7 @@ export default function StoreReviews({
           )}
         </div>
         <a
-          href={`https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(
-            placeId
-          )}`}
+          href={mapPlaceUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm underline text-blue-600"
@@ -191,6 +291,7 @@ export default function StoreReviews({
         </a>
       </div>
 
+      {/* リスト */}
       {reviews.map((rv, i) => (
         <div
           key={i}
@@ -210,9 +311,7 @@ export default function StoreReviews({
               </div>
             </div>
           </div>
-          <p className="text-sm whitespace-pre-wrap">
-            {rv.text || "（コメントなし）"}
-          </p>
+          <p className="text-sm whitespace-pre-wrap">{rv.text || "（コメントなし）"}</p>
         </div>
       ))}
     </div>
