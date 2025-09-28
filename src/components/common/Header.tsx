@@ -315,7 +315,7 @@ export default function Header({ className = "" }: { className?: string }) {
   const t = T[uiLang] ?? T.ja;
   const rtl = uiLang === "ar";
 
-  /* ダークテーマ判定 */
+  /* ダークテーマ判定（ボタンの枠色に使用） */
   const isDark = useMemo(() => {
     const darkKeys: ThemeKey[] = ["brandG", "brandH", "brandI"];
     if (!gradient) return false;
@@ -442,52 +442,57 @@ export default function Header({ className = "" }: { className?: string }) {
                   : `bg-gradient-to-b ${gradient}`)
             )}
           >
-            {/* アクセシビリティ用タイトル（視覚的に非表示） */}
-            <SheetHeader className="sr-only">
-              <SheetTitle>{t.menuTitle}</SheetTitle>
+            {/* 先頭固定ヘッダー */}
+            <SheetHeader className="px-6 py-4 border-b border-white/30">
+              <SheetTitle className="text-white text-outline text-xl">
+                {t.menuTitle}
+              </SheetTitle>
             </SheetHeader>
 
-            {/* 中央メニュー（スクロール領域） */}
+            {/* 中央：上下センター配置のスクロール領域 */}
             <div
               className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] px-6"
               onPointerDown={handleSecretTap}
             >
-              <div className="min-h-[60vh] flex flex-col items-center justify-center text-center space-y-3 py-3">
-                <h2 className="text-xl text-white text-outline">{t.menuTitle}</h2>
+              <div className="min-h-full flex items-center justify-center">
+                <div className="w-full">
+                  <nav className="py-4 flex flex-col items-center text-center space-y-3">
+                    {MENU_ITEMS.filter((m) =>
+                      visibleMenuKeys.includes(m.key)
+                    ).map(({ key, href, external }) =>
+                      external ? (
+                        <a
+                          key={key}
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={handleMenuClose}
+                          className="text-lg text-white text-outline hover:underline"
+                        >
+                          {t[key]}
+                        </a>
+                      ) : (
+                        <Link
+                          key={key}
+                          href={href}
+                          onClick={handleMenuClose}
+                          className="text-lg text-white text-outline"
+                        >
+                          {t[key]}
+                        </Link>
+                      )
+                    )}
+                  </nav>
 
-                {MENU_ITEMS.filter((m) => visibleMenuKeys.includes(m.key)).map(
-                  ({ key, href, external }) =>
-                    external ? (
-                      <a
-                        key={key}
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={handleMenuClose}
-                        className="text-lg text-white text-outline hover:underline"
-                      >
-                        {t[key]}
-                      </a>
-                    ) : (
-                      <Link
-                        key={key}
-                        href={href}
-                        onClick={handleMenuClose}
-                        className="text-lg text-white text-outline"
-                      >
-                        {t[key]}
-                      </Link>
-                    )
-                )}
-              </div>
-
-              {/* 言語ピッカー */}
-              <div className="flex flex-col items-center gap-2 py-3">
-                <UILangFloatingPicker />
+                  {/* 言語ピッカー（ナビ直下に配置） */}
+                  <div className="flex flex-col items-center gap-2 pb-6">
+                    <UILangFloatingPicker />
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* フッター（常に下詰め） */}
+            {/* 下詰めフッター */}
             <div className="border-t border-white/30 px-6 py-4">
               <div className="flex flex-col items-center gap-2">
                 {isLoggedIn &&

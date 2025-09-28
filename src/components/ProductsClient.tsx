@@ -870,13 +870,12 @@ export default function ProductsClient() {
                         router.push(`/products/${p.id}`);
                       }}
                       className={clsx(
-                        "flex flex-col h-full border shadow relative transition-colors duration-200",
+                        "flex flex-col h-full border shadow relative transition-colors duration-200 rounded-2xl",
                         "bg-gradient-to-b",
                         gradient,
-                        isDragging ? "bg-yellow-100" : "bg-white",
-                        "cursor-pointer",
-                        !isDragging && "hover:shadow-lg",
-                        "rounded-b-lg rounded-t-xl"
+                        isDragging ? "bg-yellow-100" : "bg-transparent",
+                        "backdrop-blur-sm", // 透明にすると文字が読みにくい時の保険（不要なら外してOK）
+                        "ring-1 ring-white/10"
                       )}
                     >
                       {auth.currentUser !== null && (
@@ -904,14 +903,10 @@ export default function ProductsClient() {
                       />
 
                       <div className="p-1 space-y-1">
-                        <h2
-                          className="text-white text-outline"
-                        >
+                        <h2 className="text-white text-outline">
                           {loc.title || p.title || "（無題）"}
                         </h2>
-                        <p
-                          className="text-white text-outline"
-                        >
+                        <p className="text-white text-outline">
                           ¥{(p.price ?? 0).toLocaleString()}（
                           {p.taxIncluded ? taxT.incl : taxT.excl}）
                         </p>

@@ -700,6 +700,7 @@ export default function StoresClient() {
                       onEdit={openEdit}
                       onRemove={removeStore}
                       googleEnabled={googleEnabled}
+                      gradientClass={`bg-gradient-to-b ${gradient}`}
                     />
                   )}
                 </SortableStoreItem>
@@ -968,6 +969,7 @@ interface StoreCardProps {
   onEdit: (store: StoreDoc) => void;
   onRemove: (store: StoreDoc) => void;
   googleEnabled: boolean;
+  gradientClass: string;
 }
 
 function StoreCard({
@@ -982,6 +984,7 @@ function StoreCard({
   onEdit,
   onRemove,
   googleEnabled,
+  gradientClass,
 }: StoreCardProps) {
   const ref = useRef<HTMLDivElement | null>(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px -150px 0px" });
@@ -999,10 +1002,11 @@ function StoreCard({
       initial={{ opacity: 0, y: 40 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className={clsx(
-        "rounded-lg shadow relative mt-6",
-        isDragging ? "bg-yellow-100" : "bg-white/30"
-      )}
+       className={clsx(
+    "relative overflow-hidden rounded-lg shadow mt-6",
+    "bg-gradient-to-b",              // ★ これが必須（方向）
+    isDragging ? "bg-yellow-100" : gradientClass
+  )}
     >
       {auth.currentUser !== null && (
         <div

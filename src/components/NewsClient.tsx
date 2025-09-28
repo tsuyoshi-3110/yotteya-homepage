@@ -104,7 +104,10 @@ function pickLocalized(
 ========================================================= */
 type TrFull = { lang: LangKey; title: string; body: string };
 
-async function translateAll(titleJa: string, bodyJa: string): Promise<TrFull[]> {
+async function translateAll(
+  titleJa: string,
+  bodyJa: string
+): Promise<TrFull[]> {
   const targets = (LANGS.map((l) => l.key).filter((k) => k !== "ja") ??
     []) as LangKey[];
 
@@ -126,9 +129,7 @@ async function translateAll(titleJa: string, bodyJa: string): Promise<TrFull[]> 
   const settled = await Promise.allSettled(jobs);
   return settled
     .filter(
-      (
-        r
-      ): r is PromiseFulfilledResult<TrFull> => r.status === "fulfilled"
+      (r): r is PromiseFulfilledResult<TrFull> => r.status === "fulfilled"
     )
     .map((r) => r.value);
 }
@@ -475,6 +476,7 @@ export default function NewsClient() {
                 handleDelete={handleDelete}
                 isDark={isDark}
                 uiLang={uiLang}
+                gradientClass={`bg-gradient-to-b ${gradient}`}
               />
             ))}
           </AnimatePresence>
@@ -693,8 +695,8 @@ function NewsCard({
   user,
   openEdit,
   handleDelete,
-  isDark,
   uiLang,
+  gradientClass,
 }: {
   item: NewsItem;
   user: User | null;
@@ -702,6 +704,7 @@ function NewsCard({
   handleDelete: (n: NewsItem) => void;
   isDark: boolean;
   uiLang: UILang;
+  gradientClass: string;
 }) {
   const ref = useRef<HTMLLIElement>(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px -150px 0px" });
@@ -715,11 +718,13 @@ function NewsCard({
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       exit={{ opacity: 0, y: 40 }}
-      className={`p-6 rounded-lg shadow border ${
-        isDark
-          ? "bg-gray-800 text-white border-gray-700"
-          : "bg-white text-gray-900 border-gray-200"
-      }`}
+      className={[
+        "relative overflow-hidden p-6 rounded-lg shadow",
+        "ring-1 ring-white/10", // 薄い枠（任意）
+        "text-white", // 文字は白
+        "text-outline", // お使いなら視認性UP（任意）
+        gradientClass, // ★ ここで適用
+      ].join(" ")}
     >
       <h2 className="font-bold whitespace-pre-wrap">{loc.title}</h2>
 
