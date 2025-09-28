@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import clsx from "clsx";
@@ -9,7 +9,6 @@ import { v4 as uuid } from "uuid";
 import imageCompression from "browser-image-compression";
 
 import { useThemeGradient } from "@/lib/useThemeGradient";
-import { ThemeKey, THEMES } from "@/lib/themes";
 import { type Product } from "@/types/Product";
 
 import { auth, db } from "@/lib/firebase";
@@ -85,8 +84,6 @@ function pickLocalized(
   };
 }
 
-
-
 /* ▼ 保存時に日本語→各言語へ翻訳（/api/translate を使用） */
 type Tr = { lang: LangKey; title: string; body: string };
 async function translateAll(titleJa: string, bodyJa: string): Promise<Tr[]> {
@@ -142,11 +139,6 @@ export default function ProductDetail({ product }: { product: Product }) {
     const unsub = onAuthStateChanged(auth, (u) => setIsAdmin(!!u));
     return () => unsub();
   }, []);
-
-  const isDark = useMemo(() => {
-    const darks: ThemeKey[] = ["brandG", "brandH", "brandI"];
-    return gradient && darks.some((k) => gradient === THEMES[k]);
-  }, [gradient]);
 
   /* ---------- UI言語 ---------- */
   const { uiLang } = useUILang();
@@ -393,7 +385,7 @@ export default function ProductDetail({ product }: { product: Product }) {
           "bg-gradient-to-b",
           "mt-5",
           gradient,
-          isDark ? "bg-black/40 text-white" : "bg-white"
+          "text-white text-outline"
         )}
       >
         {/* 編集・削除 */}
@@ -440,10 +432,10 @@ export default function ProductDetail({ product }: { product: Product }) {
 
         {/* テキスト（タイトル/本文のみ多言語化、他は既存のまま） */}
         <div className="p-4 space-y-2">
-          <h1 className={clsx("text-lg font-bold", isDark && "text-white")}>
+          <h1 className={clsx("text-lg font-bold", "text-white text-outline")}>
             {loc.title}
           </h1>
-          <p className={clsx("font-semibold", isDark && "text-white")}>
+          <p className={clsx("font-semibold", "text-white text-outline")}>
             ¥{displayProduct.price.toLocaleString()}（
             {displayProduct.taxIncluded ? taxT.incl : taxT.excl}）
           </p>
@@ -451,7 +443,7 @@ export default function ProductDetail({ product }: { product: Product }) {
             <p
               className={clsx(
                 "text-sm whitespace-pre-wrap leading-relaxed",
-                isDark && "text-white"
+                "text-white text-outline"
               )}
             >
               {loc.body}

@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import BackgroundVideo from "@/components/BackgroundVideo";
 import TopFixedText from "@/components/TopFixedText";
+import TopVisibleSections from "@/components/TopVisibleSections";
 
 export const metadata: Metadata = {
   title: "甘味処 よって屋｜大阪市のクレープ専門店",
@@ -49,7 +50,8 @@ export default function HomePage() {
 
         <div className="max-w-3xl mx-auto space-y-6 text-center leading-relaxed text-outline">
           <p>
-            『甘味処 よって屋』は、大阪市東淀川区・北区に展開するクレープ専門店です。
+            『甘味処
+            よって屋』は、大阪市東淀川区・北区に展開するクレープ専門店です。
             独自の配合で焼き上げた生地と、相性の良いクリームを組み合わせ、
             幅広い世代のお客様に楽しんでいただけるクレープをご提供しています。
           </p>
@@ -59,17 +61,9 @@ export default function HomePage() {
             お買い物や学校帰りなど、さまざまなシーンで気軽に立ち寄れる場所として
             ご利用いただいています。
           </p>
-
-          <p>
-            定番の組み合わせに加え、店舗ごとに工夫したメニューを取り入れることもあります。
-            詳細はご来店時や店頭にてご確認ください。
-          </p>
-
-          <p>
-            東淀川区・北区を中心に、地域のお客様に親しまれるお店を目指して営業しています。
-            大阪でクレープを楽しみたい方は、ぜひ一度お立ち寄りください。
-          </p>
         </div>
+
+        <TopVisibleSections />
       </section>
 
       {/* ③ 構造化データ (JSON-LD) */}

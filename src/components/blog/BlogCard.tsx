@@ -9,15 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash } from "lucide-react";
 import ProductMedia from "@/components/ProductMedia";
 import clsx from "clsx";
-import { useThemeGradient } from "@/lib/useThemeGradient";
-import { THEMES, type ThemeKey } from "@/lib/themes";
+
 import { useEffect, useMemo, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 
 /* ===================== 定数 ===================== */
-const DARK_KEYS: ThemeKey[] = ["brandG", "brandH", "brandI"];
 
 /* ===================== レガシー互換：body/media → blocks ===================== */
 function legacyToBlocks(post: BlogPost): BlogBlock[] {
@@ -38,8 +36,7 @@ function legacyToBlocks(post: BlogPost): BlogBlock[] {
       type: m.type,
       url: m.url,
       path: (m as any).path,
-      title:
-        (m as any).title ?? (m as any).caption ?? (m as any).alt ?? "",
+      title: (m as any).title ?? (m as any).caption ?? (m as any).alt ?? "",
       caption: (m as any).caption,
     } as unknown as BlogBlock);
   }
@@ -105,14 +102,6 @@ export default function BlogCard({
   deleting,
   className,
 }: Props) {
-  const gradient = useThemeGradient();
-  const gradientClass = typeof gradient === "string" ? gradient : "";
-  const isDark =
-    !!gradient &&
-    (Object.keys(THEMES) as ThemeKey[]).some(
-      (k) => THEMES[k] === gradientClass && DARK_KEYS.includes(k)
-    );
-
   // Jotai: UI表示言語
   const { uiLang } = useUILang();
 
@@ -133,24 +122,16 @@ export default function BlogCard({
     <article
       className={clsx(
         "overflow-hidden rounded-2xl shadow transition",
-        gradientClass ? `bg-gradient-to-br ${gradientClass}` : "bg-white",
-        isDark
-          ? "border border-white/10 hover:shadow-md"
-          : "border border-black/10 hover:shadow-md",
+        "bg-white/30",
         className
       )}
     >
-      <div
-        className={clsx(
-          "p-4 space-y-4",
-          isDark ? "text-white" : "text-black"
-        )}
-      >
+      <div className={clsx("p-4 space-y-4", "text-white text-outline")}>
         {/* 記事タイトル（ローカライズ済み） */}
         <h3
           className={clsx(
             "font-semibold text-2xl leading-snug",
-            isDark ? "text-white" : "text-black"
+            "text-white text-outline"
           )}
         >
           {locTitle}
@@ -165,7 +146,7 @@ export default function BlogCard({
                   key={b.id ?? `p-${idx}`}
                   className={clsx(
                     "text-sm whitespace-pre-wrap leading-relaxed",
-                    isDark ? "text-white/85" : "text-gray-700"
+                    "text-white text-outline"
                   )}
                 >
                   {hasKey(b, "text") ? b.text : ""}
@@ -195,7 +176,7 @@ export default function BlogCard({
                     <div
                       className={clsx(
                         "text-xl whitespace-pre-wrap",
-                        isDark ? "text-white/80" : "text-gray-700"
+                        "text-white text-outline"
                       )}
                     >
                       {title}
@@ -210,12 +191,7 @@ export default function BlogCard({
         </div>
 
         {/* 作成日時（そのまま） */}
-        <div
-          className={clsx(
-            "text-xs",
-            isDark ? "text-white/70" : "text-gray-500"
-          )}
-        >
+        <div className={clsx("text-xs", "text-white text-outline")}>
           {post.createdAt?.toDate
             ? format(post.createdAt.toDate(), "yyyy/MM/dd HH:mm", {
                 locale: ja,
@@ -226,11 +202,7 @@ export default function BlogCard({
         {/* 操作行（ログイン時のみ表示） */}
         {isLoggedIn && (
           <div className="pt-2 flex items-center gap-2">
-            <Button
-              asChild
-              size="sm"
-              variant={isDark ? "secondary" : "default"}
-            >
+            <Button asChild size="sm">
               <Link href={`/blog/${post.id}/edit`}>
                 <Pencil className="mr-1.5 h-4 w-4" />
                 編集

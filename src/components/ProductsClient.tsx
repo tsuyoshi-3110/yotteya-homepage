@@ -34,7 +34,6 @@ import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import clsx from "clsx";
-import { ThemeKey, THEMES } from "@/lib/themes";
 import {
   DndContext,
   closestCenter,
@@ -308,12 +307,6 @@ export default function ProductsClient() {
       activationConstraint: { delay: 140, tolerance: 6 },
     })
   );
-
-  const isDark = useMemo(() => {
-    const darkThemes: ThemeKey[] = ["brandG", "brandH", "brandI"];
-    if (!gradient) return false;
-    return darkThemes.some((key) => gradient === THEMES[key]);
-  }, [gradient]);
 
   const productColRef: CollectionReference<DocumentData> = useMemo(
     () => collection(db, "siteProducts", SITE_KEY, "items"),
@@ -725,7 +718,9 @@ export default function ProductsClient() {
       <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         {/* セクションピッカー（order順で表示） */}
         <div className="flex items-center gap-2">
-          <label className="text-sm text-white text-outline opacity-70">表示カテゴリ:</label>
+          <label className="text-sm text-white text-outline opacity-70">
+            表示カテゴリ:
+          </label>
           <div className="relative inline-block">
             <select
               className={clsx(
@@ -878,11 +873,7 @@ export default function ProductsClient() {
                         "flex flex-col h-full border shadow relative transition-colors duration-200",
                         "bg-gradient-to-b",
                         gradient,
-                        isDragging
-                          ? "bg-yellow-100"
-                          : isDark
-                          ? "bg-black/40 text-white"
-                          : "bg-white",
+                        isDragging ? "bg-yellow-100" : "bg-white",
                         "cursor-pointer",
                         !isDragging && "hover:shadow-lg",
                         "rounded-b-lg rounded-t-xl"
@@ -901,7 +892,7 @@ export default function ProductsClient() {
                           style={{ touchAction: "none" }} // ← スマホで必須
                         >
                           <div className="w-10 h-10 rounded-full bg-white/95 flex items-center justify-center shadow pointer-events-none">
-                            <Pin className="text-black"/>
+                            <Pin className="text-black" />
                           </div>
                         </div>
                       )}
@@ -914,16 +905,12 @@ export default function ProductsClient() {
 
                       <div className="p-1 space-y-1">
                         <h2
-                          className={clsx("text-sm font-bold", {
-                            "text-white": isDark,
-                          })}
+                          className="text-white text-outline"
                         >
                           {loc.title || p.title || "（無題）"}
                         </h2>
                         <p
-                          className={clsx("font-semibold", {
-                            "text-white": isDark,
-                          })}
+                          className="text-white text-outline"
                         >
                           ¥{(p.price ?? 0).toLocaleString()}（
                           {p.taxIncluded ? taxT.incl : taxT.excl}）

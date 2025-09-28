@@ -32,41 +32,37 @@ type MenuKey =
   | "home"
   | "products"
   | "stores"
-  | "delivery"
   | "about"
   | "company"
   | "news"
   | "interview";
-// | "cart"
-// | "productEC"
-// | "orders";
 
 type MetaDoc = {
   themeGradient?: ThemeKey;
   visibleMenuKeys?: MenuKey[];
+   activeMenuKeys?: string[];
 };
 
 const MENU_ITEMS: { key: MenuKey; label: string }[] = [
   { key: "home", label: "ホーム" },
   { key: "products", label: "商品一覧" },
   { key: "stores", label: "アクセス" },
-  { key: "delivery", label: "デリバリー" },
   { key: "about", label: "当店の思い" },
   { key: "company", label: "会社概要" },
   { key: "news", label: "お知らせ" },
   { key: "interview", label: "取材はこちら" },
-  // { key: "cart", label: "カート" },
-  // { key: "productEC", label: "商品販売 (EC)" },
-  // { key: "orders", label: "注文履歴" },
 ];
 
-// --- ECセットキー ---
-// const EC_KEYS: MenuKey[] = ["cart", "productEC", "orders"];
+// トップ表示候補は限定
+const TOP_DISPLAYABLE_ITEMS = ["products", "stores", "story", "news"];
+
+
 
 export default function LoginPage() {
   // 共通state
   const [theme, setTheme] = useState<ThemeKey>("brandA");
   const [user, setUser] = useState<User | null>(null);
+   const [activeKeys, setActiveKeys] = useState<string[]>([]);
 
   // メニュー表示制御
   const [visibleKeys, setVisibleKeys] = useState<MenuKey[]>(
@@ -92,11 +88,10 @@ export default function LoginPage() {
         if (!snap.exists()) return;
         const data = snap.data() as MetaDoc;
         if (data.themeGradient) setTheme(data.themeGradient);
-        if (Array.isArray(data.visibleMenuKeys)) {
-          setVisibleKeys(data.visibleMenuKeys);
-        }
-      } catch (err) {
-        console.error("初期データ取得失敗:", err);
+        if (Array.isArray(data.visibleMenuKeys)) setVisibleKeys(data.visibleMenuKeys);
+        if (Array.isArray(data.activeMenuKeys)) setActiveKeys(data.activeMenuKeys);
+      } catch (e) {
+        console.error("初期データ取得失敗:", e);
       }
     })();
   }, []);
@@ -174,6 +169,11 @@ export default function LoginPage() {
     await setDoc(META_REF, { visibleMenuKeys: newKeys }, { merge: true });
   };
 
+  const handleActiveKeysChange = async (newKeys: string[]) => {
+    setActiveKeys(newKeys);
+    await setDoc(META_REF, { activeMenuKeys: newKeys }, { merge: true });
+  };
+
   // ====== レンダリング =====================================================
 
   return (
@@ -243,57 +243,31 @@ export default function LoginPage() {
                         );
                       })}
 
-                      {/* {MENU_ITEMS.filter(
-                        (item) => !EC_KEYS.includes(item.key)
-                      ).map((item) => {
-                        const checked = visibleKeys.includes(item.key);
-                        return (
-                          <label
-                            key={item.key}
-                            className="flex items-center gap-2"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={(e) => {
-                                const next = e.target.checked
-                                  ? ([...visibleKeys, item.key] as MenuKey[])
-                                  : (visibleKeys.filter(
-                                      (k) => k !== item.key
-                                    ) as MenuKey[]);
-                                handleVisibleKeysChange(next);
-                              }}
-                            />
-                            {item.label}
-                          </label>
-                        );
-                      })} */}
+                    </div>
+                  </div>
 
-                      {/* EC機能セット */}
-                      {/* <label className="flex items-center gap-2 font-bold">
-                        <input
-                          type="checkbox"
-                          checked={EC_KEYS.every((k) =>
-                            visibleKeys.includes(k)
-                          )}
-                          onChange={(e) => {
-                            let next: MenuKey[];
-                            if (e.target.checked) {
-                              // まとめてON
-                              next = Array.from(
-                                new Set([...visibleKeys, ...EC_KEYS])
-                              ) as MenuKey[];
-                            } else {
-                              // まとめてOFF
-                              next = visibleKeys.filter(
-                                (k) => !EC_KEYS.includes(k)
-                              ) as MenuKey[];
-                            }
-                            handleVisibleKeysChange(next);
-                          }}
-                        />
-                        EC機能セット（カート・商品販売・注文履歴）
-                      </label> */}
+                     {/* トップに表示するもの（限定） */}
+                  <div>
+                    <p className="text-sm mb-2">トップに表示するもの</p>
+                    <div className="space-y-1">
+                      {MENU_ITEMS.filter((item) =>
+                        TOP_DISPLAYABLE_ITEMS.includes(item.key)
+                      ).map((item) => (
+                        <label key={item.key} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            disabled={!visibleKeys.includes(item.key)} // 候補外は選べない
+                            checked={activeKeys.includes(item.key)}
+                            onChange={(e) => {
+                              const newKeys = e.target.checked
+                                ? [...activeKeys, item.key]
+                                : activeKeys.filter((k) => k !== item.key);
+                              handleActiveKeysChange(newKeys);
+                            }}
+                          />
+                          {item.label}
+                        </label>
+                      ))}
                     </div>
                   </div>
                 </CardContent>

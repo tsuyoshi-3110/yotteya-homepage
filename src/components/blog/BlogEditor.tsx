@@ -1,7 +1,7 @@
 // components/blog/BlogEditor.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   addDoc,
   collection,
@@ -23,18 +23,13 @@ import {
 } from "firebase/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useThemeGradient } from "@/lib/useThemeGradient";
-import { THEMES, type ThemeKey } from "@/lib/themes";
 import clsx from "clsx";
 import BlockEditor from "./BlockEditor";
 import { v4 as uuid } from "uuid";
 import { BusyOverlay } from "@/components/BusyOverlay";
 import { LANGS, type LangKey } from "@/lib/langs";
 
-/* ==========================
-   テーマ（ダーク判定）
-========================== */
-const DARK_KEYS: ThemeKey[] = ["brandH", "brandG", "brandI"];
+
 
 /* ==========================
    Firestore 保存用ユーティリティ
@@ -213,14 +208,8 @@ export default function BlogEditor({ postId }: Props) {
   const [busy, setBusy] = useState(false);
   const [uploadPercent, setUploadPercent] = useState<number | null>(null);
 
-  // テーマ（見栄え用）
-  const gradient = useThemeGradient();
-  const isDark = useMemo(() => {
-    if (!gradient) return false;
-    return (Object.keys(THEMES) as ThemeKey[]).some(
-      (k) => THEMES[k] === gradient && DARK_KEYS.includes(k)
-    );
-  }, [gradient]);
+
+
 
   /* 既存読み込み（互換対応） */
   useEffect(() => {
@@ -416,7 +405,7 @@ export default function BlogEditor({ postId }: Props) {
     <div
       className={clsx(
         "space-y-6 bg-white/20 rounded-2xl shadow",
-        isDark ? "text-white" : "text-black"
+        "text-white text-outline"
       )}
     >
       {/* ✅ 共通 BusyOverlay */}
@@ -430,7 +419,7 @@ export default function BlogEditor({ postId }: Props) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="タイトル"
-            className={isDark ? "text-white" : "text-black"}
+            className="text-white text-outline"
             disabled={busy}
           />
         </div>

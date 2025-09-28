@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import Header from "@/components/Header";
+import Header from "@/components/common/Header";
+import Footer from "@/components/common/Footer";
 import Script from "next/script";
 import ThemeBackground from "@/components/ThemeBackground";
 import WallpaperBackground from "@/components/WallpaperBackground";
@@ -137,6 +138,7 @@ export default function RootLayout({
           <Header />
           <FontLoader />
           {children}
+          <Footer />
         </CartProvider>
 
         {/* 構造化データ（店舗情報） */}

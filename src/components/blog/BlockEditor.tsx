@@ -60,7 +60,7 @@ const MAX_VIDEO_SEC = 60;
 /* ========== Sortable 子コンポーネント ========== */
 function SortableBlockCard({
   id,
-  isDark,
+
   children,
   onMoveUp,
   onMoveDown,
@@ -73,7 +73,7 @@ function SortableBlockCard({
   isMedia,
 }: {
   id: string;
-  isDark: boolean;
+
   children: React.ReactNode;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -103,7 +103,7 @@ function SortableBlockCard({
       style={style}
       className={clsx(
         "relative overflow-visible rounded-2xl border p-4 pt-10",
-        isDark ? "border-white/15 bg-black/10" : "border-black/10 bg-white",
+        "text-white text-outline",
         isDragging && "shadow-xl ring-2 ring-blue-400/40"
       )}
     >
@@ -116,9 +116,7 @@ function SortableBlockCard({
           className={clsx(
             "h-10 w-10 rounded-full border shadow flex items-center justify-center",
             "cursor-grab active:cursor-grabbing select-none touch-none",
-            isDark
-              ? "bg-white/95 border-white/30"
-              : "bg-white/95 border-black/10"
+           "text-white text-outline",
           )}
           {...attributes}
           {...listeners}
@@ -664,7 +662,6 @@ export default function BlockEditor({ value, onChange, postIdForPath }: Props) {
               <SortableBlockCard
                 key={b.id}
                 id={b.id}
-                isDark={isDark}
                 onMoveUp={() => move(i, -1)}
                 onMoveDown={() => move(i, +1)}
                 onAddTextBelow={() =>

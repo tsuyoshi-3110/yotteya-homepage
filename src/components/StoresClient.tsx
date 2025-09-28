@@ -31,7 +31,6 @@ import { auth, db } from "@/lib/firebase";
 import type { FieldValue } from "firebase/firestore";
 
 import { useThemeGradient } from "@/lib/useThemeGradient";
-import { ThemeKey, THEMES } from "@/lib/themes";
 import CardSpinner from "./CardSpinner";
 import { Button } from "./ui/button";
 
@@ -221,11 +220,6 @@ export default function StoresClient() {
   const [worksAlbumTag, setWorksAlbumTag] = useState<string>("works");
 
   const gradient = useThemeGradient(); // isDark 判定に使用
-  const isDark = useMemo(() => {
-    const darkThemes: ThemeKey[] = ["brandG", "brandH", "brandI"];
-    if (!gradient) return false;
-    return darkThemes.some((k) => gradient === THEMES[k]);
-  }, [gradient]);
 
   const colRef: CollectionReference<DocumentData> = useMemo(
     () => collection(db, STORE_COL),
@@ -701,7 +695,6 @@ export default function StoresClient() {
                       locDescription={loc.description ?? ""}
                       isAdmin={isAdmin}
                       isDragging={isDragging}
-                      isDark={isDark}
                       listeners={listeners}
                       attributes={attributes}
                       onEdit={openEdit}
@@ -970,7 +963,6 @@ interface StoreCardProps {
   locDescription: string;
   isAdmin: boolean;
   isDragging: boolean;
-  isDark: boolean;
   listeners: any;
   attributes: any;
   onEdit: (store: StoreDoc) => void;
@@ -985,7 +977,6 @@ function StoreCard({
   locDescription,
   isAdmin,
   isDragging,
-  isDark,
   listeners,
   attributes,
   onEdit,
@@ -1010,11 +1001,7 @@ function StoreCard({
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={clsx(
         "rounded-lg shadow relative mt-6",
-        isDragging
-          ? "bg-yellow-100"
-          : isDark
-          ? "bg-black/40 text-white"
-          : "bg-white/30"
+        isDragging ? "bg-yellow-100" : "bg-white/30"
       )}
     >
       {auth.currentUser !== null && (
@@ -1042,7 +1029,7 @@ function StoreCard({
         </div>
       )}
 
-      <div className={clsx("p-4 space-y-2", isDark && "text-white")}>
+      <div className={clsx("p-4 space-y-2", "text-white text-outline")}>
         <h2 className="text-xl font-semibold whitespace-pre-wrap">{locName}</h2>
 
         <div className="text-sm">
@@ -1051,12 +1038,7 @@ function StoreCard({
               href={buildMapsHref(s)}
               target="_blank"
               rel="noopener noreferrer"
-              className={clsx(
-                "underline",
-                isDark
-                  ? "text-blue-300 hover:text-blue-200"
-                  : "text-blue-700 hover:text-blue-900"
-              )}
+              className={clsx("underline")}
             >
               {primaryAddr}
             </a>
