@@ -23,10 +23,10 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import { ThemeKey, THEMES } from "@/lib/themes";
 
-/* Firestore: メニュー表示制御 */
+/* Firestore: メニュー表示制御 & i18n */
 const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 
-/* i18n */
+/* i18n 辞書 */
 type Keys =
   | "menuTitle"
   | "home"
@@ -311,27 +311,43 @@ export default function Header({ className = "" }: { className?: string }) {
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // 現在の UI 言語（グローバル）
   const { uiLang } = useUILang();
-  const t = T[uiLang] ?? T.ja;
-  const rtl = uiLang === "ar";
 
-  /* ダークテーマ判定（ボタンの枠色に使用） */
-  const isDark = useMemo(() => {
-    const darkKeys: ThemeKey[] = ["brandG", "brandH", "brandI"];
-    if (!gradient) return false;
-    return darkKeys.some((k) => gradient === THEMES[k]);
-  }, [gradient]);
-
-  /* Firestore: 表示メニュー */
+  // Firestore: 表示メニュー
   const [visibleMenuKeys, setVisibleMenuKeys] = useState<MenuKey[]>(
     [...MENU_ITEMS, ...FOOTER_ITEMS].map((m) => m.key)
   );
+
+  // Firestore: i18n 設定（ON/OFF と許可言語）
+  const [i18nEnabled, setI18nEnabled] = useState<boolean>(true);
+  const [allowedLangs, setAllowedLangs] = useState<UILangType[] | null>(null);
+
   useEffect(() => {
     const unsub = onSnapshot(META_REF, (snap) => {
-      const data = snap.data() as { visibleMenuKeys?: MenuKey[] } | undefined;
-      if (Array.isArray(data?.visibleMenuKeys) && data.visibleMenuKeys.length) {
-        setVisibleMenuKeys(data.visibleMenuKeys);
+      const data = snap.data() as
+        | {
+            visibleMenuKeys?: MenuKey[];
+            i18n?: { enabled?: boolean; langs?: UILangType[] };
+          }
+        | undefined;
+
+      if (Array.isArray(data?.visibleMenuKeys) && data!.visibleMenuKeys!.length) {
+        setVisibleMenuKeys(data!.visibleMenuKeys!);
       }
+
+      const enabled =
+        typeof data?.i18n?.enabled === "boolean" ? (data!.i18n!.enabled as boolean) : true;
+      setI18nEnabled(enabled);
+
+      // 未設定時は ja のみ、常に ja は含める
+      const langs = Array.isArray(data?.i18n?.langs)
+        ? (data!.i18n!.langs as UILangType[])
+        : (["ja"] as UILangType[]);
+      const set = new Set<UILangType>(langs);
+      set.add("ja" as UILangType);
+      setAllowedLangs(Array.from(set));
     });
     return () => unsub();
   }, []);
@@ -348,6 +364,27 @@ export default function Header({ className = "" }: { className?: string }) {
       ? gradient
       : `bg-gradient-to-b ${gradient}`
     : "bg-gray-100";
+
+  /* ダークテーマ判定（ボタンの枠色に使用） */
+  const isDark = useMemo(() => {
+    const darkKeys: ThemeKey[] = ["brandG", "brandH", "brandI"];
+    if (!gradient) return false;
+    return darkKeys.some((k) => gradient === THEMES[k]);
+  }, [gradient]);
+
+  /* ───────── i18n: 実際に使う言語（翻訳OFF時や許可外は日本語にフォールバック） ───────── */
+  const effectiveLang: UILangType = useMemo(() => {
+    const allow = new Set<UILangType>(
+      i18nEnabled ? (allowedLangs ?? (["ja"] as UILangType[])) : (["ja"] as UILangType[])
+    );
+    if (allow.has(uiLang)) return uiLang;
+    return allow.has("ja" as UILangType)
+      ? ("ja" as UILangType)
+      : (Array.from(allow)[0] as UILangType);
+  }, [i18nEnabled, allowedLangs, uiLang]);
+
+  const t = T[effectiveLang] ?? T.ja;
+  const rtl = effectiveLang === "ar";
 
   /* 管理者リンクの3タップ */
   const [showAdminLink, setShowAdminLink] = useState(false);
@@ -381,6 +418,12 @@ export default function Header({ className = "" }: { className?: string }) {
   };
 
   const handleMenuClose = () => setOpen(false);
+
+  // 言語ピッカーを表示する条件（ON かつ 許可言語 > 1）
+  const showLangPicker =
+    i18nEnabled &&
+    Array.isArray(allowedLangs) &&
+    new Set<UILangType>(allowedLangs).size > 1;
 
   return (
     <header
@@ -484,10 +527,12 @@ export default function Header({ className = "" }: { className?: string }) {
                     )}
                   </nav>
 
-                  {/* 言語ピッカー（ナビ直下に配置） */}
-                  <div className="flex flex-col items-center gap-2 pb-6">
-                    <UILangFloatingPicker />
-                  </div>
+                  {/* 言語ピッカー（ON かつ複数言語のときだけ表示） */}
+                  {showLangPicker && (
+                    <div className="flex flex-col items-center gap-2 pb-6">
+                      <UILangFloatingPicker />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

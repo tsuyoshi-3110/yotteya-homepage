@@ -4,15 +4,40 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { LANGS } from "@/lib/langs";
 import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
+import { db } from "@/lib/firebase";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { doc, onSnapshot } from "firebase/firestore";
 
 type LangOption = { key: UILang; label: string; emoji: string };
 const ALL_OPTIONS: ReadonlyArray<LangOption> = LANGS;
 
-const TAP_MOVE_THRESHOLD = 8;   // px 未満ならタップ
-const TAP_TIME_THRESHOLD = 500; // ms 未満ならタップ
+const TAP_MOVE_THRESHOLD = 8;
+const TAP_TIME_THRESHOLD = 500;
 
-// ★ 幅をここで一括管理（お好みで 200〜260 に調整）
-const PICKER_W = 220; // px
+const PICKER_W = 220;   // ドロップダウン幅
+const GUTTER = 8;       // コンテナ端の余白
+const SAFETY = 10;      // 余白(ヘッダー境界でのチラ見切れ防止)
+
+/** 近いスクロール親（overflow-y: auto/scroll/hidden）を取得 */
+function getScrollContainer(el: HTMLElement | null): HTMLElement {
+  let p: HTMLElement | null = el?.parentElement ?? null;
+  const isScrollable = (node: HTMLElement) => {
+    const s = getComputedStyle(node);
+    return /(auto|scroll|hidden)/.test(s.overflowY);
+  };
+  while (p && p !== document.body && p !== document.documentElement) {
+    if (isScrollable(p)) return p;
+    p = p.parentElement;
+  }
+  return document.documentElement; // 無ければビューポート
+}
+
+type I18nMeta = {
+  i18n?: {
+    enabled?: boolean;
+    langs?: UILang[];
+  };
+};
 
 export default function UILangFloatingPicker() {
   const { uiLang, setUiLang } = useUILang();
@@ -20,28 +45,86 @@ export default function UILangFloatingPicker() {
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // ▼ 自動配置（上/下）と、その時の最大高さ（px）
+  // サイト設定に連動（有効/無効, 許可言語）
+  const [i18nEnabled, setI18nEnabled] = useState<boolean>(true);
+  const [allowedFromServer, setAllowedFromServer] = useState<UILang[]>(["ja"]);
+
+  // 配置（縦：上/下、横：左/中央/右）
   const [placement, setPlacement] = useState<"down" | "up">("down");
-  const [menuMaxH, setMenuMaxH] = useState<string>("60vh"); // フォールバック
+  const [hAlign, setHAlign] = useState<"left" | "center" | "right">("center");
+  const [menuMaxH, setMenuMaxH] = useState<string>("60vh");
+
+  // Firestore 購読
+  useEffect(() => {
+    const ref = doc(db, "siteSettingsEditable", SITE_KEY);
+    const unsub = onSnapshot(ref, (snap) => {
+      const data = snap.data() as I18nMeta | undefined;
+      const enabled =
+        typeof data?.i18n?.enabled === "boolean" ? data!.i18n!.enabled! : true;
+      const langs =
+        Array.isArray(data?.i18n?.langs) && data!.i18n!.langs!.length > 0
+          ? (data!.i18n!.langs as UILang[])
+          : (["ja"] as UILang[]);
+      const uniq = Array.from(new Set<UILang>([...langs, "ja"]));
+      setI18nEnabled(enabled);
+      setAllowedFromServer(uniq);
+    });
+    return () => unsub();
+  }, []);
+
+  // 表示候補（i18n無効時は日本語のみ）
+  const visibleOptions = useMemo(() => {
+    const allowed = i18nEnabled ? allowedFromServer : (["ja"] as UILang[]);
+    const allowedSet = new Set<UILang>([...allowed, "ja"]);
+    return ALL_OPTIONS.filter((o) => allowedSet.has(o.key));
+  }, [i18nEnabled, allowedFromServer]);
+
+  // 現在の言語が許可外ならフォールバック
+  useEffect(() => {
+    const keys = visibleOptions.map((o) => o.key);
+    if (!keys.includes(uiLang)) {
+      const fallback = (keys.includes("ja") ? "ja" : keys[0]) as UILang;
+      if (fallback) setUiLang(fallback);
+    }
+  }, [visibleOptions, uiLang, setUiLang]);
 
   const current = useMemo<LangOption>(() => {
-    return ALL_OPTIONS.find((o) => o.key === uiLang) ?? ALL_OPTIONS[0];
-  }, [uiLang]);
+    return (
+      visibleOptions.find((o) => o.key === uiLang) ??
+      visibleOptions[0] ??
+      ALL_OPTIONS[0]
+    );
+  }, [uiLang, visibleOptions]);
 
+  // 位置計算（スクロール親の内側に収める）
   const decidePlacementAndSize = () => {
     if (!btnRef.current) return;
-    const rect = btnRef.current.getBoundingClientRect();
-    const gutter = 6;
-    const vh = window.innerHeight;
-    const spaceAbove = Math.max(0, rect.top - gutter);
-    const spaceBelow = Math.max(0, vh - rect.bottom - gutter);
-    const nextPlacement: "down" | "up" = spaceBelow >= spaceAbove ? "down" : "up";
+    const btnRect = btnRef.current.getBoundingClientRect();
 
+    const container = getScrollContainer(btnRef.current);
+    const cRect =
+      container === document.documentElement
+        ? new DOMRect(0, 0, window.innerWidth, window.innerHeight)
+        : container.getBoundingClientRect();
+
+    // 縦：上/下（スクロール親の内側で計算）
+    const spaceAbove = Math.max(0, btnRect.top - cRect.top - GUTTER);
+    const spaceBelow = Math.max(0, cRect.bottom - btnRect.bottom - GUTTER);
+    const nextPlacement: "down" | "up" =
+      spaceBelow >= spaceAbove ? "down" : "up";
     const capacity = nextPlacement === "down" ? spaceBelow : spaceAbove;
-    const logicalMax = Math.floor(vh * 0.6); // 60vh
-    const px = Math.max(Math.min(capacity, logicalMax), 160);
+    const logicalMax = Math.floor((cRect.height || window.innerHeight) * 0.6);
+    const px = Math.max(Math.min(capacity - SAFETY, logicalMax), 160);
     setPlacement(nextPlacement);
     setMenuMaxH(`${px}px`);
+
+    // 横：コンテナ端のはみ出し回避
+    const half = PICKER_W / 2;
+    const centerLeft = btnRect.left + btnRect.width / 2 - half;
+    const centerRight = btnRect.left + btnRect.width / 2 + half;
+    if (centerRight + GUTTER > cRect.right) setHAlign("right");
+    else if (centerLeft - GUTTER < cRect.left) setHAlign("left");
+    else setHAlign("center");
   };
 
   // 外側タップで閉じる
@@ -60,26 +143,24 @@ export default function UILangFloatingPicker() {
     };
   }, [open]);
 
-  // Esc で閉じる
+  // Escで閉じる
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // 開いた時 & リサイズ/スクロール時に配置を再計算
+  // 開いたとき／リサイズ・スクロール時に再計算
   useEffect(() => {
     if (!open) return;
     decidePlacementAndSize();
-    const onResizeOrScroll = () => decidePlacementAndSize();
-    window.addEventListener("resize", onResizeOrScroll);
-    window.addEventListener("scroll", onResizeOrScroll, { passive: true });
+    const onRS = () => decidePlacementAndSize();
+    window.addEventListener("resize", onRS);
+    window.addEventListener("scroll", onRS, { passive: true });
     return () => {
-      window.removeEventListener("resize", onResizeOrScroll);
-      window.removeEventListener("scroll", onResizeOrScroll);
+      window.removeEventListener("resize", onRS);
+      window.removeEventListener("scroll", onRS);
     };
   }, [open]);
 
@@ -95,7 +176,7 @@ export default function UILangFloatingPicker() {
         )}
         style={{ WebkitTapHighlightColor: "transparent" }}
       >
-        {/* トリガーボタン（幅固定） */}
+        {/* トリガー */}
         <button
           ref={btnRef}
           type="button"
@@ -108,42 +189,46 @@ export default function UILangFloatingPicker() {
             "min-h-[44px]",
             "cursor-pointer select-none"
           )}
-          style={{ width: PICKER_W }} // ★ 幅を固定
+          style={{ width: PICKER_W }}
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-label="表示言語を選択"
         >
-          <span className="text-lg leading-none">{current.emoji}</span>
+          <span className="text-lg leading-none">{current?.emoji}</span>
           <span className="text-sm truncate text-white">
-            {current.label} / {current.key}
+            {current?.label} / {current?.key}
           </span>
           <span className="ml-auto text-white/70">▾</span>
         </button>
 
-        {/* メニュー（幅もボタンに合わせて固定） */}
-        {open && (
+        {/* メニュー（許可された言語のみ） */}
+        {open && visibleOptions.length > 0 && (
           <div
             ref={menuRef}
             role="listbox"
             className={clsx(
-              "absolute left-1/2 -translate-x-1/2",
+              "absolute z-[9999]",
+              // 縦位置
               placement === "down"
                 ? "top-[calc(100%+6px)]"
                 : "bottom-[calc(100%+6px)]",
-              "z-[9999]",
-              "overflow-auto rounded-xl border",
-              "bg-white text-gray-900 shadow-xl"
+              // 横位置
+              hAlign === "center" && "left-1/2 -translate-x-1/2",
+              hAlign === "left" && "left-0",
+              hAlign === "right" && "right-0",
+              "overflow-auto rounded-xl border bg-white text-gray-900 shadow-xl",
+              "py-1" // 先頭/末尾の見切れ防止クッション
             )}
             style={{
               WebkitOverflowScrolling: "touch",
               overscrollBehavior: "contain",
               touchAction: "pan-y",
               maxHeight: menuMaxH,
-              width: PICKER_W, // ★ 幅を固定（ボタンと同じ）
-              maxWidth: "92vw", // 画面が狭いときは縮む
+              width: PICKER_W,
+              maxWidth: "92vw",
             }}
           >
-            {ALL_OPTIONS.map((o) => (
+            {visibleOptions.map((o) => (
               <LangRow
                 key={o.key}
                 option={o}
@@ -167,7 +252,7 @@ function LangRow({
   active,
   onSelect,
 }: {
-  option: LangOption;
+  option: { key: UILang; label: string; emoji: string };
   active: boolean;
   onSelect: (val: UILang) => void;
 }) {
@@ -190,7 +275,10 @@ function LangRow({
         const dy = Math.abs(t.clientY - start.y);
         const dx = Math.abs(t.clientX - start.x);
         const dt = Date.now() - start.t;
-        const isTap = dy < TAP_MOVE_THRESHOLD && dx < TAP_MOVE_THRESHOLD && dt < TAP_TIME_THRESHOLD;
+        const isTap =
+          dy < TAP_MOVE_THRESHOLD &&
+          dx < TAP_MOVE_THRESHOLD &&
+          dt < TAP_TIME_THRESHOLD;
         if (isTap) {
           e.preventDefault();
           onSelect(option.key);
@@ -206,7 +294,9 @@ function LangRow({
     >
       <div className="flex items-center gap-2">
         <span className="shrink-0">{option.emoji}</span>
-        <span className="truncate">{option.label} / {option.key}</span>
+        <span className="truncate">
+          {option.label} / {option.key}
+        </span>
       </div>
     </button>
   );
