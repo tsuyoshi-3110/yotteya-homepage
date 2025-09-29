@@ -31,7 +31,6 @@ import type { UILang } from "@/lib/atoms/uiLangAtom";
 
 // Google Maps Places
 
-
 // Firestore ref
 const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 
@@ -64,27 +63,20 @@ type MetaDoc = {
 
 const MENU_ITEMS: { key: string; label: string }[] = [
   { key: "home", label: "ホーム" },
-  { key: "products", label: "施工実績" },
-  { key: "staffs", label: "スタッフ" },
-  { key: "pricing", label: "料金" },
-  { key: "areas", label: "対応エリア" },
+  { key: "products", label: "商品一覧" },
   { key: "stores", label: "店舗一覧" },
-  { key: "story", label: "私たちの思い" },
-  { key: "blog", label: "ブログ" },
+  { key: "about", label: "私たちの思い" },
   { key: "company", label: "会社概要" },
-  { key: "contact", label: "無料相談・お問合せ" },
-  { key: "reserve", label: "ご予約はこちら" },
-  { key: "partners", label: "協力業者募集！" },
+  { key: "news", label: "お知らせ" },
+  { key: "interview", label: "取材はこちら" },
 ];
 
 // トップ表示候補は限定
 const TOP_DISPLAYABLE_ITEMS = [
   "products",
-  "pricing",
   "staffs",
-  "areas",
   "stores",
-  "story",
+  "about",
 ];
 
 /* =========================
@@ -269,8 +261,6 @@ export default function LoginPage() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showForgotEmail, setShowForgotEmail] = useState(false);
 
-
-
   /* ---------------- 初期ロード（サイト設定） ---------------- */
   useEffect(() => {
     (async () => {
@@ -438,9 +428,6 @@ export default function LoginPage() {
       { merge: true }
     );
   };
-
-
-
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10">

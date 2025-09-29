@@ -47,7 +47,7 @@ const T: Record<UILangType, Record<Keys, string>> = {
     home: "ホーム",
     products: "商品一覧",
     stores: "店舗一覧",
-    about: "当店の思い",
+    about: "私たちの思い",
     company: "会社概要",
     news: "お知らせ",
     interview: "取材はこちら",
@@ -474,16 +474,18 @@ export default function Header({ className = "" }: { className?: string }) {
           </SheetTrigger>
 
           {/* === シート === */}
-          <SheetContent
+           <SheetContent
             side="right"
-            dir={rtl ? "rtl" : "ltr"}
             className={clsx(
               "flex h-dvh min-h-0 flex-col p-0",
-              gradient &&
-                (gradient.startsWith("bg-[")
-                  ? gradient
-                  : `bg-gradient-to-b ${gradient}`)
+              gradient && "bg-gradient-to-b",
+              gradient || "bg-gray-100",
+              // ▼ 色切替 + 線を太く + アイコンサイズを拡大（例: 28px）
+              isDark
+                ? "[&>button]:text-white [&>button>svg]:!text-white [&>button>svg]:stroke-[3] [&>button>svg]:w-7 [&>button>svg]:h-6"
+                : "[&>button]:text-black [&>button>svg]:!text-black [&>button>svg]:stroke-[3] [&>button>svg]:w-7 [&>button>svg]:h-6"
             )}
+            dir={rtl ? "rtl" : "ltr"}
           >
             {/* 先頭固定ヘッダー */}
             <SheetHeader className="px-6 py-4 border-b border-white/30">
