@@ -121,7 +121,7 @@ export default function RootLayout({
         />
       </head>
 
-      <body className="relative min-h-screen">
+      <body className="relative min-h-[100dvh] flex flex-col">
         {/* 背景レイヤー（下層） */}
         <WallpaperBackground />
         <ThemeBackground />
@@ -137,7 +137,7 @@ export default function RootLayout({
           {/* UI本体 */}
           <Header />
           <FontLoader />
-          {children}
+          <main className="flex-1">{children}</main>
           <Footer />
         </CartProvider>
 
@@ -154,7 +154,7 @@ export default function RootLayout({
             address: {
               "@type": "PostalAddress",
               addressLocality: "大阪市東淀川区",
-              streetAddress: "〇〇町1-2-3",
+              streetAddress: "淡路４丁目１８−１６",
             },
             telephone: "06-1234-5678",
             url: "https://example.com",
