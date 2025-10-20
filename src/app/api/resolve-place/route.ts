@@ -4,33 +4,67 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type Source = "geocode" | "findplace" | "textsearch";
 type Resolved = {
   placeId?: string;
   lat?: number;
   lng?: number;
   formattedAddress?: string;
-  source?: "findplace" | "textsearch" | "geocode";
+  source?: Source;
 };
 
 type StepLog = {
-  step: "findplace" | "textsearch" | "geocode";
+  step: Source | "geocode_first";
   requestUrl: string;
   httpStatus?: number;
   ok?: boolean;
   googleStatus?: string;
   googleError?: string;
   note?: string;
-  sample?: any; // 返却JSONの一部
+  distanceM?: number;
+  addressMatch?: boolean;
+  sample?: any;
 };
 
 const oneLine = (s: string) =>
-  (s ?? "")
-    .replace(/\s+/g, " ")
-    .replace(/[\r\n]+/g, " ")
-    .trim();
+  (s ?? "").replace(/\s+/g, " ").replace(/[\r\n]+/g, " ").trim();
 
-function slice(s: string, n = 1200) {
-  return s.length > n ? s.slice(0, n) + "...(truncated)" : s;
+
+
+/* ===== 住所正規化の超ライト版（全角→半角、空白/句読点/「日本」/郵便記号など除去） ===== */
+function toHalfWidthDigits(s: string) {
+  return s.replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0))
+          .replace(/[－―ー―‐]/g, "-");
+}
+function normalizeAddr(s: string) {
+  const z = toHalfWidthDigits(s || "");
+  return z
+    .replace(/日本[,、]?\s*/g, "")
+    .replace(/〒?\s*\d{3}-?\d{4}/g, "")
+    .replace(/[,\s、。]/g, "")
+    .toLowerCase()
+    .trim();
+}
+function addrSimilar(a?: string, b?: string) {
+  if (!a || !b) return false;
+  const A = normalizeAddr(a);
+  const B = normalizeAddr(b);
+  if (!A || !B) return false;
+  return A.includes(B) || B.includes(A);
+}
+
+/* ===== 距離判定（haversine） ===== */
+function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371e3;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
 }
 
 export async function GET(req: Request) {
@@ -45,10 +79,7 @@ export async function POST(req: Request) {
   try {
     const { name, address, debug } = await req.json();
     if (!name || !address) {
-      return NextResponse.json(
-        { error: "name and address required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "name and address required" }, { status: 400 });
     }
     return handler(String(name), String(address), !!debug);
   } catch {
@@ -57,187 +88,160 @@ export async function POST(req: Request) {
 }
 
 async function handler(nameRaw: string, addressRaw: string, debug = false) {
-  // ❗ ここは「公開」ではなくサーバー秘密鍵を使う
   const key = process.env.GOOGLE_MAPS_API_KEY;
   if (!key) {
-    return NextResponse.json(
-      { error: "missing GOOGLE_MAPS_API_KEY" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "missing GOOGLE_MAPS_API_KEY" }, { status: 500 });
   }
 
-  // 入力正規化（解決率UP）
   const name = oneLine(nameRaw);
   const address = oneLine(addressRaw);
-  const query = `${name} ${address}`.trim();
-
-  const common = { language: "ja", region: "jp" as const };
   const steps: StepLog[] = [];
 
-  // ヘルパー: fetch→テキスト→JSON化まで
   const grab = async (u: URL, step: StepLog["step"]) => {
     const reqUrl = u.toString();
     try {
       const r = await fetch(reqUrl, { cache: "no-store" });
       const txt = await r.text();
-      const httpStatus = r.status;
       let j: any = null;
-      try {
-        j = JSON.parse(txt);
-      } catch {
-        /* noop */
-      }
-
+      try { j = JSON.parse(txt); } catch {}
       const log: StepLog = {
         step,
         requestUrl: reqUrl,
-        httpStatus,
+        httpStatus: r.status,
         ok: r.ok,
         googleStatus: j?.status,
         googleError: j?.error_message,
-        sample: debug
-          ? typeof j === "object"
-            ? pickPreview(j)
-            : slice(txt)
-          : undefined,
+        sample: debug ? pickPreview(j) : undefined,
       };
       steps.push(log);
-      return { httpStatus, ok: r.ok, json: j, raw: txt };
+      return { ok: r.ok, json: j, raw: txt };
     } catch (e: any) {
-      steps.push({
-        step,
-        requestUrl: reqUrl,
-        note: `fetch error: ${String(e?.message || e)}`,
-      });
-      return { httpStatus: 0, ok: false, json: null, raw: "" };
+      steps.push({ step, requestUrl: reqUrl, note: `fetch error: ${String(e?.message || e)}` });
+      return { ok: false, json: null, raw: "" };
     }
   };
 
-  // 1) Find Place From Text
-  {
-    const url = new URL(
-      "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
-    );
-    url.searchParams.set("input", query);
-    url.searchParams.set("inputtype", "textquery");
-    url.searchParams.set(
-      "fields",
-      "place_id,name,geometry/location,formatted_address,business_status"
-    );
-    url.searchParams.set("language", common.language);
-    url.searchParams.set("region", common.region);
-    url.searchParams.set("key", key);
-
-    const { ok, json } = await grab(url, "findplace");
-    if (
-      ok &&
-      json?.status === "OK" &&
-      Array.isArray(json.candidates) &&
-      json.candidates.length
-    ) {
-      const c = json.candidates[0];
-      const out: Resolved = {
-        placeId: c.place_id,
-        lat: c.geometry?.location?.lat,
-        lng: c.geometry?.location?.lng,
-        formattedAddress: c.formatted_address,
-        source: "findplace",
-      };
-      return NextResponse.json(
-        debug
-          ? { ...out, debug: { normalized: { name, address, query }, steps } }
-          : out
-      );
-    }
-  }
-
-  // 2) Text Search（Find Placeで拾えないときの保険）
-  {
-    const url = new URL(
-      "https://maps.googleapis.com/maps/api/place/textsearch/json"
-    );
-    url.searchParams.set("query", query);
-    url.searchParams.set("language", common.language);
-    url.searchParams.set("region", common.region);
-    url.searchParams.set("key", key);
-
-    const { ok, json } = await grab(url, "textsearch");
-    if (
-      ok &&
-      json?.status === "OK" &&
-      Array.isArray(json.results) &&
-      json.results.length
-    ) {
-      const c = json.results[0];
-      const out: Resolved = {
-        placeId: c.place_id,
-        lat: c.geometry?.location?.lat,
-        lng: c.geometry?.location?.lng,
-        formattedAddress: c.formatted_address,
-        source: "textsearch",
-      };
-      return NextResponse.json(
-        debug
-          ? { ...out, debug: { normalized: { name, address, query }, steps } }
-          : out
-      );
-    }
-  }
-
-  // 3) Geocoding（住所のみで座標取得＋place_id）
+  /* === 1) 住所→座標（基準点の確定） === */
+  let base: { lat: number; lng: number; formatted: string } | null = null;
   {
     const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
     url.searchParams.set("address", address);
-    url.searchParams.set("language", common.language);
-    url.searchParams.set("region", common.region);
+    url.searchParams.set("language", "ja");
+    url.searchParams.set("region", "jp");
+    url.searchParams.set("key", key);
+    const { ok, json } = await grab(url, "geocode_first");
+    if (ok && json?.status === "OK" && Array.isArray(json.results) && json.results[0]) {
+      const g = json.results[0];
+      base = {
+        lat: g.geometry?.location?.lat,
+        lng: g.geometry?.location?.lng,
+        formatted: g.formatted_address,
+      };
+    } else {
+      // 住所が曖昧なら、元の実装のように「名前+住所」で探す最小限の保険（ただしplaceIdは採用しない）
+      return NextResponse.json(
+        debug
+          ? { lat: undefined, lng: undefined, formattedAddress: undefined, source: "geocode",
+              debug: { normalized: { name, address }, steps } }
+          : { source: "geocode" }
+      );
+    }
+  }
+
+  /* === 2) 近傍で店名検索（Find Place, locationbias） === */
+  const RADIUS = 400; // m（必要に応じて調整）
+  let best: { placeId: string; lat: number; lng: number; formatted: string; source: Source; dist: number; match: boolean } | null = null;
+
+  {
+    const url = new URL("https://maps.googleapis.com/maps/api/place/findplacefromtext/json");
+    url.searchParams.set("input", name);
+    url.searchParams.set("inputtype", "textquery");
+    url.searchParams.set("fields", "place_id,name,geometry/location,formatted_address,business_status,types");
+    url.searchParams.set("language", "ja");
+    url.searchParams.set("region", "jp");
+    url.searchParams.set("locationbias", `circle:${RADIUS}@${base!.lat},${base!.lng}`);
     url.searchParams.set("key", key);
 
-    const { ok, json } = await grab(url, "geocode");
-    if (!ok) {
-      return NextResponse.json(
-        {
-          error: "upstream http error",
-          debug: debug
-            ? { normalized: { name, address, query }, steps }
-            : undefined,
-        },
-        { status: 502 }
-      );
+    const { ok, json } = await grab(url, "findplace");
+    if (ok && json?.status === "OK" && Array.isArray(json.candidates) && json.candidates.length) {
+      const c = json.candidates[0];
+      const lat = c.geometry?.location?.lat;
+      const lng = c.geometry?.location?.lng;
+      const fa = c.formatted_address as string | undefined;
+      const dist = (lat && lng) ? distanceMeters({ lat, lng }, { lat: base!.lat, lng: base!.lng }) : Number.POSITIVE_INFINITY;
+      const match = addrSimilar(fa, base!.formatted);
+      steps[steps.length - 1].distanceM = isFinite(dist) ? Math.round(dist) : undefined;
+      steps[steps.length - 1].addressMatch = match;
+
+      if (isFinite(dist) && dist <= RADIUS && match) {
+        best = {
+          placeId: c.place_id,
+          lat, lng,
+          formatted: fa || base!.formatted,
+          source: "findplace",
+          dist, match
+        };
+      }
     }
-    if (
-      json?.status !== "OK" ||
-      !Array.isArray(json?.results) ||
-      json.results.length === 0
-    ) {
-      return NextResponse.json(
-        {
-          error: "not found",
-          googleStatus: json?.status,
-          googleError: json?.error_message,
-          debug: debug
-            ? { normalized: { name, address, query }, steps }
-            : undefined,
-        },
-        { status: 404 }
-      );
-    }
-    const g = json.results[0];
-    const out: Resolved = {
-      placeId: g.place_id,
-      lat: g.geometry?.location?.lat,
-      lng: g.geometry?.location?.lng,
-      formattedAddress: g.formatted_address,
-      source: "geocode",
-    };
-    return NextResponse.json(
-      debug
-        ? { ...out, debug: { normalized: { name, address, query }, steps } }
-        : out
-    );
   }
+
+  /* === 3) それでも未決なら Text Search（半径内） === */
+  if (!best) {
+    const url = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
+    url.searchParams.set("query", name);
+    url.searchParams.set("language", "ja");
+    url.searchParams.set("region", "jp");
+    url.searchParams.set("location", `${base!.lat},${base!.lng}`);
+    url.searchParams.set("radius", String(RADIUS));
+    // url.searchParams.set("type", "establishment"); // 必要なら絞る
+    url.searchParams.set("key", key);
+
+    const { ok, json } = await grab(url, "textsearch");
+    if (ok && json?.status === "OK" && Array.isArray(json.results) && json.results.length) {
+      const c = json.results[0];
+      const lat = c.geometry?.location?.lat;
+      const lng = c.geometry?.location?.lng;
+      const fa = c.formatted_address as string | undefined;
+      const dist = (lat && lng) ? distanceMeters({ lat, lng }, { lat: base!.lat, lng: base!.lng }) : Number.POSITIVE_INFINITY;
+      const match = addrSimilar(fa, base!.formatted);
+      steps[steps.length - 1].distanceM = isFinite(dist) ? Math.round(dist) : undefined;
+      steps[steps.length - 1].addressMatch = match;
+
+      if (isFinite(dist) && dist <= RADIUS && match) {
+        best = {
+          placeId: c.place_id,
+          lat, lng,
+          formatted: fa || base!.formatted,
+          source: "textsearch",
+          dist, match
+        };
+      }
+    }
+  }
+
+  /* === 4) 返却：厳格一致時のみ placeId 採用、そうでなければ座標のみ === */
+  if (best) {
+    const out: Resolved = {
+      placeId: best.placeId,
+      lat: best.lat,
+      lng: best.lng,
+      formattedAddress: best.formatted,
+      source: best.source,
+    };
+    return NextResponse.json(debug ? { ...out, debug: { normalized: { name, address }, steps } } : out);
+  }
+
+  // placeIdは付けず、座標のみ（レビューは無効、地図リンクは座標でOK）
+  const out: Resolved = {
+    lat: base.lat,
+    lng: base.lng,
+    formattedAddress: base.formatted,
+    source: "geocode",
+  };
+  return NextResponse.json(debug ? { ...out, debug: { normalized: { name, address }, steps } } : out);
 }
 
-// でかいJSONを少量サンプル化（個人情報配慮）
+/* でかいJSONを少量サンプル化（個人情報配慮） */
 function pickPreview(j: any) {
   if (!j || typeof j !== "object") return j;
   const shallow: any = {};
@@ -254,7 +258,6 @@ function pickPreview(j: any) {
   }
   return shallow;
 }
-
 function minifyCandidate(c: any) {
   return {
     place_id: c?.place_id,

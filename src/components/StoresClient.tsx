@@ -56,6 +56,7 @@ import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import { LANGS, type LangKey } from "@/lib/langs";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 import StoreReviews from "./StoreReviews";
+import { BusyOverlay } from "./BusyOverlay";
 
 /* ======================== 定数/型 ======================== */
 const STORE_COL = `siteStores/${SITE_KEY}/items`;
@@ -584,6 +585,7 @@ export default function StoresClient() {
 
   return (
     <main className="max-w-5xl mx-auto p-4 mt-20">
+      <BusyOverlay uploadingPercent={progress} saving={submitFlag && !uploading} />
       {/* ===== Google連携（管理者のみ見える） ===== */}
       {isAdmin && (
         <div className="mb-6 rounded-lg border bg-white/70 p-4 shadow-sm">
@@ -1002,11 +1004,11 @@ function StoreCard({
       initial={{ opacity: 0, y: 40 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-       className={clsx(
-    "relative overflow-hidden rounded-lg shadow mt-6",
-    "bg-gradient-to-b",              // ★ これが必須（方向）
-    isDragging ? "bg-yellow-100" : gradientClass
-  )}
+      className={clsx(
+        "relative overflow-visible rounded-lg shadow mt-6", // ★ ここを overflow-visible に変更（ピンがはみ出しても表示）
+        "bg-gradient-to-b",
+        isDragging ? "bg-yellow-100" : gradientClass
+      )}
     >
       {auth.currentUser !== null && (
         <div
