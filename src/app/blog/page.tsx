@@ -214,7 +214,7 @@ export default function BlogListPage() {
 
       {/* 右下固定「取材はこちらへ」— 半透明グレー＋透過＆モーション */}
       <a
-        href="mailto:onestopgunma@gmail.com"
+        href="mailto:tsreform.yukisaito@gmail.com"
         aria-label="メールで問い合わせる"
         className={clsx(
           "group fixed bottom-6 right-6 z-20 pointer-events-auto",
