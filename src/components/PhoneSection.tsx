@@ -7,8 +7,9 @@ import { useThemeGradient } from "@/lib/useThemeGradient";
 import { ThemeKey, THEMES } from "@/lib/themes";
 import clsx from "clsx";
 import { AsYouType, parsePhoneNumberFromString } from "libphonenumber-js";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
-const SITE_KEY = "yotteya";
+
 
 export function PhoneSection() {
   const [phone, setPhone] = useState<string | null>(null);
@@ -95,12 +96,17 @@ export function PhoneSection() {
           {phone ? (
             <a
               href={`tel:${phone}`}
-              className="text-2xl md:text-3xl font-extrabold text-white bg-gradient-to-br from-[rgba(245,75,202,0.7)] to-[rgba(250,219,159,0.7)] px-6 py-3 rounded-xl inline-block hover:bg-pink-700 transition"
+              className={clsx(
+                "text-2xl md:text-3xl font-extrabold text-white",
+                `bg-gradient-to-br ${gradient}`,
+                "px-6 py-3 rounded-xl inline-block", // 👈 ここが超重要！
+                "hover:bg-pink-700 transition"
+              )}
             >
               {formatDisplay(phone)}
             </a>
           ) : (
-            <p className="text-white text-lg">※ 電話番号が未登録です</p>
+            <p className="text-white text-lg">※ 電話番号(代表)が未登録です</p>
           )}
 
           {isLoggedIn && (
@@ -113,14 +119,14 @@ export function PhoneSection() {
                   setInput(p ?? "");
                   setEditing(true);
                 }}
-                className="px-2 py-1 bg-blue-600 text-white rounded text-sm cursor-pointer"
+                className="px-2 py-1 bg-blue-600 text-white rounded text-sm"
               >
                 {phone ? "編集" : "登録する"}
               </button>
               {phone && (
                 <button
                   onClick={deletePhone}
-                  className="px-2 py-1 bg-red-600 text-white rounded text-sm cursor-pointer"
+                  className="px-2 py-1 bg-red-600 text-white rounded text-sm"
                 >
                   削除
                 </button>

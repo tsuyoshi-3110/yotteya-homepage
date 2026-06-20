@@ -8,9 +8,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
-
-/* アプリ側で持っている siteKey に差し替えてください */
-const SITE_KEY = "yotteya";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 export default function ReplyForm({
   postId,
@@ -23,7 +21,7 @@ export default function ReplyForm({
 
   /* ----- サイト名 & アイコン URL を取得 ----- */
   const [siteName, setSiteName] = useState("Anonymous");
-  const [logoUrl, setLogoUrl] = useState("/noImage.png");
+  const [logoUrl, setLogoUrl] = useState("/images/noImage.png");
 
   useEffect(() => {
     const fetchMeta = async () => {
@@ -36,7 +34,9 @@ export default function ReplyForm({
       /* headerLogoUrl */
       const eSnap = await getDoc(doc(db, "siteSettingsEditable", SITE_KEY));
       if (eSnap.exists()) {
-        setLogoUrl((eSnap.data() as any).headerLogoUrl ?? "/noImage.png");
+        setLogoUrl(
+          (eSnap.data() as any).headerLogoUrl ?? "/images/noImage.png"
+        );
       }
     };
     fetchMeta();
@@ -52,7 +52,7 @@ export default function ReplyForm({
       content: text.trim(),
       authorUid: uid,
       authorName: siteName,
-      authorIconUrl: logoUrl,           // ← 追加
+      authorIconUrl: logoUrl, // ← 追加
       createdAt: serverTimestamp(),
     });
 
@@ -67,7 +67,7 @@ export default function ReplyForm({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="返信を入力"
-        className="w-full border rounded p-2"
+        className="w-full bg-gray-100 border rounded p-2"
       />
       <button
         onClick={handleSubmit}

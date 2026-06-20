@@ -2,9 +2,8 @@
 import { atomWithStorage } from "jotai/utils";
 
 export const partnerSiteKeyAtom = atomWithStorage<string | null>(
-  "partnerSiteKey",   // localStorage のキー
+  "partnerSiteKey", // localStorage のキー
   null
 );
 
-export const SITE_KEY = "yotteya";
-
+export const SITE_KEY = "tayotteya3110";

@@ -27,7 +27,7 @@ ${text}
 `;
 
     const chat = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-5-chat-latest",
       messages: [{ role: "user", content: prompt }],
     });
 

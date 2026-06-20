@@ -5,10 +5,12 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 export async function POST(req: NextRequest) {
   const { keywords } = await req.json();
-  const prompt = `以下のキーワードを含むSNS投稿文を生成してください: ${keywords.join(", ")}`;
+  const prompt = `以下のキーワードをすべて含み、SNS投稿にふさわしい内容を300文字以内で日本語で作成してください。\nキーワード: ${keywords.join(
+    ", "
+  )}`;
 
   const chat = await openai.chat.completions.create({
-    model: "gpt-4",
+    model: "gpt-5-chat-latest",
     messages: [{ role: "user", content: prompt }],
   });
 

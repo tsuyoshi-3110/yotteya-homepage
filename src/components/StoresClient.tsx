@@ -57,11 +57,31 @@ import { LANGS, type LangKey } from "@/lib/langs";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 import StoreReviews from "./StoreReviews";
 import { BusyOverlay } from "./BusyOverlay";
+import { UILang } from "@/lib/langsState";
 
 /* ======================== 定数/型 ======================== */
 const STORE_COL = `siteStores/${SITE_KEY}/items`;
 const STORAGE_PATH = `stores/public/${SITE_KEY}`;
 const META_EDIT_REF = doc(db, "siteSettingsEditable", SITE_KEY);
+
+const STORES_T: Record<UILang, { page: string }> = {
+  ja: { page: "店舗一覧" },
+  en: { page: "Stores" },
+  zh: { page: "门店一览" },
+  "zh-TW": { page: "門市一覽" },
+  ko: { page: "매장 목록" },
+  fr: { page: "Magasins" },
+  es: { page: "Tiendas" },
+  de: { page: "Filialen" },
+  pt: { page: "Lojas" },
+  it: { page: "Negozi" },
+  ru: { page: "Магазины" },
+  th: { page: "สาขา" },
+  vi: { page: "Cửa hàng" },
+  id: { page: "Toko" },
+  hi: { page: "दुकानें" },
+  ar: { page: "المتاجر" },
+};
 
 type Store = {
   id: string;
@@ -73,6 +93,7 @@ type Store = {
   order?: number;
   createdAt?: any;
   updatedAt?: any;
+  phone?: string;
 };
 
 type Base = { name: string; address: string; description?: string };
@@ -197,6 +218,7 @@ export default function StoresClient() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
+  const [phone, setPhone] = useState("");
   // 店舗個別の口コミ表示フラグ
   const [showReviews, setShowReviews] = useState(true);
 
@@ -219,6 +241,8 @@ export default function StoresClient() {
   const [worksAutoSyncEnabled, setWorksAutoSyncEnabled] =
     useState<boolean>(false);
   const [worksAlbumTag, setWorksAlbumTag] = useState<string>("works");
+
+  const T = STORES_T[uiLang] ?? STORES_T.ja;
 
   const gradient = useThemeGradient(); // isDark 判定に使用
 
@@ -323,7 +347,9 @@ export default function StoresClient() {
           base,
           t,
           ...(geo ? { geo } : {}),
-          showReviews: data.showReviews ?? true, // ★ 追加：既定はtrue
+          showReviews: data.showReviews ?? true,
+          // ★ 追加
+          phone: typeof data.phone === "string" ? data.phone : undefined,
         } as StoreDoc;
       });
       docs.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
@@ -341,6 +367,7 @@ export default function StoresClient() {
     setDescription("");
     setShowReviews(true); // ★ 新規は既定でON
     setFile(null);
+    setPhone("");
     setFormMode("add");
   };
 
@@ -352,6 +379,7 @@ export default function StoresClient() {
     setDescription(s.base?.description ?? s.description ?? "");
     setShowReviews(s.showReviews ?? true); // ★ 既存を反映
     setFile(null);
+    setPhone(s.phone ?? "");
     setFormMode("edit");
   };
 
@@ -465,7 +493,7 @@ export default function StoresClient() {
       // ★ 既存にgeoが無い場合は必ず再解決
       const needResolve =
         !isEdit ||
-        !editingStore?.geo ||
+        !editingStore?.geo?.placeId ||
         prevName !== base.name ||
         prevAddr !== base.address;
 
@@ -526,6 +554,8 @@ export default function StoresClient() {
         originalFileName?: string;
         geo?: Geo;
         showReviews: boolean;
+        // ★ 追加
+        phone?: string;
       } = {
         base,
         t,
@@ -536,7 +566,9 @@ export default function StoresClient() {
         updatedAt: serverTimestamp(),
         ...(originalFileName && { originalFileName }),
         ...(geo ? { geo } : {}),
-        showReviews, // ★ 追加
+        showReviews,
+        // ★ 追加（未入力なら入れない）
+        ...(phone.trim() ? { phone: phone.trim() } : {}),
       };
 
       if (isEdit) {
@@ -585,7 +617,15 @@ export default function StoresClient() {
 
   return (
     <main className="max-w-5xl mx-auto p-4 mt-20">
-      <BusyOverlay uploadingPercent={progress} saving={submitFlag && !uploading} />
+      <BusyOverlay
+        uploadingPercent={progress}
+        saving={submitFlag && !uploading}
+      />
+
+      <h1 className="text-3xl font-semibold text-white text-outline">
+        {T.page}
+      </h1>
+
       {/* ===== Google連携（管理者のみ見える） ===== */}
       {isAdmin && (
         <div className="mb-6 rounded-lg border bg-white/70 p-4 shadow-sm">
@@ -747,6 +787,15 @@ export default function StoresClient() {
               onChange={(e) => setAddress(e.target.value)}
               className="w-full border px-3 py-2 rounded mb-3"
               rows={2}
+              disabled={uploading || submitFlag}
+            />
+
+            <input
+              type="tel"
+              placeholder="電話番号（任意） 例：06-1234-5678 / +81 6-1234-5678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border px-3 py-2 rounded mb-3"
               disabled={uploading || submitFlag}
             />
 
@@ -1035,7 +1084,7 @@ function StoreCard({
         </div>
       )}
 
-      <div className={clsx("p-4 space-y-2", "text-white text-outline")}>
+      <div className={clsx("p-4 space-y-2", "text-black")}>
         <h2 className="text-xl font-semibold whitespace-pre-wrap">{locName}</h2>
 
         <div className="text-sm">
@@ -1055,6 +1104,19 @@ function StoreCard({
             </div>
           ))}
         </div>
+
+        {/* 住所表示ブロックのすぐ下など、見やすい位置に追加 */}
+        {s.phone && (
+          <p className="text-sm mt-1">
+            <a
+              href={`tel:${s.phone}`}
+              className="underline"
+              aria-label="店舗に電話する"
+            >
+              TEL: {s.phone}
+            </a>
+          </p>
+        )}
 
         {locDescription && (
           <p className="text-sm whitespace-pre-wrap">{locDescription}</p>

@@ -19,7 +19,7 @@ import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 /* ───────── 自店舗 ID ───────── */
 
-const DUMMY_IMG = "/noImage.png";
+const DUMMY_IMG = "/images/noImage.png";
 
 /* ---------- 型 ---------- */
 type MetaRow = {
@@ -109,7 +109,7 @@ export default function InboxPage() {
                     width={48}
                     height={48}
                     className="rounded-full object-cover"
-                    unoptimized 
+                    unoptimized
                   />
 
                   {/* 相手名・最終メッセージ・未読バッジ */}

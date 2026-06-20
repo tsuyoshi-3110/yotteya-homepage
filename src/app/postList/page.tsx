@@ -306,7 +306,7 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
                 {/* アイコン */}
                 <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border">
                   <Image
-                    src={c.authorIconUrl || logoUrl || "/noImage.png"}
+                    src={c.authorIconUrl || logoUrl || "/images/noImage.png"}
                     alt={c.authorName || siteName || "user"}
                     fill
                     sizes="32px"
@@ -981,7 +981,7 @@ function Card({
       <header className="mb-3 flex items-center gap-3">
         <div className="relative h-10 w-10 shrink-0">
           <Image
-            src={post.authorIconUrl || "/noImage.png"}
+            src={post.authorIconUrl || "/images/noImage.png"}
             alt={post.authorName || "user"}
             fill
             sizes="40px"

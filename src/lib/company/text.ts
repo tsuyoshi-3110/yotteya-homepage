@@ -1,0 +1,37 @@
+export const COMPANY_OVERVIEW_T = {
+  ja: "会社概要",
+  en: "Company Overview",
+  zh: "公司概况",
+  "zh-TW": "公司概況",
+  ko: "회사 개요",
+  fr: "Présentation de l’entreprise",
+  es: "Información de la empresa",
+  de: "Unternehmensübersicht",
+  pt: "Visão geral da empresa",
+  it: "Panoramica aziendale",
+  ru: "Обзор компании",
+  th: "ภาพรวมบริษัท",
+  vi: "Tổng quan công ty",
+  id: "Gambaran Perusahaan",
+  hi: "कंपनी का परिचय",
+  ar: "نظرة عامة على الشركة",
+} as const;
+
+/* ========= 言語リスト（ja は base として保持） ========= */
+export const LANGS = [
+  { key: "en", label: "English" },
+  { key: "zh", label: "简体中文" },
+  { key: "zh-TW", label: "繁體中文" },
+  { key: "ko", label: "한국어" },
+  { key: "fr", label: "Français" },
+  { key: "es", label: "Español" },
+  { key: "de", label: "Deutsch" },
+  { key: "pt", label: "Português" },
+  { key: "it", label: "Italiano" },
+  { key: "ru", label: "Русский" },
+  { key: "th", label: "ไทย" },
+  { key: "vi", label: "Tiếng Việt" },
+  { key: "id", label: "Bahasa Indonesia" },
+  { key: "hi", label: "हिन्दी" },
+  { key: "ar", label: "العربية" },
+] as const;

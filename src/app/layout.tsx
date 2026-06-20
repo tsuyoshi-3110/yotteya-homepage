@@ -1,165 +1,110 @@
 // app/layout.tsx
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
+import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
-import Script from "next/script";
 import ThemeBackground from "@/components/ThemeBackground";
 import WallpaperBackground from "@/components/WallpaperBackground";
-import AnalyticsLogger from "@/components/AnalyticsLogger";
-import FontLoader from "@/components/FontLoader";
 import SubscriptionOverlay from "@/components/SubscriptionOverlay";
+import AnalyticsLogger from "@/components/AnalyticsLogger";
+import TextColorLoader from "@/components/TextColorLoader";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
-
-// ▼ カート全体提供（追加）
 import { CartProvider } from "@/lib/cart/CartContext";
-
+import { seo, site, pageUrl, PUBLIC_ADDRESS } from "@/config/site";
 import {
-  kosugiMaru,
-  notoSansJP,
-  shipporiMincho,
-  reggaeOne,
-  yomogi,
-  hachiMaruPop,
+  kosugiMaru, notoSansJP, shipporiMincho, reggaeOne, yomogi, hachiMaruPop,
 } from "@/lib/font";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-});
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
-export const metadata: Metadata = {
-  title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
-  description:
-    "大阪市東淀川区のクレープ専門店『甘味処 よって屋』。ふんわり生地とこだわりクリームが自慢です。",
-  keywords: [
-    "甘味処クレープよって屋",
-    "よって屋",
-    "甘味処",
-    "飲食",
-    "クレープ",
-    "大阪",
-    "東淀川区",
-    "下新庄",
+export const metadata: Metadata = seo.base();
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
-  openGraph: {
-    title: "甘味処 よって屋｜ふんわり生地のクレープ専門店",
-    description:
-      "ふんわり生地とこだわりクリームが自慢のクレープ屋さん。大阪市東淀川区で営業中。",
-    url: "https://www.kikaikintots.shop/",
-    siteName: "甘味処 よって屋",
-    images: [
-      {
-        url: "/ogp.jpg",
-        width: 1200,
-        height: 630,
-      },
-    ],
-    locale: "ja_JP",
-    type: "website",
-  },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+function toLD(obj: unknown) {
+  return JSON.stringify(obj).replace(/</g, "\\u003c");
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const BASE = site.baseUrl.replace(/\/$/, "");
+  const sameAs = Object.values(site.socials).filter(Boolean);
+  const mainImage = pageUrl(site.logoPath);
+
+  const ldGraph = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${BASE}#org`,
+        name: site.name,
+        url: site.baseUrl,
+        logo: mainImage,
+        image: [mainImage],
+        ...(site.tel ? { telephone: site.tel } : {}),
+        ...(sameAs.length ? { sameAs } : {}),
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${BASE}#website`,
+        name: site.name,
+        url: site.baseUrl,
+        publisher: { "@id": `${BASE}#org` },
+      },
+      {
+        "@type": "LocalBusiness",
+        "@id": `${BASE}#local`,
+        name: site.name,
+        url: site.baseUrl,
+        image: [mainImage],
+        ...(site.tel ? { telephone: site.tel } : {}),
+        address: PUBLIC_ADDRESS.postal,
+        hasMap: PUBLIC_ADDRESS.hasMap,
+        /** ★ここを追加 → 任意の価格帯（￥〜￥￥￥） */
+        priceRange: "￥￥",
+      },
+    ],
+  };
 
   return (
     <html
       lang="ja"
-      suppressHydrationWarning
-      className={`
-        ${geistSans.variable} ${geistMono.variable}
-        ${kosugiMaru.variable} ${notoSansJP.variable}
-        ${yomogi.variable} ${hachiMaruPop.variable}
-        ${reggaeOne.variable} ${shipporiMincho.variable}
-        antialiased
-      `}
+      className={[
+        geistSans.variable, geistMono.variable,
+        kosugiMaru.variable, notoSansJP.variable,
+        yomogi.variable, hachiMaruPop.variable,
+        reggaeOne.variable, shipporiMincho.variable,
+        "antialiased",
+      ].join(" ")}
     >
       <head>
-        {/* Google Analytics（IDがあるときだけ読み込み） */}
-        {GA_ID ? (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script id="gtag-init" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${GA_ID}', { page_path: window.location.pathname });
-              `}
-            </Script>
-          </>
-        ) : null}
-
-        {/* 画像の先読み（壁紙） */}
-        <link
-          rel="preload"
-          as="image"
-          href="/images/wallpaper/kamon.jpg"
-          type="image/webp"
-        />
-        <meta name="theme-color" content="#ffffff" />
-
-        {/* サーチコンソール用（複数可） */}
-        <meta
-          name="google-site-verification"
-          content="UcH7-5B4bwpJxxSjIpBskahFhBRTSLRJUZ8A3LAnnFE"
-        />
-        <meta
-          name="google-site-verification"
-          content="h2O77asgMDfUmHBb7dda53OOJdsxv9GKXd5rrRgIQ-k"
+        <link rel="preload" as="image" href={site.logoPath} type="image/png" />
+        <Script
+          id="ld-graph"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: toLD(ldGraph) }}
         />
       </head>
 
       <body className="relative min-h-[100dvh] flex flex-col">
-        {/* 背景レイヤー（下層） */}
         <WallpaperBackground />
         <ThemeBackground />
-
-        {/* 計測（ページ表示時のログなど） */}
+        <TextColorLoader />
         <AnalyticsLogger />
-
-        {/* サイト全体をCartProviderでラップ */}
         <CartProvider>
-          {/* 上位オーバーレイ（サブスク状態によるブロック等） */}
           <SubscriptionOverlay siteKey={SITE_KEY} />
-
-          {/* UI本体 */}
           <Header />
-          <FontLoader />
           <main className="flex-1">{children}</main>
           <Footer />
         </CartProvider>
-
-        {/* 構造化データ（店舗情報） */}
-        <Script
-          id="ld-json"
-          type="application/ld+json"
-          strategy="afterInteractive"
-        >
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Restaurant",
-            name: "甘味処 よって屋",
-            address: {
-              "@type": "PostalAddress",
-              addressLocality: "大阪市東淀川区",
-              streetAddress: "淡路４丁目１８−１６",
-            },
-            telephone: "06-1234-5678",
-            url: "https://example.com",
-          })}
-        </Script>
       </body>
     </html>
   );

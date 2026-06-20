@@ -3,15 +3,16 @@
 import { useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 export default function FontLoader() {
-  const siteKey = "yotteya";
+
 
   useEffect(() => {
     const fetchFont = async () => {
-      if (!siteKey) return;
+      if (!SITE_KEY) return;
 
-      const docRef = doc(db, "assets", siteKey);
+      const docRef = doc(db, "assets", SITE_KEY);
       const snap = await getDoc(docRef);
 
       if (snap.exists()) {
@@ -36,7 +37,7 @@ export default function FontLoader() {
     };
 
     fetchFont();
-  }, [siteKey]);
+  }, []);
 
   return null;
 }

@@ -269,7 +269,8 @@ export default function CommunityPage() {
             ownerName: data.ownerName ?? "(名前未設定)",
             ownerAddress: data.ownerAddress ?? "(住所不明)",
             ownerId: data.ownerId ?? "",
-            iconUrl: (editableData as any)?.headerLogoUrl ?? "/noImage.png",
+            iconUrl:
+              (editableData as any)?.headerLogoUrl ?? "/images/noImage.png",
             industry,
           };
           return row;
@@ -491,7 +492,7 @@ export default function CommunityPage() {
           onClick={handleSmartSelect}
           disabled={loadingAI || owners.length === 0}
           className={clsx(
-            "shrink-0 px-4 h-10 rounded-md text-white text-outline font-medium shadow transition",
+            "shrink-0 px-4 h-10 rounded-md text-black font-medium shadow transition",
             loadingAI && "opacity-70 cursor-not-allowed",
             gradient
               ? ["bg-gradient-to-r", gradient, "hover:brightness-110"]
@@ -542,7 +543,7 @@ export default function CommunityPage() {
                     href={`/community/message/${best.id}`}
                     onClick={() => setPartnerSiteKey(best.id)}
                     className={clsx(
-                      "inline-flex items-center justify-center text-center px-3 h-9 rounded-md text-white text-sm font-medium transition",
+                      "inline-flex items-center justify-center text-center px-3 h-9 rounded-md text-black text-sm font-medium transition",
                       gradient
                         ? ["bg-gradient-to-r", gradient, "hover:brightness-110"]
                         : "bg-blue-600 hover:bg-blue-700"
@@ -676,7 +677,7 @@ export default function CommunityPage() {
                 disabled={busy}
                 className={clsx(
                   "absolute bottom-4 left-4 inline-flex h-9 items-center justify-center rounded px-3 text-sm font-medium",
-                  "text-white text-outline shadow-md transition",
+                  "text-black shadow-md transition",
                   busy && "opacity-70 cursor-not-allowed",
                   gradient
                     ? ["bg-gradient-to-r", gradient, "hover:brightness-110"]
@@ -693,7 +694,7 @@ export default function CommunityPage() {
                 onClick={() => setPartnerSiteKey(o.id)}
                 className={clsx(
                   "absolute bottom-4 right-4 inline-flex h-9 items-center justify-center rounded px-3 text-sm font-medium",
-                  "text-white text-outline shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2",
+                  "text-black shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2",
                   gradient
                     ? [
                         "bg-gradient-to-r",

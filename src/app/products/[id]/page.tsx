@@ -5,10 +5,11 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import ProductDetail from "@/components/ProductDetail";
+import ProductDetail from "@/components/products/ProductDetail";
 import CardSpinner from "@/components/CardSpinner";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
-const SITE_KEY = "yotteya";
+
 
 export default function ProductPage() {
   const { id } = useParams() as { id: string };

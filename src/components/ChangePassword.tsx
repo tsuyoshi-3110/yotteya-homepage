@@ -116,8 +116,9 @@ export default function ChangePassword({ onClose }: Props) {
         </span>
         <br />※ パスワードは英大文字・小文字・数字・記号を含めてください
         <br />
-        例: <code className="bg-gray-100 px-1 py-0.5 rounded">
-          Yotteya123!
+        例:{" "}
+        <code className="bg-gray-100 px-1 py-0.5 rounded">
+          tayotteya3110123!
         </code>{" "}
         や <code className="bg-gray-100 px-1 py-0.5 rounded">Sakura2024$</code>
       </p>

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+const MODEL = process.env.OPENAI_MODEL ?? "gpt-5-chat-latest";
 
 export async function GET() {
   // 疎通確認用: /api/ai/generate-company
@@ -17,15 +17,24 @@ export async function POST(req: Request) {
 
     const target = body?.target as "about" | "business" | undefined;
     const keywords: string[] = Array.isArray(body?.keywords)
-      ? body.keywords.map((v: any) => String(v).trim()).filter(Boolean).slice(0, 3)
+      ? body.keywords
+          .map((v: any) => String(v).trim())
+          .filter(Boolean)
+          .slice(0, 3)
       : [];
 
     if (target !== "about" && target !== "business") {
-      return NextResponse.json({ error: "target must be 'about' or 'business'." }, { status: 400 });
+      return NextResponse.json(
+        { error: "target must be 'about' or 'business'." },
+        { status: 400 }
+      );
     }
 
     if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({ error: "Missing OPENAI_API_KEY" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Missing OPENAI_API_KEY" },
+        { status: 500 }
+      );
     }
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -37,13 +46,17 @@ export async function POST(req: Request) {
       audience: (body?.audience ?? "").toString(),
       industryHint: (body?.industryHint ?? "").toString(),
       existingAbout: (body?.existingAbout ?? "").toString(),
-      existingBusiness: Array.isArray(body?.existingBusiness) ? body.existingBusiness : [],
+      existingBusiness: Array.isArray(body?.existingBusiness)
+        ? body.existingBusiness
+        : [],
     };
 
     const system = [
       "あなたは日本語で書く企業ライティングアシスタントです。",
       "出力は JSON オブジェクトのみ。余計な文字は一切含めないでください。",
-      target === "about" ? `出力形式: {"about": string}` : `出力形式: {"business": string[]}`,
+      target === "about"
+        ? `出力形式: {"about": string}`
+        : `出力形式: {"business": string[]}`,
     ].join("\n");
 
     const userPrompt =
@@ -57,18 +70,26 @@ export async function POST(req: Request) {
             context.location && `所在地: ${context.location}`,
             context.audience && `対象顧客: ${context.audience}`,
             context.industryHint && `業種ヒント: ${context.industryHint}`,
-            context.existingAbout && `既存の説明（参考）: ${context.existingAbout}`,
-          ].filter(Boolean).join("\n")
+            context.existingAbout &&
+              `既存の説明（参考）: ${context.existingAbout}`,
+          ]
+            .filter(Boolean)
+            .join("\n")
         : [
             "事業内容（business）の箇条書きを 3〜6 項目で作成してください。",
             "各項目は 20〜30 文字程度で簡潔に。重複や一般論を避けてください。",
             `キーワード: ${keywords.join(" / ") || "（未指定）"}`,
             context.companyName && `会社名: ${context.companyName}`,
             context.location && `所在地: ${context.location}`,
-            Array.isArray(context.existingBusiness) && context.existingBusiness.length > 0
-              ? `既存の事業内容（参考）: ${context.existingBusiness.join(" | ")}`
+            Array.isArray(context.existingBusiness) &&
+            context.existingBusiness.length > 0
+              ? `既存の事業内容（参考）: ${context.existingBusiness.join(
+                  " | "
+                )}`
               : "",
-          ].filter(Boolean).join("\n");
+          ]
+            .filter(Boolean)
+            .join("\n");
 
     const completion = await client.chat.completions.create({
       model: MODEL,
@@ -90,9 +111,14 @@ export async function POST(req: Request) {
       }
       return NextResponse.json({ about: json.about.trim() });
     } else {
-      const arr = Array.isArray(json.business) ? json.business.map((s: any) => String(s).trim()).filter(Boolean) : [];
+      const arr = Array.isArray(json.business)
+        ? json.business.map((s: any) => String(s).trim()).filter(Boolean)
+        : [];
       if (arr.length === 0) {
-        return NextResponse.json({ error: "Invalid business" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Invalid business" },
+          { status: 400 }
+        );
       }
       return NextResponse.json({ business: arr.slice(0, 8) });
     }

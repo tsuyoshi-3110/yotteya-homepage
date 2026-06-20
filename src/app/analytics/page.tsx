@@ -60,8 +60,8 @@ const PAGE_LABELS: Record<string, string> = {
   map_click: "マップアクセス",
   staffs: "スタッフ紹介ぺージ",
   jobApp: "応募ページ",
-  apply: "応募ページ",
-  blog: "ブログページ",
+  apply: "予約ページ",
+  blog: "取材ページ",
   menu: "料金ページ",
   company: "会社概要ページ",
 };
@@ -78,7 +78,7 @@ const EVENT_LABELS: Record<string, string> = {
   home_stay_seconds_map_click: "マップアクセス滞在",
   home_stay_seconds_apply: "応募滞在",
   home_stay_seconds_menu: "料金滞在",
-  home_stay_seconds_blog: "ブログ滞在",
+  home_stay_seconds_blog: "取材滞在",
   home_stay_seconds_company: "会社概要滞在",
 };
 
@@ -296,9 +296,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
-      <h2 className="text-xl font-bold text-white text-outline">
-        アクセス解析
-      </h2>
+      <h2 className="text-xl font-bold text-white">アクセス解析</h2>
 
       {/* 期間プリセット */}
       <div className="flex flex-wrap gap-2 mb-4">
@@ -456,15 +454,9 @@ export default function AnalyticsPage() {
                   <thead>
                     <tr className="bg-gray-200">
                       <th className="p-2 border w-2/5">イベント名</th>
-                      <th className="p-2 border text-right text-xs w-1/5">
-                        合計秒数
-                      </th>
-                      <th className="p-2 border text-right text-xs w-1/5">
-                        回数
-                      </th>
-                      <th className="p-2 border text-right text-xs w-1/5">
-                        平均秒数
-                      </th>
+                      <th className="p-2 border text-right w-1/5">合計秒数</th>
+                      <th className="p-2 border text-right w-1/5">回数</th>
+                      <th className="p-2 border text-right w-1/5">平均秒数</th>
                     </tr>
                   </thead>
                   <tbody>

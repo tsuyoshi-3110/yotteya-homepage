@@ -45,34 +45,7 @@ export async function POST(req: NextRequest) {
       dailyData,
       referrerData,
       weekdayData,
-      visitorStats,
-      bounceRates,
-      geoData,
     } = await req.json();
-
-    // ─── 新規／リピーターサマリー ───
-    const visitorSummary = visitorStats
-      ? `・新規：${visitorStats.new}人\n・リピーター：${visitorStats.returning}人`
-      : "データがありません";
-
-    // ─── 直帰率サマリー ───
-    const bounceSummary =
-      Array.isArray(bounceRates) && bounceRates.length > 0
-        ? bounceRates
-            .map(
-              (b) =>
-                `・${PAGE_PATH_LABELS[b.page] || b.page}：${b.rate.toFixed(1)}%`
-            )
-            .join("\n")
-        : "データがありません";
-
-    // ─── 地域別アクセスサマリー ───
-    const geoSummary =
-      Array.isArray(geoData) && geoData.length > 0
-        ? geoData.map((g) => `・${g.region}：${g.count}回`).join("\n")
-        : "データがありません";
-
-    /* ------------ 既存の曜日・時間・日別・ページ・イベント・参照元サマリー作成コード … ------------ */
 
     /* ------------ ② 曜日別サマリーを作成 ------------ */
     const weekdayLabelsJP = ["日", "月", "火", "水", "木", "金", "土"];
@@ -164,15 +137,6 @@ export async function POST(req: NextRequest) {
     const prompt = `
 以下はホームページの分析データです（期間：${period}）。
 
-【新規 vs リピーター】
-${visitorSummary}
-
-【直帰率】
-${bounceSummary}
-
-【地域別アクセス分布】
-${geoSummary}
-
 【アクセス元の割合】
 ${referrerSummaries}
 
@@ -227,7 +191,7 @@ AI アシスタントです。オーナーが出来る操作は次の 4 つだ�
 `;
 
     const chat = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-5-chat-latest",
       messages: [{ role: "user", content: prompt }],
     });
 

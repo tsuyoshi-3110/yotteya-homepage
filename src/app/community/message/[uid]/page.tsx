@@ -23,7 +23,7 @@ import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 /* ===== 定数 ===== */
 
-const DUMMY_IMG = "/noImage.png"; // ロゴが無いとき
+const DUMMY_IMG = "/images/noImage.png"; // ロゴが無いとき
 const INPUT_H_REM = 3.5; // 入力欄高さ (rem)
 
 /* ===== 型 ===== */

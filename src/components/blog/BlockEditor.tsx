@@ -20,6 +20,7 @@ import { THEMES, ThemeKey } from "@/lib/themes";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import { Pin } from "lucide-react";
 import { BusyOverlay } from "@/components/BusyOverlay";
+import Image from "next/image";
 
 /* ✅ 共通ファイル形式ユーティリティ */
 import {
@@ -60,7 +61,7 @@ const MAX_VIDEO_SEC = 60;
 /* ========== Sortable 子コンポーネント ========== */
 function SortableBlockCard({
   id,
-
+  isDark,
   children,
   onMoveUp,
   onMoveDown,
@@ -73,7 +74,7 @@ function SortableBlockCard({
   isMedia,
 }: {
   id: string;
-
+  isDark: boolean;
   children: React.ReactNode;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -103,7 +104,7 @@ function SortableBlockCard({
       style={style}
       className={clsx(
         "relative overflow-visible rounded-2xl border p-4 pt-10",
-        "text-white text-outline",
+        isDark ? "border-white/15 bg-black/10" : "border-black/10 bg-white",
         isDragging && "shadow-xl ring-2 ring-blue-400/40"
       )}
     >
@@ -116,7 +117,9 @@ function SortableBlockCard({
           className={clsx(
             "h-10 w-10 rounded-full border shadow flex items-center justify-center",
             "cursor-grab active:cursor-grabbing select-none touch-none",
-           "text-white text-outline",
+            isDark
+              ? "bg-white/95 border-white/30"
+              : "bg-white/95 border-black/10"
           )}
           {...attributes}
           {...listeners}
@@ -662,6 +665,7 @@ export default function BlockEditor({ value, onChange, postIdForPath }: Props) {
               <SortableBlockCard
                 key={b.id}
                 id={b.id}
+                isDark={isDark}
                 onMoveUp={() => move(i, -1)}
                 onMoveDown={() => move(i, +1)}
                 onAddTextBelow={() =>
@@ -722,12 +726,16 @@ export default function BlockEditor({ value, onChange, postIdForPath }: Props) {
                   <div className="space-y-3">
                     <div className="overflow-hidden rounded-lg border border-black/10">
                       {b.type === "image" ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={(b as any).url}
-                          alt=""
-                          className="max-h-[420px] w-full bg-black/5 object-contain"
-                        />
+                        <div className="relative w-full aspect-[16/9] bg-black/5">
+                          <Image
+                            src={(b as any).url}
+                            alt=""
+                            fill
+                            className="object-contain"
+                            sizes="(max-width: 768px) 100vw, 800px"
+                            unoptimized
+                          />
+                        </div>
                       ) : (
                         <video
                           src={(b as any).url}
@@ -820,7 +828,8 @@ export default function BlockEditor({ value, onChange, postIdForPath }: Props) {
               AIで校正（本文カード）
             </div>
             <div className={clsx("mb-2 text-xs", subTextClass)}>
-              対象範囲：{proof.start} 〜 {proof.end} 文字（選択がなければブロック全体）
+              対象範囲：{proof.start} 〜 {proof.end}{" "}
+              文字（選択がなければブロック全体）
             </div>
 
             {proof.loading ? (
@@ -883,7 +892,8 @@ export default function BlockEditor({ value, onChange, postIdForPath }: Props) {
                 AIで本文作成（本文カード）
               </div>
               <div className={clsx("mt-1 text-xs", subTextClass)}>
-                タイトルは使用しません。キーワードを 1〜3 個入力してください。生成結果は
+                タイトルは使用しません。キーワードを 1〜3
+                個入力してください。生成結果は
                 <strong>このカードに上書き</strong>されます。
               </div>
             </div>

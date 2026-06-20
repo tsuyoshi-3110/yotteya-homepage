@@ -64,7 +64,10 @@ export async function POST(req: NextRequest) {
     // ---- 価格検証（siteKey配下の商品だけを許可）----
     const ids: string[] = items.map((x: any) => String(x.id));
     const qtyMap: Record<string, number> = Object.fromEntries(
-      items.map((x: any) => [String(x.id), Math.max(1, Math.min(999, Number(x.qty) || 1))])
+      items.map((x: any) => [
+        String(x.id),
+        Math.max(1, Math.min(999, Number(x.qty) || 1)),
+      ])
     );
 
     const productDocs = await fetchProductDocsChunked(siteKey, ids);
@@ -89,12 +92,17 @@ export async function POST(req: NextRequest) {
     }
 
     if (!line_items.length) {
-      return NextResponse.json({ error: "no purchasable items" }, { status: 400 });
+      return NextResponse.json(
+        { error: "no purchasable items" },
+        { status: 400 }
+      );
     }
 
     // 呼び出し元のURL（戻り先）— body が優先、無ければヘッダ由来（nullの可能性あり）
     const siteOrigin = String(bodyOrigin || origin || "");
-    const success_url = siteOrigin ? `${siteOrigin}/thanks?sid={CHECKOUT_SESSION_ID}` : `/thanks?sid={CHECKOUT_SESSION_ID}`;
+    const success_url = siteOrigin
+      ? `${siteOrigin}/thanks?sid={CHECKOUT_SESSION_ID}`
+      : `/thanks?sid={CHECKOUT_SESSION_ID}`;
     const cancel_url = siteOrigin ? `${siteOrigin}/cart` : `/cart`;
 
     const session = await stripe.checkout.sessions.create({
@@ -109,13 +117,12 @@ export async function POST(req: NextRequest) {
     });
 
     // CORS レスポンスヘッダは、クロスオリジン時のみ付与
-    const corsHeaders =
-      origin
-        ? {
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Credentials": "true",
-          }
-        : undefined;
+    const corsHeaders = origin
+      ? {
+          "Access-Control-Allow-Origin": origin,
+          "Access-Control-Allow-Credentials": "true",
+        }
+      : undefined;
 
     return NextResponse.json({ url: session.url }, { headers: corsHeaders });
   } catch (e) {

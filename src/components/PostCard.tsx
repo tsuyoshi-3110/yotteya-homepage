@@ -94,7 +94,7 @@ export default function PostCard({ post }: { post: Post }) {
           } w-full`}
         >
           <Image
-            src={post.authorIconUrl || "/noImage.png"}
+            src={post.authorIconUrl || "/images/noImage.png"}
             alt="icon"
             width={40}
             height={40}
@@ -120,7 +120,10 @@ export default function PostCard({ post }: { post: Post }) {
               <span>
                 {dayjs(post.createdAt?.toDate()).format("MM/DD HH:mm")}
               </span>
-              <LikeButton postId={post.id} count={post.likeCount ?? 0} />
+              <LikeButton
+                postId={post.id}
+                initialLikeCount={post.likeCount ?? 0}
+              />
             </div>
           </div>
         </div>
@@ -139,7 +142,7 @@ export default function PostCard({ post }: { post: Post }) {
               >
                 {!myReply && (
                   <Image
-                    src={r.authorIconUrl || "/noImage.png"}
+                    src={r.authorIconUrl || "/images/noImage.png"}
                     alt="icon"
                     width={28}
                     height={28}
@@ -166,7 +169,7 @@ export default function PostCard({ post }: { post: Post }) {
                 </div>
                 {myReply && (
                   <Image
-                    src={r.authorIconUrl || "/noImage.png"}
+                    src={r.authorIconUrl || "/images/noImage.png"}
                     alt="icon"
                     width={28}
                     height={28}
@@ -197,7 +200,7 @@ export default function PostCard({ post }: { post: Post }) {
         <button
           onClick={() => {
             router.push(`/community/message/${post.authorSiteKey}`);
-            setPartnerSiteKey(post.authorSiteKey)
+            setPartnerSiteKey(post.authorSiteKey);
           }}
           className="mt-4 mx-auto rounded-full bg-blue-500 px-6 py-3 text-base font-semibold text-white shadow-lg hover:bg-blue-600 transition"
         >

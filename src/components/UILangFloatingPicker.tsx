@@ -9,14 +9,15 @@ import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import { doc, onSnapshot } from "firebase/firestore";
 
 type LangOption = { key: UILang; label: string; emoji: string };
-const ALL_OPTIONS: ReadonlyArray<LangOption> = LANGS;
+const ALL_OPTIONS: ReadonlyArray<LangOption> =
+  LANGS as unknown as ReadonlyArray<LangOption>;
 
 const TAP_MOVE_THRESHOLD = 8;
 const TAP_TIME_THRESHOLD = 500;
 
-const PICKER_W = 220;   // ドロップダウン幅
-const GUTTER = 8;       // コンテナ端の余白
-const SAFETY = 10;      // 余白(ヘッダー境界でのチラ見切れ防止)
+const PICKER_W = 220;
+const GUTTER = 8;
+const SAFETY = 10;
 
 /** 近いスクロール親（overflow-y: auto/scroll/hidden）を取得 */
 function getScrollContainer(el: HTMLElement | null): HTMLElement {
@@ -29,7 +30,7 @@ function getScrollContainer(el: HTMLElement | null): HTMLElement {
     if (isScrollable(p)) return p;
     p = p.parentElement;
   }
-  return document.documentElement; // 無ければビューポート
+  return document.documentElement;
 }
 
 type I18nMeta = {
@@ -45,11 +46,14 @@ export default function UILangFloatingPicker() {
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // サイト設定に連動（有効/無効, 許可言語）
+  // ---- サイト設定に連動（有効/無効, 許可言語） ----
   const [i18nEnabled, setI18nEnabled] = useState<boolean>(true);
-  const [allowedFromServer, setAllowedFromServer] = useState<UILang[]>(["ja"]);
+  const [allowedFromServer, setAllowedFromServer] = useState<UILang[] | null>(
+    null
+  ); // ← 初期は null（未ロード）
+  const [loaded, setLoaded] = useState(false); // ← 初回スナップショット受信フラグ
 
-  // 配置（縦：上/下、横：左/中央/右）
+  // 配置
   const [placement, setPlacement] = useState<"down" | "up">("down");
   const [hAlign, setHAlign] = useState<"left" | "center" | "right">("center");
   const [menuMaxH, setMenuMaxH] = useState<string>("60vh");
@@ -60,7 +64,7 @@ export default function UILangFloatingPicker() {
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.data() as I18nMeta | undefined;
       const enabled =
-        typeof data?.i18n?.enabled === "boolean" ? data!.i18n!.enabled! : true;
+        typeof data?.i18n?.enabled === "boolean" ? data.i18n!.enabled! : true;
       const langs =
         Array.isArray(data?.i18n?.langs) && data!.i18n!.langs!.length > 0
           ? (data!.i18n!.langs as UILang[])
@@ -68,25 +72,36 @@ export default function UILangFloatingPicker() {
       const uniq = Array.from(new Set<UILang>([...langs, "ja"]));
       setI18nEnabled(enabled);
       setAllowedFromServer(uniq);
+      setLoaded(true); // ← ここで初めて「ロード完了」
     });
     return () => unsub();
   }, []);
 
-  // 表示候補（i18n無効時は日本語のみ）
+  // 表示候補（i18n無効時は日本語のみ）。未ロードの間は「現在の言語」を尊重して候補を出す。
   const visibleOptions = useMemo(() => {
+    if (!loaded || allowedFromServer === null) {
+      // ロード前は現在の言語 + ja を最小限出しておく（フォールバック抑制）
+      const cur = ALL_OPTIONS.find((o) => o.key === uiLang) ?? ALL_OPTIONS[0];
+      const base = new Map<UILang, LangOption>([
+        [cur.key, cur],
+        ["ja" as UILang, ALL_OPTIONS.find((o) => o.key === "ja")!],
+      ]);
+      return Array.from(base.values());
+    }
     const allowed = i18nEnabled ? allowedFromServer : (["ja"] as UILang[]);
     const allowedSet = new Set<UILang>([...allowed, "ja"]);
     return ALL_OPTIONS.filter((o) => allowedSet.has(o.key));
-  }, [i18nEnabled, allowedFromServer]);
+  }, [loaded, allowedFromServer, i18nEnabled, uiLang]);
 
-  // 現在の言語が許可外ならフォールバック
+  // 現在の言語が許可外ならフォールバック（※ 初回ロード後のみ実行）
   useEffect(() => {
+    if (!loaded) return; // ← これが重要。ロード前は絶対に上書きしない。
     const keys = visibleOptions.map((o) => o.key);
     if (!keys.includes(uiLang)) {
       const fallback = (keys.includes("ja") ? "ja" : keys[0]) as UILang;
       if (fallback) setUiLang(fallback);
     }
-  }, [visibleOptions, uiLang, setUiLang]);
+  }, [loaded, visibleOptions, uiLang, setUiLang]);
 
   const current = useMemo<LangOption>(() => {
     return (
@@ -96,18 +111,16 @@ export default function UILangFloatingPicker() {
     );
   }, [uiLang, visibleOptions]);
 
-  // 位置計算（スクロール親の内側に収める）
+  // 位置計算
   const decidePlacementAndSize = () => {
     if (!btnRef.current) return;
     const btnRect = btnRef.current.getBoundingClientRect();
-
     const container = getScrollContainer(btnRef.current);
     const cRect =
       container === document.documentElement
         ? new DOMRect(0, 0, window.innerWidth, window.innerHeight)
         : container.getBoundingClientRect();
 
-    // 縦：上/下（スクロール親の内側で計算）
     const spaceAbove = Math.max(0, btnRect.top - cRect.top - GUTTER);
     const spaceBelow = Math.max(0, cRect.bottom - btnRect.bottom - GUTTER);
     const nextPlacement: "down" | "up" =
@@ -118,7 +131,6 @@ export default function UILangFloatingPicker() {
     setPlacement(nextPlacement);
     setMenuMaxH(`${px}px`);
 
-    // 横：コンテナ端のはみ出し回避
     const half = PICKER_W / 2;
     const centerLeft = btnRect.left + btnRect.width / 2 - half;
     const centerRight = btnRect.left + btnRect.width / 2 + half;
@@ -195,29 +207,27 @@ export default function UILangFloatingPicker() {
           aria-label="表示言語を選択"
         >
           <span className="text-lg leading-none">{current?.emoji}</span>
-          <span className="text-sm truncate text-white">
+          <span className="text-sm truncate text-black">
             {current?.label} / {current?.key}
           </span>
           <span className="ml-auto text-white/70">▾</span>
         </button>
 
-        {/* メニュー（許可された言語のみ） */}
+        {/* メニュー */}
         {open && visibleOptions.length > 0 && (
           <div
             ref={menuRef}
             role="listbox"
             className={clsx(
               "absolute z-[9999]",
-              // 縦位置
               placement === "down"
                 ? "top-[calc(100%+6px)]"
                 : "bottom-[calc(100%+6px)]",
-              // 横位置
               hAlign === "center" && "left-1/2 -translate-x-1/2",
               hAlign === "left" && "left-0",
               hAlign === "right" && "right-0",
               "overflow-auto rounded-xl border bg-white text-gray-900 shadow-xl",
-              "py-1" // 先頭/末尾の見切れ防止クッション
+              "py-1"
             )}
             style={{
               WebkitOverflowScrolling: "touch",
@@ -234,7 +244,7 @@ export default function UILangFloatingPicker() {
                 option={o}
                 active={o.key === uiLang}
                 onSelect={(val) => {
-                  setUiLang(val);
+                  setUiLang(val); // ← 操作時のみ更新
                   setOpen(false);
                 }}
               />
@@ -246,7 +256,7 @@ export default function UILangFloatingPicker() {
   );
 }
 
-/** スクロールとタップを判別して、タップ時のみ onSelect を呼ぶ行 */
+/** タップ時のみ onSelect を呼ぶ行 */
 function LangRow({
   option,
   active,

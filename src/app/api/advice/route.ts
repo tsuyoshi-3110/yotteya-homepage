@@ -25,15 +25,21 @@ export async function POST(req: NextRequest) {
 投稿者に対して建設的で思いやりのあるアドバイスを、日本語で丁寧に提供してください。
 誤字脱字を指摘したり、推測で内容を補ったりせず、嘘の情報を避け、優しくサポートしてください。
 
+アドバイスは500文字以内でお願いします。
+
 ■ 投稿内容：
 ${content}
 
 ■ 最近の返信：
-${recentReplies.length > 0 ? recentReplies.join("\n") : "（返信はまだありません）"}
+${
+  recentReplies.length > 0
+    ? recentReplies.join("\n")
+    : "（返信はまだありません）"
+}
 `;
 
     const chat = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-5-chat-latest",
       messages: [{ role: "user", content: prompt }],
     });
 

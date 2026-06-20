@@ -4,8 +4,9 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
-const siteKey = "yotteya";
+
 
 /* 利用可能フォント一覧（表示名と保存キー） */
 const fonts = [
@@ -21,14 +22,14 @@ export default function FontSwitcher() {
   /* 現在選択中のフォント */
   const [selected, setSelected] = useState<string>("kosugi");
   /* 保存完了のフラグ（✅アイコン表示用） */
-  const [saved, setSaved] = useState(false);
+  // const [saved, setSaved] = useState(false);
   /* 二重クリック防止用 */
   const [saving, setSaving] = useState(false);
 
   /* ---------- 初回：Firestore からフォント取得 ---------- */
   useEffect(() => {
     (async () => {
-      const snap = await getDoc(doc(db, "assets", siteKey));
+      const snap = await getDoc(doc(db, "assets", SITE_KEY));
       if (snap.exists()) {
         const font = snap.data().fontFamily as string | undefined;
         if (font) {
@@ -58,14 +59,14 @@ export default function FontSwitcher() {
           - setDoc + {merge:true} で
             まだドキュメントが無い場合は新規作成、あれば更新 */
     await setDoc(
-      doc(db, "assets", siteKey),
+      doc(db, "assets", SITE_KEY),
       { fontFamily: fontKey },
       { merge: true }
     );
 
     /* 3) ✅Saved アイコンを 2 秒だけ表示 */
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    // setSaved(true);
+    // setTimeout(() => setSaved(false), 2000);
     setSaving(false);
   };
 
@@ -91,7 +92,7 @@ export default function FontSwitcher() {
       ))}
 
       {/* ✅ 保存完了シール */}
-      {saved && (
+      {/* {saved && (
         <span
           className="absolute -top-2 right-2 flex items-center gap-1
                          bg-emerald-500 text-white text-xs font-semibold
@@ -99,7 +100,7 @@ export default function FontSwitcher() {
         >
           ✅ Saved
         </span>
-      )}
+      )} */}
     </div>
   );
 }

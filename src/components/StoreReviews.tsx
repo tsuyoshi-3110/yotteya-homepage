@@ -118,8 +118,6 @@ export default function StoreReviews({
   const [loading, setLoading] = useState(false); // 連携OFF時は発火させない
   const [error, setError] = useState<string | null>(null);
 
-  // Theme hooks（必ずトップレベル）
-
   // ここもトップレベルでOK（値はいつでも算出可能）
   const mapPlaceUrl = `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(
     placeId
@@ -271,14 +269,18 @@ export default function StoreReviews({
       {/* ヘッダ */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-lg font-semibold">口コミ</span>
+          <span className="text-lg font-semibold text-black">
+            口コミ
+          </span>
           {typeof avg === "number" && (
             <span className="text-yellow-500" aria-label={`平均評価 ${avg} 点`}>
               {"★".repeat(Math.round(avg))}
             </span>
           )}
           {typeof total === "number" && (
-            <span className="text-sm opacity-70">（{total}件）</span>
+            <span className="text-sm opacity-70 text-black">
+              （{total}件）
+            </span>
           )}
         </div>
         <a
@@ -295,7 +297,7 @@ export default function StoreReviews({
       {reviews.map((rv, i) => (
         <div
           key={i}
-          className={`rounded-md border p-4 shadow-sm text-white text-outline`}
+          className={`rounded-md border p-4 shadow-sm ${"bg-white/30 text-black"}`}
         >
           <div className="flex items-center gap-3 mb-2">
             <Avatar author={rv.author} url={rv.profilePhotoUrl} />

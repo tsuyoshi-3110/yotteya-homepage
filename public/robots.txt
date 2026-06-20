@@ -1,9 +1,0 @@
-# *
-User-agent: *
-Allow: /
-
-# Host
-Host: https://yotteya.shop
-
-# Sitemaps
-Sitemap: https://yotteya.shop/sitemap.xml
