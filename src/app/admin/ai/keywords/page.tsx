@@ -80,7 +80,7 @@ export default function AIKeywordsPage() {
 
       <textarea
         className="w-full min-h-[360px] rounded border p-3 font-mono text-sm"
-        placeholder={`例）\n追い焚き配管洗浄の特徴\nエアコンクリーニングの注意点\n対応エリア：大阪・兵庫（東淀川区／豊中市／吹田市 など）`}
+        placeholder={`例）\n主力商品・サービスの特徴\nよくある質問と回答\n対応エリア・最寄り駅`}
         value={lines}
         onChange={(e) => setLines(e.target.value)}
       />

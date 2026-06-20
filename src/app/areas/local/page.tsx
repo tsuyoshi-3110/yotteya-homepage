@@ -2,30 +2,30 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import {
   PUBLIC_ADDRESS,
-  copy,
   pageUrl,
   seo,
   site,
 } from "@/config/site";
+import { CUSTOMER } from "@/config/customer";
 
 export const metadata: Metadata = seo.page("areasLocal");
 
-const localCopy = copy.ja.areasLocal;
+const localCopy = CUSTOMER.localPage;
 
 const localBusinessJsonLd = {
   "@context": "https://schema.org",
-  "@type": "FoodEstablishment",
+  "@type": localCopy.schemaType,
   "@id": `${pageUrl("/")}#local`,
   name: site.name,
   url: pageUrl("/areas/local"),
   image: pageUrl(site.logoPath),
-  servesCuisine: ["クレープ", "スイーツ"],
-  priceRange: "￥￥",
+  servesCuisine: [...localCopy.cuisines],
+  priceRange: localCopy.priceRange,
   address: PUBLIC_ADDRESS.postal,
   hasMap: PUBLIC_ADDRESS.hasMap,
   areaServed: {
     "@type": "AdministrativeArea",
-    name: "大阪市東淀川区",
+    name: localCopy.areaName,
   },
   sameAs: Object.values(site.socials).filter(Boolean),
 };
@@ -46,7 +46,7 @@ const faqJsonLd = {
 const safeJson = (value: object) =>
   JSON.stringify(value).replace(/</g, "\\u003c");
 
-export default function HigashiyodogawaCrepePage() {
+export default function LocalBusinessPage() {
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 text-black">
       <script
@@ -60,20 +60,19 @@ export default function HigashiyodogawaCrepePage() {
 
       <article className="space-y-8 rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl backdrop-blur-md sm:p-10">
         <header className="space-y-4">
-          <p className="font-semibold text-pink-700">大阪市東淀川区・淡路</p>
+          <p className="font-semibold text-pink-700">{localCopy.areaLabel}</p>
           <h1 className="text-3xl font-extrabold leading-tight sm:text-4xl">
-            大阪市東淀川区のクレープ専門店 甘味処 よって屋
+            {localCopy.h1}
           </h1>
           <p className="text-base leading-8 sm:text-lg">
             {localCopy.lead}
-            注文をいただいてから生地を焼き上げ、できたてのクレープをご提供しています。
-            テイクアウトはもちろん、店舗ではイートインもご利用いただけます。
+            {localCopy.introduction}
           </p>
         </header>
 
         <section aria-labelledby="access" className="space-y-3">
           <h2 id="access" className="text-2xl font-bold">
-            淡路の店舗・アクセス
+            {localCopy.accessTitle}
           </h2>
           <p className="leading-7">
             所在地：{PUBLIC_ADDRESS.text}
@@ -109,15 +108,12 @@ export default function HigashiyodogawaCrepePage() {
             {localCopy.coverageTitle}
           </h2>
           <p className="leading-8">{localCopy.coverageBody}</p>
-          <p className="leading-8">
-            東淀川区でクレープやスイーツをお探しの際は、お買い物帰り、
-            学校帰り、ご家族とのおやつなどにお気軽にお立ち寄りください。
-          </p>
+          <p className="leading-8">{localCopy.closingText}</p>
         </section>
 
         <section aria-labelledby="faq" className="space-y-4">
           <h2 id="faq" className="text-2xl font-bold">
-            東淀川区の店舗についてよくある質問
+            {localCopy.faqTitle}
           </h2>
           <dl className="space-y-4">
             {localCopy.faq.map((item) => (
@@ -140,19 +136,19 @@ export default function HigashiyodogawaCrepePage() {
             href="/products"
             className="rounded-full bg-pink-600 px-5 py-3 font-semibold text-white hover:opacity-80"
           >
-            クレープメニューを見る
+            {localCopy.menuLinkText}
           </Link>
           <Link
             href="/stores"
             className="rounded-full border border-black px-5 py-3 font-semibold hover:bg-black hover:text-white"
           >
-            店舗情報を見る
+            {localCopy.storesLinkText}
           </Link>
           <Link
             href="/"
             className="rounded-full border border-black px-5 py-3 font-semibold hover:bg-black hover:text-white"
           >
-            トップページへ戻る
+            {localCopy.homeLinkText}
           </Link>
         </nav>
       </article>

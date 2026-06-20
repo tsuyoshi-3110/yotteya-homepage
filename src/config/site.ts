@@ -13,11 +13,12 @@ import { type AiSiteConfig } from "@/types/AiSite";
 import { type FooterI18n } from "@/types/FooterI18n";
 import { type FaqItem } from "@/types/FaqItem";
 import { type PageDef } from "@/types/PageDef";
+import { CUSTOMER } from "@/config/customer";
 
 /* =========================
    URL / 環境ユーティリティ
 ========================= */
-const PRODUCTION_BASE_URL = "https://yotteya.shop";
+const PRODUCTION_BASE_URL = CUSTOMER.productionUrl;
 const LOCAL_BASE_URL = "http://localhost:3000";
 const ENV_BASE_URL_RAW = process.env.NEXT_PUBLIC_APP_URL?.trim();
 const ENV_BASE_URL_IS_LOCAL =
@@ -106,30 +107,21 @@ function createSite(overrides: SiteOverrides) {
 /* =========================
    ★ 店舗ごとの最小上書き（ここだけ編集）
 ========================= */
-const SITE_BRAND = "甘味処 よって屋"; // 表示用のフル表記
+const SITE_BRAND = CUSTOMER.brand.name;
 
 const SITE_OVERRIDES: SiteOverrides = {
-  name: "甘味処 よって屋",
-  tagline: "大阪市のクレープ専門店",
-  description:
-    "大阪市東淀川区・北区に展開するクレープ専門店『甘味処 よって屋』。注文ごとに生地から焼き上げるこだわりのクレープをご提供。テイクアウト・イートイン対応。",
-  keywords: [
-    "甘味処クレープよって屋",
-    "よって屋",
-    "甘味処",
-    "クレープ",
-    "大阪",
-    "東淀川区",
-    "北区",
-    "下新庄",
-    "淡路",
-    "クレープ専門店",
-  ],
-  tel: "",
-  logoPath: "/images/ogpLogo.png",
-  googleSiteVerification: "UcH7-5B4bwpJxxSjIpBskahFhBRTSLRJUZ8A3LAnnFE",
+  name: CUSTOMER.brand.name,
+  tagline: CUSTOMER.brand.tagline,
+  description: CUSTOMER.brand.description,
+  keywords: CUSTOMER.brand.keywords,
+  tel: CUSTOMER.brand.telephone,
+  logoPath: CUSTOMER.brand.logoPath,
+  googleSiteVerification: CUSTOMER.brand.googleSiteVerification,
   socials: {
-    instagram: "https://www.instagram.com/yotteya.crape/",
+    instagram: CUSTOMER.social.instagram,
+    line: CUSTOMER.social.line,
+    x: CUSTOMER.social.x,
+    facebook: CUSTOMER.social.facebook,
   },
 };
 
@@ -163,15 +155,18 @@ function mapUrlFromText(text: string) {
 
 /** 店舗の公開住所（必要に応じてこの値だけ編集） */
 export const PUBLIC_ADDRESS: PublicAddress = {
-  text: "大阪市東淀川区淡路４丁目１８−１６",
+  text: CUSTOMER.address.text,
   postal: {
     "@type": "PostalAddress",
     addressCountry: "JP",
-    addressRegion: "大阪府",
-    addressLocality: "大阪市東淀川区",
-    streetAddress: "淡路４丁目１８−１６",
+    addressRegion: CUSTOMER.address.region,
+    addressLocality: CUSTOMER.address.locality,
+    streetAddress: CUSTOMER.address.street,
+    ...(CUSTOMER.address.postalCode
+      ? { postalCode: CUSTOMER.address.postalCode }
+      : {}),
   },
-  hasMap: mapUrlFromText("大阪市東淀川区淡路４丁目１８−１６"),
+  hasMap: mapUrlFromText(CUSTOMER.address.text),
 };
 
 /* =========================
@@ -234,56 +229,26 @@ export const copy: Record<string, CopyBundle> = {
   /* ========= 日本語 ========= */
   ja: {
     home: {
-      headline: site.name,
-      description:
-        "大阪市東淀川区・北区に展開するクレープ専門店です。注文ごとに生地から焼き上げるこだわりのクレープをご提供しています。テイクアウトはもちろん、店舗によってはイートインもご利用いただけます。お買い物や学校帰りなど、さまざまなシーンでお気軽にお立ち寄りください。",
+      headline: CUSTOMER.home.headline,
+      description: CUSTOMER.home.description,
     },
     stores: {
-      heroTitle: `${site.name} ─ 店舗一覧`,
-      heroAreas: "大阪市東淀川区・北区",
-      heroLead: "こだわりのクレープをご提供するクレープ専門店です。",
-      heroTail:
-        "駅チカ店から住宅街の隠れ家店まで、各店舗の営業時間・限定メニューをチェックしてください。",
-      heroIntroLine: `${site.name}は大阪市東淀川区・北区に展開するクレープ専門店です。`,
+      heroTitle: CUSTOMER.stores.heroTitle,
+      heroAreas: CUSTOMER.stores.heroAreas,
+      heroLead: CUSTOMER.stores.heroLead,
+      heroTail: CUSTOMER.stores.heroTail,
+      heroIntroLine: CUSTOMER.stores.heroIntroLine,
     },
     areasLocal: {
-      h1: "東淀川区のクレープ・甘味処",
-      lead: "淡路・上新庄・だいどう豊里・井高野・柴島など東淀川区全域からご来店いただいています。",
-      services: [
-        {
-          title: "人気メニュー",
-          bullets: [
-            "季節のフルーツクレープ（限定）",
-            "カスタード＆生クリーム（自家製ソース）",
-            "チョコバナナ／いちごみるく ほか定番",
-          ],
-        },
-        {
-          title: "ご利用シーン",
-          bullets: [
-            "テイクアウト・食べ歩き",
-            "ちょっとした手土産・差し入れ",
-            "お子さま連れ・放課後のおやつに",
-          ],
-        },
-      ],
-      coverageTitle: "対応エリア（東淀川区）",
-      coverageBody:
-        "淡路・東淡路・菅原・豊新・上新庄・瑞光・小松・南江口・北江口・井高野・大桐・大隅・豊里・大道南・柴島・下新庄 ほか",
-      faq: [
-        {
-          q: "テイクアウトはできますか？",
-          a: "すべてテイクアウト可能です。生クリーム多めなどのカスタムもお気軽にどうぞ。",
-        },
-        {
-          q: "売り切れはありますか？",
-          a: "季節限定メニューは材料がなくなり次第終了となる場合があります。最新情報はInstagramでお知らせしています。",
-        },
-        {
-          q: "支払い方法は何がありますか？",
-          a: "現金のほか、主要キャッシュレス決済に対応しています。詳細は店頭でご確認ください。",
-        },
-      ],
+      h1: CUSTOMER.localPage.h1,
+      lead: CUSTOMER.localPage.lead,
+      services: CUSTOMER.localPage.services.map((service) => ({
+        title: service.title,
+        bullets: [...service.bullets],
+      })),
+      coverageTitle: CUSTOMER.localPage.coverageTitle,
+      coverageBody: CUSTOMER.localPage.coverageBody,
+      faq: CUSTOMER.localPage.faq.map((item) => ({ ...item })),
       contactTitle: "お問い合わせ",
       contactText: "ご不明な点はInstagramのDMまたは店頭にてお気軽にどうぞ。",
       toProductsText: "トップページへ",
@@ -1175,6 +1140,24 @@ export const copy: Record<string, CopyBundle> = {
   },
 };
 
+if (CUSTOMER.localizedContentMode === "customer-default") {
+  Object.keys(copy).forEach((lang) => {
+    if (lang === "ja") return;
+    copy[lang] = {
+      home: { ...copy.ja.home },
+      stores: { ...copy.ja.stores },
+      areasLocal: {
+        ...copy.ja.areasLocal,
+        services: copy.ja.areasLocal.services.map((service) => ({
+          title: service.title,
+          bullets: [...service.bullets],
+        })),
+        faq: copy.ja.areasLocal.faq.map((item) => ({ ...item })),
+      },
+    };
+  });
+}
+
 /* =========================
    Footer L10N（サイト名は自動追従）
 ========================= */
@@ -1191,7 +1174,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "公式サイト",
     siteAlt: site.name,
-    areaLinkText: "東淀川区の甘味処・クレープ",
+    areaLinkText: CUSTOMER.localPage.footerLinkText,
     rights: "All rights reserved.",
   },
   en: {
@@ -1349,33 +1332,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
 /* =========================
    FAQ データ（ここで集約管理）
 ========================= */
-export const faqItems: FaqItem[] = [
-  {
-    question: "テイクアウトはできますか？",
-    answer:
-      "すべてのメニューをテイクアウトでご利用いただけます。生クリーム多めなどのカスタムもお気軽にお申し付けください。",
-  },
-  {
-    question: "売り切れはありますか？",
-    answer:
-      "季節限定メニューや人気商品は、材料がなくなり次第終了となる場合があります。最新情報はInstagram（@yotteya.crape）でお知らせしています。",
-  },
-  {
-    question: "支払い方法は？",
-    answer:
-      "現金のほか、主要なキャッシュレス決済に対応しています。詳細は店頭でご確認ください。",
-  },
-  {
-    question: "イートインはできますか？",
-    answer:
-      "店舗によってはイートインスペースをご用意しています。各店舗の情報は店舗一覧ページをご確認ください。",
-  },
-  {
-    question: "アレルギー対応はしていますか？",
-    answer:
-      "原材料のアレルギー情報については店頭スタッフにお問い合わせください。",
-  },
-];
+export const faqItems: FaqItem[] = CUSTOMER.faq.map((item) => ({ ...item }));
 
 /* =========================
    ページ辞書（ogImage は任意）
@@ -1383,16 +1340,14 @@ export const faqItems: FaqItem[] = [
 const PAGES = {
   home: {
     path: "/",
-    title: `東淀川区のクレープ専門店｜${site.name}`,
-    description:
-      "大阪市東淀川区・淡路のクレープ専門店『甘味処 よって屋』。注文ごとに生地から焼き上げるこだわりクレープをご提供。テイクアウト・イートイン対応。",
+    title: CUSTOMER.seo.homeTitle,
+    description: CUSTOMER.seo.homeDescription,
     ogType: "website",
   },
   about: {
     path: "/about",
     title: `当店の思い｜${site.name}`,
-    description:
-      "甘味処 よって屋の想いをご紹介します。素材へのこだわりとお客様への気持ちを込めたメッセージ。",
+    description: CUSTOMER.seo.aboutDescription,
     ogType: "website",
   },
   news: {
@@ -1403,41 +1358,40 @@ const PAGES = {
   },
   areasLocal: {
     path: "/areas/local",
-    title: `東淀川区のクレープ専門店｜${site.name}`,
-    description:
-      "大阪市東淀川区・淡路でクレープをお探しなら「甘味処 よって屋」へ。焼きたてクレープをテイクアウト・イートインで楽しめます。",
+    title: CUSTOMER.seo.localTitle,
+    description: CUSTOMER.seo.localDescription,
     ogType: "article",
   },
   products: {
     path: "/products",
     title: `メニュー一覧｜${site.name}`,
-    description: `${site.name}のクレープメニュー一覧。季節限定・定番・カスタマイズ可能なクレープを掲載。`,
+    description: CUSTOMER.seo.productsDescription,
     ogType: "website",
     ogImage: "/ogp-products.jpg",
   },
   productsEC: {
     path: "/products-ec",
     title: `メニュー一覧（オンライン）｜${site.name}`,
-    description: `${site.name}のメニュー一覧（オンライン対応）。お気に入りのクレープをチェック。`,
+    description: CUSTOMER.seo.productsEcDescription,
     ogType: "website",
     ogImage: "/ogp-products.jpg",
   },
   projects: {
     path: "/projects",
-    title: `クレープ紹介｜${site.name}`,
-    description: `${site.name}のクレープ紹介ページ。季節のフルーツ・定番クリーム・チョコバナナなどを写真付きで掲載。`,
+    title: CUSTOMER.seo.projectsTitle,
+    description: CUSTOMER.seo.projectsDescription,
     ogType: "website",
   },
   stores: {
     path: "/stores",
     title: `店舗一覧｜${site.name}`,
-    description: `${site.name}の店舗一覧ページ。大阪市東淀川区・北区の店舗情報をご紹介します。`,
+    description: CUSTOMER.seo.storesDescription,
     ogType: "website",
   },
   faq: {
     path: "/faq",
     title: `よくある質問（FAQ）｜${site.name}`,
-    description: `テイクアウト・支払い方法・売り切れ情報など、${site.name}のクレープに関するよくある質問。`,
+    description: CUSTOMER.seo.faqDescription,
     ogType: "article",
   },
 } as const;
@@ -1565,15 +1519,15 @@ export const AI_SITE: AiSiteConfig = {
   brand: site.name,
   url: site.baseUrl,
   areasByLang: {
-    ja: "大阪市東淀川区・北区（淡路・上新庄・下新庄 など）",
-    en: "Higashiyodogawa & Kita, Osaka (e.g., Awaji, Kamishinjo, Shimoshinjo)",
+    ja: CUSTOMER.ai.areasJa,
+    en: CUSTOMER.ai.areasEn,
   },
   servicesByLang: {
-    ja: ["クレープ", "テイクアウト", "イートイン", "季節限定メニュー"],
-    en: ["crepe", "takeout", "eat-in", "seasonal limited menu"],
+    ja: [...CUSTOMER.ai.servicesJa],
+    en: [...CUSTOMER.ai.servicesEn],
   },
-  retail: true,
-  productPageRoute: "/products",
+  retail: CUSTOMER.ai.retail,
+  productPageRoute: CUSTOMER.ai.productPageRoute,
   languages: {
     default: "ja",
     allowed: [

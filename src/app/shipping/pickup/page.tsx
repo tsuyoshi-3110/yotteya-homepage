@@ -276,7 +276,7 @@ export default function PickupAddressPage() {
             className="mt-1 w-full border rounded-xl p-2"
             value={form.city}
             onChange={onChange("city")}
-            placeholder="例）東淀川区淡路"
+            placeholder="例）市区町村・地域名"
           />
         </div>
 

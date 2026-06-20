@@ -1,5 +1,6 @@
 // src/lib/jsonld/video.ts
 import type { DocumentData } from "firebase/firestore";
+import { CUSTOMER } from "@/config/customer";
 
 /** 相対→絶対URL */
 const toAbs = (
@@ -47,7 +48,8 @@ export function buildVideoJsonLd(
   const embedUrl = rawEmbedUrl ? toAbs(rawEmbedUrl, siteUrl) : undefined;
 
   const name: string =
-    d?.heroVideo?.name ?? `${d?.siteName ?? "おそうじ処 たよって屋"} 紹介動画`;
+    d?.heroVideo?.name ??
+    `${d?.siteName ?? CUSTOMER.brand.name} 紹介動画`;
   const description: string =
     d?.heroVideo?.description ?? d?.description ?? "サービス紹介動画です。";
 
@@ -88,7 +90,9 @@ export function buildVideoJsonLd(
   if (d?.heroVideo?.duration) video.duration = d.heroVideo.duration; // ISO8601: "PT30S" など
 
   const publisherName =
-    d?.heroVideo?.publisherName ?? d?.siteName ?? "おそうじ処 たよって屋";
+    d?.heroVideo?.publisherName ??
+    d?.siteName ??
+    CUSTOMER.brand.name;
   const publisherLogoUrl = toAbs(
     d?.headerLogoUrl,
     siteUrl,

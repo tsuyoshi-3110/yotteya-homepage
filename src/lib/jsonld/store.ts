@@ -1,5 +1,6 @@
 // src/lib/jsonld/store.ts
 import type { DocumentData } from "firebase/firestore";
+import { CUSTOMER } from "@/config/customer";
 
 /* =========================
    Helpers
@@ -57,8 +58,8 @@ const normalizeOpeningHours = (raw: any): any[] => {
           "Friday",
           "Saturday",
         ],
-        opens: r.opens ?? "09:00",
-        closes: r.closes ?? "18:00",
+        opens: r.opens ?? CUSTOMER.structuredData.openingHours.opens,
+        closes: r.closes ?? CUSTOMER.structuredData.openingHours.closes,
       };
     });
   }
@@ -66,25 +67,24 @@ const normalizeOpeningHours = (raw: any): any[] => {
   return [
     {
       "@type": "OpeningHoursSpecification",
-      dayOfWeek: [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ],
-      opens: "09:00",
-      closes: "18:00",
+      dayOfWeek: [...CUSTOMER.structuredData.openingHours.dayOfWeek],
+      opens: CUSTOMER.structuredData.openingHours.opens,
+      closes: CUSTOMER.structuredData.openingHours.closes,
     },
   ];
 };
 
-/** 緯度経度を @type 付きで正規化（無ければ既定：豊中市付近） */
+/** 緯度経度を @type 付きで正規化（無ければ顧客設定を使用） */
 const normalizeGeo = (d: Record<string, any>) => {
   const g = d.geo ?? { latitude: d.latitude, longitude: d.longitude };
-  const lat = typeof g?.latitude === "number" ? g.latitude : 34.7488;
-  const lng = typeof g?.longitude === "number" ? g.longitude : 135.4821;
+  const lat =
+    typeof g?.latitude === "number"
+      ? g.latitude
+      : CUSTOMER.address.latitude;
+  const lng =
+    typeof g?.longitude === "number"
+      ? g.longitude
+      : CUSTOMER.address.longitude;
   return { "@type": "GeoCoordinates", latitude: lat, longitude: lng };
 };
 
@@ -119,12 +119,10 @@ const normalizeAreaServed = (raw: any): any[] => {
       typeof x === "string" ? { "@type": "AdministrativeArea", name: x } : x
     );
   }
-  return [
-    { "@type": "AdministrativeArea", name: "大阪府" },
-    { "@type": "AdministrativeArea", name: "豊中市" },
-    { "@type": "AdministrativeArea", name: "大阪市東淀川区" },
-    { "@type": "AdministrativeArea", name: "兵庫県" },
-  ];
+  return CUSTOMER.structuredData.areaServed.map((name) => ({
+    "@type": "AdministrativeArea",
+    name,
+  }));
 };
 
 /* =========================
@@ -132,7 +130,7 @@ const normalizeAreaServed = (raw: any): any[] => {
 ========================= */
 
 /**
- * LocalBusiness / CleaningService の JSON-LD を生成（欠損OK）
+ * 顧客設定に応じた LocalBusiness JSON-LD を生成（欠損OK）
  * - store: Firestoreから取れた任意shape（undefinedでもOK）
  * - siteUrl: ルートURL（例: https://example.com）※末尾スラは自動除去
  */
@@ -145,10 +143,9 @@ export function buildStoreJsonLd(
 
   // 基本情報
   const siteName =
-    d.siteName ?? d.title ?? d.shopName ?? "おそうじ処 たよって屋";
+    d.siteName ?? d.title ?? d.shopName ?? CUSTOMER.brand.name;
   const description =
-    d.description ??
-    "大阪府豊中市の家事代行・ハウスクリーニング専門店。水回り清掃から整理収納まで丁寧に対応します。";
+    d.description ?? CUSTOMER.structuredData.defaultDescription;
   const url = toAbs(d.url, root, ""); // 相対でも絶対でもOK。未指定は root
 
   // 代表画像（オーナーが設定した imageUrls の先頭を最優先）
@@ -170,17 +167,32 @@ export function buildStoreJsonLd(
 
   // 電話番号
   const telephone =
-    toE164JP(d.ownerTel ?? d.tel ?? d.phone) ?? "+81 90-6559-9110";
+    toE164JP(d.ownerTel ?? d.tel ?? d.phone) ??
+    toE164JP(CUSTOMER.brand.telephone);
 
   // 住所
   const address = {
     "@type": "PostalAddress",
     streetAddress:
-      d.address?.streetAddress ?? d.streetAddress ?? "小曽根3-6-13",
-    addressLocality: d.address?.addressLocality ?? d.city ?? "豊中市",
-    addressRegion: d.address?.addressRegion ?? d.pref ?? "大阪府",
-    postalCode: d.address?.postalCode ?? d.postalCode ?? "561-0813",
-    addressCountry: d.address?.addressCountry ?? "JP",
+      d.address?.streetAddress ??
+      d.streetAddress ??
+      CUSTOMER.address.street,
+    addressLocality:
+      d.address?.addressLocality ?? d.city ?? CUSTOMER.address.locality,
+    addressRegion:
+      d.address?.addressRegion ?? d.pref ?? CUSTOMER.address.region,
+    ...(d.address?.postalCode ??
+    d.postalCode ??
+    CUSTOMER.address.postalCode
+      ? {
+          postalCode:
+            d.address?.postalCode ??
+            d.postalCode ??
+            CUSTOMER.address.postalCode,
+        }
+      : {}),
+    addressCountry:
+      d.address?.addressCountry ?? CUSTOMER.address.country,
   };
 
   // 営業時間
@@ -231,7 +243,7 @@ export function buildStoreJsonLd(
   // 返却
   return {
     "@context": "https://schema.org",
-    "@type": ["LocalBusiness", "CleaningService"],
+    "@type": [...CUSTOMER.structuredData.types],
     "@id": entityId,
     name: siteName,
     description,

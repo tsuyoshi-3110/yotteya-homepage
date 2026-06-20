@@ -161,7 +161,7 @@ const JA: Strings = {
     namePh: "山田 太郎",
     phonePh: "09012345678",
     emailPh: "example@example.com",
-    addressPh: "例）大阪府豊中市〇〇町1-2-3",
+    addressPh: "例）都道府県・市区町村・番地",
     notesPh: "サービス内容をご記入ください",
   },
   modal: {

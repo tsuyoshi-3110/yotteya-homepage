@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { CUSTOMER } from "@/config/customer";
 
 // Header と完全に同じ Menu キー一覧
 const MENU_KEYS = [
@@ -114,44 +115,49 @@ export default function Footer() {
 
           {/* SNS */}
           <nav className="flex items-center justify-center gap-5">
-            <a
-              href="https://www.instagram.com/yotteya.crape/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Image
-                src="/images/instagram-logo.png"
-                alt="Instagram"
-                width={iconSize}
-                height={iconSize}
-              />
-            </a>
+            {CUSTOMER.social.instagram && (
+              <a
+                href={CUSTOMER.social.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Image
+                  src="/images/instagram-logo.png"
+                  alt="Instagram"
+                  width={iconSize}
+                  height={iconSize}
+                />
+              </a>
+            )}
 
-            <a
-              href="https://lin.ee/YcKAJja"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Image
-                src="/images/line-logo.png"
-                alt="LINE"
-                width={iconSize}
-                height={iconSize}
-              />
-            </a>
+            {CUSTOMER.social.line && (
+              <a
+                href={CUSTOMER.social.line}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Image
+                  src="/images/line-logo.png"
+                  alt="LINE"
+                  width={iconSize}
+                  height={iconSize}
+                />
+              </a>
+            )}
           </nav>
 
           {/* エリアリンク */}
           <p className="text-xs">
             <a href="/areas/local" className="hover:underline">
-              {t.areaLinkText}
+              {CUSTOMER.localPage.footerLinkText}
             </a>
           </p>
 
           {/* コピーライト */}
           <p className="font-semibold">{site.name}</p>
           <p className="text-xs">
-            © {new Date().getFullYear()} Tayotteya. {t.rights}
+            © {new Date().getFullYear()} {CUSTOMER.brand.copyrightName}.{" "}
+            {t.rights}
           </p>
         </div>
       </div>

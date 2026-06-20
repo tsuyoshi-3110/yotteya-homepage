@@ -1,5 +1,39 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 新しい顧客サイトを作る
+
+顧客固有の公開情報は `src/config/customer.ts` に集約しています。
+
+新しい顧客へ複製するときは、まず次を変更してください。
+
+- `siteKey`
+- `productionUrl` / `vercelUrl`
+- 店名・業種・説明・SEOキーワード
+- SNS URL
+- 店舗住所・緯度経度
+- トップページ・店舗一覧・地域ページの文章
+- 構造化データの業種、対応地域、営業時間
+- FAQ
+- AI用の業種・地域情報
+
+`localizedContentMode` は、新規顧客では `"customer-default"` を推奨します。
+これにより、旧顧客向けの翻訳文が残らず、未翻訳言語では顧客用の日本語コピーを表示します。
+
+ロゴ類は別途差し替えます。
+
+- `public/images/ogpLogo.png`
+- `src/app/icon.png`
+- `src/app/favicon.ico`
+
+秘密情報は `customer.ts` に書かず、`.env.local` とVercelのEnvironment Variablesで管理します。
+
+- Firebase
+- Stripe
+- Google API / OAuth
+- OpenAI API
+
+`npm run build`の前に、`customer.ts`のドメインから`cors.json`が自動同期されます。
+
 ## Getting Started
 
 First, run the development server:
