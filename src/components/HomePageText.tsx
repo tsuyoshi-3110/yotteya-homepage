@@ -25,12 +25,14 @@ export default function HomePageText() {
   function StaggerText({
     text,
     className,
+    as = "p",
     delay = 0.2,
     duration = 0.7,
     stagger = 0.035,
   }: {
     text: string;
     className?: string;
+    as?: "h1" | "p";
     delay?: number;
     duration?: number;
     stagger?: number;
@@ -49,8 +51,10 @@ export default function HomePageText() {
       },
     };
 
+    const MotionTag = as === "h1" ? motion.h1 : motion.p;
+
     return (
-      <motion.p
+      <MotionTag
         variants={parent}
         initial="hidden"
         animate={inView ? "show" : "hidden"}
@@ -61,7 +65,7 @@ export default function HomePageText() {
             {ch === " " ? "\u00A0" : ch}
           </motion.span>
         ))}
-      </motion.p>
+      </MotionTag>
     );
   }
 
@@ -71,6 +75,7 @@ export default function HomePageText() {
       {/* ======= 見出し（1文字ずつ Stagger） ======= */}
       <StaggerText
         text={headline}
+        as="h1"
         className="text-3xl lg:text-4xl font-extrabold leading-tight text-white text-outline"
         stagger={0.05}
         duration={0.7}

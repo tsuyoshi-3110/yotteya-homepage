@@ -1383,9 +1383,9 @@ export const faqItems: FaqItem[] = [
 const PAGES = {
   home: {
     path: "/",
-    title: `${site.name}｜大阪市のクレープ専門店`,
+    title: `東淀川区のクレープ専門店｜${site.name}`,
     description:
-      "大阪市東淀川区・北区に展開するクレープ専門店『甘味処 よって屋』。注文ごとに生地から焼き上げるこだわりクレープをご提供。",
+      "大阪市東淀川区・淡路のクレープ専門店『甘味処 よって屋』。注文ごとに生地から焼き上げるこだわりクレープをご提供。テイクアウト・イートイン対応。",
     ogType: "website",
   },
   about: {
@@ -1403,9 +1403,9 @@ const PAGES = {
   },
   areasLocal: {
     path: "/areas/local",
-    title: `東淀川区のクレープ・甘味処｜${site.name}`,
+    title: `東淀川区のクレープ専門店｜${site.name}`,
     description:
-      "大阪市東淀川区のクレープ・甘味は「甘味処 よって屋」へ。テイクアウト・イートイン対応。",
+      "大阪市東淀川区・淡路でクレープをお探しなら「甘味処 よって屋」へ。焼きたてクレープをテイクアウト・イートインで楽しめます。",
     ogType: "article",
   },
   products: {
