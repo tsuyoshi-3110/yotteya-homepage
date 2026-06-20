@@ -281,6 +281,9 @@ export default function ProductMedia({
                   onCanPlayThrough={(event) =>
                     markVideoReady(index, event.currentTarget)
                   }
+                  onSeeked={(event) =>
+                    markVideoReady(index, event.currentTarget)
+                  }
                   onEnded={handleVideoEnded}
                 />
               ) : (
