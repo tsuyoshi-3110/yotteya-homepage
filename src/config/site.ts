@@ -17,9 +17,20 @@ import { type PageDef } from "@/types/PageDef";
 /* =========================
    URL / 環境ユーティリティ
 ========================= */
-const ENV_BASE_URL_RAW =
-  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-const BASE_URL = ENV_BASE_URL_RAW.replace(/\/$/, "");
+const PRODUCTION_BASE_URL = "https://yotteya.shop";
+const LOCAL_BASE_URL = "http://localhost:3000";
+const ENV_BASE_URL_RAW = process.env.NEXT_PUBLIC_APP_URL?.trim();
+const ENV_BASE_URL_IS_LOCAL =
+  ENV_BASE_URL_RAW === "http://localhost:3000" ||
+  ENV_BASE_URL_RAW === "https://localhost:3000" ||
+  ENV_BASE_URL_RAW?.startsWith("http://127.0.0.1") ||
+  ENV_BASE_URL_RAW?.startsWith("https://127.0.0.1");
+const RESOLVED_BASE_URL =
+  process.env.NODE_ENV === "production" &&
+  (!ENV_BASE_URL_RAW || ENV_BASE_URL_IS_LOCAL)
+    ? PRODUCTION_BASE_URL
+    : ENV_BASE_URL_RAW || LOCAL_BASE_URL;
+const BASE_URL = RESOLVED_BASE_URL.replace(/\/$/, "");
 
 function safeHost(input: string, fallback = "localhost:3000"): string {
   try {

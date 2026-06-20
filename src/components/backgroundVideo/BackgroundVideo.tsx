@@ -123,13 +123,15 @@ export default function BackgroundMedia() {
           }
         });
       } else {
+        // 旧形式では type/url がトップ動画を表す。
+        // 画像より先に追加しないと、動画が数秒間表示されず「消えた」ように見える。
+        if (data.type === "video" && data.url) {
+          items.push({ src: data.url, type: "video" });
+        }
         if (Array.isArray(data.imageUrls)) {
           data.imageUrls.forEach((u) => {
             if (u) items.push({ src: u, type: "image" });
           });
-        }
-        if (data.type === "video" && data.url) {
-          items.push({ src: data.url, type: "video" });
         }
       }
 
@@ -499,6 +501,9 @@ export default function BackgroundMedia() {
     mode: "existing",
     src: item.src,
   }));
+  const heroPoster =
+    heroVideoMeta?.thumbnailUrl ||
+    heroItems.find((item) => item.type === "image")?.src;
 
   return (
     <div className="fixed inset-0 top-12">
@@ -516,7 +521,7 @@ export default function BackgroundMedia() {
             muted
             alt="背景メディア"
             videoDisplay="thumbnailUntilReady"
-            videoPoster={heroVideoMeta?.thumbnailUrl}
+            videoPoster={heroPoster}
           />
         </div>
       )}
