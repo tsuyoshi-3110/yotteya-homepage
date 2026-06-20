@@ -516,11 +516,11 @@ export default function BackgroundMedia() {
             src={heroItems[0].src}
             type={heroItems[0].type}
             items={heroItems}
-            className="w-full h-full"
+            fill
             autoPlay
             muted
             alt="背景メディア"
-            videoDisplay="thumbnailUntilReady"
+            videoDisplay="play"
             videoPoster={heroPoster}
           />
         </div>

@@ -10,7 +10,7 @@ export const metadata: Metadata = seo.page("home");
 
 export default function HomePage() {
   return (
-    <main className="w-full overflow-x-hidden">
+    <div className="w-full overflow-x-hidden">
       {/* ① ファーストビュー */}
       <section className="relative h-screen overflow-hidden">
         <BackgroundVideo />
@@ -23,6 +23,6 @@ export default function HomePage() {
         <HomePageText />
         <TopVisibleSections />
       </section>
-    </main>
+    </div>
   );
 }

@@ -31,6 +31,8 @@ interface Props {
   videoDisplay?: "play" | "thumbnailUntilReady";
   /** 動画読込中に即時表示するサムネイル画像 */
   videoPoster?: string;
+  /** trueにすると aspect-square を外し、親要素を埋めるモードになる（背景用） */
+  fill?: boolean;
 }
 
 /** items があればそれを優先。なければ旧来の単枚 src/type を1枚目として使う */
@@ -75,6 +77,7 @@ export default function ProductMedia({
   alt = "",
   videoDisplay = "play",
   videoPoster,
+  fill = false,
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [readyVideoIndexes, setReadyVideoIndexes] = useState<Set<number>>(
@@ -225,7 +228,9 @@ export default function ProductMedia({
     <div
       ref={ref}
       className={clsx(
-        "relative w-full aspect-square overflow-hidden",
+        "relative w-full overflow-hidden",
+        !fill && "aspect-square",
+        fill && "h-full",
         className,
       )}
     >
@@ -269,6 +274,9 @@ export default function ProductMedia({
                   preload={visible ? "auto" : "metadata"}
                   onLoadedMetadata={(event) =>
                     showVideoThumbnail(event.currentTarget)
+                  }
+                  onCanPlay={(event) =>
+                    markVideoReady(index, event.currentTarget)
                   }
                   onCanPlayThrough={(event) =>
                     markVideoReady(index, event.currentTarget)
