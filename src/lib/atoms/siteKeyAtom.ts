@@ -3,7 +3,7 @@ import { atomWithStorage } from "jotai/utils";
 
 export const partnerSiteKeyAtom = atomWithStorage<string | null>(
   "partnerSiteKey", // localStorage のキー
-  null
+  null,
 );
 
-export const SITE_KEY = "tayotteya3110";
+export const SITE_KEY = "yotteya";

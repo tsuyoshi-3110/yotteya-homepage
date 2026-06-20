@@ -14,7 +14,7 @@ import ThemeWallpaper from "./ThemeWallpaper";
 import HeaderLogoPicker from "./HeaderLogoPicker";
 
 type Props = {
-  /** どのサイトの設定か（例: "tayotteya3110"） */
+  /** どのサイトの設定か（例: "yotteya"） */
   siteKey: string;
   /** Firestore のコレクション（既定: "siteSettingsEditable"） */
   collectionName?: string;
@@ -56,7 +56,7 @@ export default function ImageLogoControls({
       "state_changed",
       (snapshot) => {
         const percent = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
         );
         setP(percent);
       },
@@ -70,12 +70,12 @@ export default function ImageLogoControls({
         await setDoc(
           doc(db, collectionName, siteKey),
           { imageUrl },
-          { merge: true }
+          { merge: true },
         );
         setP(null);
         onDone?.("wallpaper", imageUrl);
         alert("背景画像を更新しました！");
-      }
+      },
     );
   };
 
@@ -101,7 +101,7 @@ export default function ImageLogoControls({
       "state_changed",
       (snapshot) => {
         const percent = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
         );
         setP(percent);
       },
@@ -115,12 +115,12 @@ export default function ImageLogoControls({
         await setDoc(
           doc(db, collectionName, siteKey),
           { headerLogoUrl: downloadURL },
-          { merge: true }
+          { merge: true },
         );
         setP(null);
         onDone?.("logo", downloadURL);
         alert("ヘッダー画像を更新しました！");
-      }
+      },
     );
   };
 

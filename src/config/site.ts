@@ -95,31 +95,30 @@ function createSite(overrides: SiteOverrides) {
 /* =========================
    ★ 店舗ごとの最小上書き（ここだけ編集）
 ========================= */
-const SITE_BRAND = "お掃除処　たよって屋"; // 表示用のフル表記（全角スペース等もOK）
+const SITE_BRAND = "甘味処 よって屋"; // 表示用のフル表記
 
 const SITE_OVERRIDES: SiteOverrides = {
-  name: "おそうじ処 たよって屋",
-  tagline: "ハウスクリーニング・家事代行（大阪・兵庫）",
+  name: "甘味処 よって屋",
+  tagline: "大阪市のクレープ専門店",
   description:
-    "大阪・兵庫エリア対応のハウスクリーニング・家事代行・整理収納サービス。大阪市東淀川区、豊中市、吹田市など近隣も丁寧に対応。水回り・リビング・定期清掃まで安心価格。",
+    "大阪市東淀川区・北区に展開するクレープ専門店『甘味処 よって屋』。注文ごとに生地から焼き上げるこだわりのクレープをご提供。テイクアウト・イートイン対応。",
   keywords: [
-    "おそうじ処たよって屋",
-    "たよって屋",
-    "ハウスクリーニング",
-    "家事代行",
-    "整理収納",
+    "甘味処クレープよって屋",
+    "よって屋",
+    "甘味処",
+    "クレープ",
     "大阪",
-    "兵庫",
-    "大阪市東淀川区",
-    "水回り掃除",
-    "エアコンクリーニング",
+    "東淀川区",
+    "北区",
+    "下新庄",
+    "淡路",
+    "クレープ専門店",
   ],
-  tel: "+81 90-6559-9110",
+  tel: "",
   logoPath: "/images/ogpLogo.png",
-  googleSiteVerification: "uN73if1NMw0L6lYoLXqKJDBt56lxDXlmbZwfurtPFNs",
+  googleSiteVerification: "UcH7-5B4bwpJxxSjIpBskahFhBRTSLRJUZ8A3LAnnFE",
   socials: {
-    instagram: "https://www.instagram.com/yuki.tayotte2017",
-    line: "https://lin.ee/YcKAJja",
+    instagram: "https://www.instagram.com/yotteya.crape/",
   },
 };
 
@@ -153,15 +152,15 @@ function mapUrlFromText(text: string) {
 
 /** 店舗の公開住所（必要に応じてこの値だけ編集） */
 export const PUBLIC_ADDRESS: PublicAddress = {
-  text: "大阪府豊中市小曽根3-6-13",
+  text: "大阪市東淀川区淡路４丁目１８−１６",
   postal: {
     "@type": "PostalAddress",
     addressCountry: "JP",
     addressRegion: "大阪府",
-    addressLocality: "豊中市",
-    streetAddress: "小曽根3-6-13",
+    addressLocality: "大阪市東淀川区",
+    streetAddress: "淡路４丁目１８−１６",
   },
-  hasMap: mapUrlFromText("大阪府豊中市小曽根3-6-13"),
+  hasMap: mapUrlFromText("大阪市東淀川区淡路４丁目１８−１６"),
 };
 
 /* =========================
@@ -226,35 +225,34 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "大阪府・兵庫県を中心に、ハウスクリーニング／家事代行／整理収納を提供しています。キッチン・浴室などの水回りから、リビングの徹底清掃、定期プランまで。ご家庭の状態やご要望に合わせて、無理なく続けられるプランをご提案します。",
+        "大阪市東淀川区・北区に展開するクレープ専門店です。注文ごとに生地から焼き上げるこだわりのクレープをご提供しています。テイクアウトはもちろん、店舗によってはイートインもご利用いただけます。お買い物や学校帰りなど、さまざまなシーンでお気軽にお立ち寄りください。",
     },
     stores: {
       heroTitle: `${site.name} ─ 店舗一覧`,
-      heroAreas: "大阪府・兵庫県",
-      heroLead:
-        "ハウスクリーニング・家事代行・整理収納サービスを提供しています。",
+      heroAreas: "大阪市東淀川区・北区",
+      heroLead: "こだわりのクレープをご提供するクレープ専門店です。",
       heroTail:
-        "各店舗のサービス対応エリアや詳細情報をこちらからご確認いただけます。",
-      heroIntroLine: `${site.name}は大阪府・兵庫県を中心にハウスクリーニング・家事代行・整理収納サービスを提供しています。`,
+        "駅チカ店から住宅街の隠れ家店まで、各店舗の営業時間・限定メニューをチェックしてください。",
+      heroIntroLine: `${site.name}は大阪市東淀川区・北区に展開するクレープ専門店です。`,
     },
     areasLocal: {
-      h1: "東淀川区の家事代行・ハウスクリーニング",
-      lead: "淡路・上新庄・だいどう豊里・井高野・柴島など東淀川区全域に対応。",
+      h1: "東淀川区のクレープ・甘味処",
+      lead: "淡路・上新庄・だいどう豊里・井高野・柴島など東淀川区全域からご来店いただいています。",
       services: [
         {
-          title: "家事代行（単発／定期）",
+          title: "人気メニュー",
           bullets: [
-            "掃除・片付け・洗濯・買い物代行",
-            "お子様／高齢者の見守り（家事の範囲内）",
-            "女性スタッフ指名可",
+            "季節のフルーツクレープ（限定）",
+            "カスタード＆生クリーム（自家製ソース）",
+            "チョコバナナ／いちごみるく ほか定番",
           ],
         },
         {
-          title: "ハウスクリーニング",
+          title: "ご利用シーン",
           bullets: [
-            "水回り（キッチン・浴室・洗面・トイレ）",
-            "エアコンクリーニング",
-            "引越し前後・空室クリーニング",
+            "テイクアウト・食べ歩き",
+            "ちょっとした手土産・差し入れ",
+            "お子さま連れ・放課後のおやつに",
           ],
         },
       ],
@@ -263,25 +261,20 @@ export const copy: Record<string, CopyBundle> = {
         "淡路・東淡路・菅原・豊新・上新庄・瑞光・小松・南江口・北江口・井高野・大桐・大隅・豊里・大道南・柴島・下新庄 ほか",
       faq: [
         {
-          q: "東淀川区で当日予約は可能ですか？",
-          a: "当日の空き状況によっては対応可能です。まずはお問い合わせください。",
+          q: "テイクアウトはできますか？",
+          a: "すべてテイクアウト可能です。生クリーム多めなどのカスタムもお気軽にどうぞ。",
         },
         {
-          q: "鍵預かりでの不在クリーニングは対応していますか？",
-          a: "条件を確認のうえ、鍵管理のルールに基づいて対応します。詳細は事前にご相談ください。",
+          q: "売り切れはありますか？",
+          a: "季節限定メニューは材料がなくなり次第終了となる場合があります。最新情報はInstagramでお知らせしています。",
         },
         {
-          q: "当日の追加のお願いは可能ですか？",
-          a: "スケジュールに空きがあれば対応いたします。まずはお問い合わせください。",
-        },
-        {
-          q: "鍵預かりや在宅不要の対応は？",
-          a: "条件を確認のうえ、適切に管理して対応可能です。",
+          q: "支払い方法は何がありますか？",
+          a: "現金のほか、主要キャッシュレス決済に対応しています。詳細は店頭でご確認ください。",
         },
       ],
       contactTitle: "お問い合わせ",
-      contactText:
-        "予約状況の確認・見積りは、LINE／メールフォームからお気軽にどうぞ。",
+      contactText: "ご不明な点はInstagramのDMまたは店頭にてお気軽にどうぞ。",
       toProductsText: "トップページへ",
     },
   },
@@ -291,63 +284,58 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "We provide house cleaning, housekeeping and home-organizing services mainly in Osaka and Hyogo. From kitchens and bathrooms to living rooms and regular plans, we propose services that fit your household and needs without overburdening you.",
+        "We are a crepe specialty shop in Higashiyodogawa and Kita wards, Osaka. Every crepe is made to order, baked fresh from our unique batter. Takeout is available at all locations, and eat-in seating is offered at select stores.",
     },
     stores: {
       heroTitle: `${site.name} ─ Locations`,
-      heroAreas: "Osaka & Hyogo",
-      heroLead:
-        "We offer house cleaning, housekeeping and home-organizing services.",
+      heroAreas: "Higashiyodogawa & Kita, Osaka",
+      heroLead: "A crepe specialty shop offering freshly made-to-order crepes.",
       heroTail:
-        "Check service areas and details for each location from this page.",
-      heroIntroLine: `${site.name} offers house cleaning, housekeeping and organizing services mainly across Osaka and Hyogo.`,
+        "From station-front stores to hidden gems in residential areas — check each location's hours and exclusive menus.",
+      heroIntroLine: `${site.name} is a crepe specialty shop in Higashiyodogawa and Kita wards, Osaka.`,
     },
     areasLocal: {
-      h1: "Housekeeping & house cleaning in Higashiyodogawa, Osaka",
-      lead: "We cover all of Higashiyodogawa Ward, including Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima and more.",
+      h1: "Crepe Shop in Higashiyodogawa, Osaka",
+      lead: "Customers visit us from all over Higashiyodogawa Ward, including Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima and more.",
       services: [
         {
-          title: "Housekeeping (one-off / regular)",
+          title: "Popular Menu",
           bullets: [
-            "Cleaning, tidying, laundry and shopping assistance",
-            "Light watching over children or seniors (within housework)",
-            "Female staff can be requested",
+            "Seasonal fruit crepe (limited)",
+            "Custard & fresh cream (house-made sauce)",
+            "Chocolate banana / Strawberry milk and more classic flavors",
           ],
         },
         {
-          title: "House cleaning",
+          title: "Perfect For",
           bullets: [
-            "Wet areas (kitchen, bathroom, washstand, toilet)",
-            "Air conditioner cleaning",
-            "Move-in / move-out & vacant-room cleaning",
+            "Takeout & street food",
+            "A small gift or treat for someone",
+            "Families with kids or post-school snacks",
           ],
         },
       ],
       coverageTitle: "Service area (Higashiyodogawa Ward)",
       coverageBody:
-        "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Otori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo and surrounding areas.",
+        "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo and surrounding areas.",
       faq: [
         {
-          q: "Can I make a same-day booking in Higashiyodogawa?",
-          a: "Depending on availability that day, same-day bookings may be possible. Please contact us first.",
+          q: "Is takeout available?",
+          a: "Yes — all items are available for takeout. Feel free to ask for custom options like extra cream.",
         },
         {
-          q: "Do you accept key-keeping so you can clean while I am away?",
-          a: "Yes. After confirming the conditions, we safely keep your key and clean while you are away according to our key-management rules.",
+          q: "Do you sometimes sell out?",
+          a: "Seasonal and limited items may sell out when ingredients run out. Check our Instagram for the latest updates.",
         },
         {
-          q: "Can I add extra tasks on the day?",
-          a: "If there is room in the schedule, we will respond as flexibly as possible. Please feel free to ask the staff.",
-        },
-        {
-          q: "Is it possible to use the service without being at home?",
-          a: "As long as we agree in advance on how to keep and manage your key, cleaning without you at home is possible.",
+          q: "What payment methods do you accept?",
+          a: "We accept cash and major cashless payment methods. Please check in-store for details.",
         },
       ],
       contactTitle: "Contact",
       contactText:
-        "To check availability or request a quote, feel free to contact us via LINE or the inquiry form.",
-      toProductsText: "Back to the top page",
+        "Feel free to reach out via Instagram DM or ask at the counter.",
+      toProductsText: "Back to top",
     },
   },
 
@@ -356,33 +344,33 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "本店主要在大阪府和兵库县提供家政清洁、家务代办和收纳整理服务。从厨房、浴室等水区到客厅的深度清洁，以及定期服务，根据您家庭的情况和需求提供适合、易于长期持续的方案。",
+        "本店是位于大阪市东淀川区和北区的可丽饼专卖店。每份可丽饼均按订单现做，使用独特配方的面糊新鲜烘烤。全部商品均可外带，部分门店亦提供堂食服务。",
     },
     stores: {
       heroTitle: `${site.name} ─ 门店一览`,
-      heroAreas: "大阪府・兵库县",
-      heroLead: "提供家政清洁、家务代办、收纳整理等服务。",
-      heroTail: "各门店的服务范围与详细信息请在本页面查看。",
-      heroIntroLine: `${site.name} 以大阪府和兵库县为中心，提供家政清洁、家务代办与收纳整理服务。`,
+      heroAreas: "大阪市东淀川区・北区",
+      heroLead: "现做现卖的可丽饼专卖店。",
+      heroTail: "从车站附近的门店到住宅区的隐藏小店，欢迎查看各店营业时间及限定菜单。",
+      heroIntroLine: `${site.name} 是大阪市东淀川区和北区的可丽饼专卖店。`,
     },
     areasLocal: {
-      h1: "大阪市东淀川区的家政服务与家居清洁",
-      lead: "覆盖淡路、上新庄、大道丰里、井高野、柴岛等东淀川区全域。",
+      h1: "东淀川区的可丽饼店",
+      lead: "欢迎来自淡路、上新庄、大道丰里、井高野、柴岛等东淀川区全域的顾客。",
       services: [
         {
-          title: "家务代办（单次／定期）",
+          title: "人气菜单",
           bullets: [
-            "打扫、整理、洗衣、代购等日常家务",
-            "在家务范围内照看儿童／老人",
-            "可指定女性工作人员",
+            "季节水果可丽饼（限定）",
+            "卡仕达酱＆鲜奶油（自制酱料）",
+            "巧克力香蕉／草莓牛奶等经典口味",
           ],
         },
         {
-          title: "家居清洁",
+          title: "适合场景",
           bullets: [
-            "厨房、浴室、洗手台、卫生间等水区清洁",
-            "空调清洗",
-            "搬家前后／空房的整体清洁",
+            "外带・边走边吃",
+            "小礼物・伴手礼",
+            "亲子出行・课后零食",
           ],
         },
       ],
@@ -391,25 +379,20 @@ export const copy: Record<string, CopyBundle> = {
         "淡路、东淡路、菅原、丰新、上新庄、瑞光、小松、南江口、北江口、井高野、大桐、大隅、丰里、大道南、柴岛、下新庄等地区。",
       faq: [
         {
-          q: "在东淀川区可以当天预约吗？",
-          a: "视当日空档情况而定，有时可以当天安排。请先与我们联系确认。",
+          q: "可以外带吗？",
+          a: "所有商品均可外带。鲜奶油加量等定制需求也欢迎告知。",
         },
         {
-          q: "可以把钥匙交给你们，在我不在家的时候打扫吗？",
-          a: "在事先确认条件并约定钥匙管理规则的前提下，可以代为保管钥匙并在您不在家时进行清洁。",
+          q: "有时会售罄吗？",
+          a: "季节限定菜单可能因食材用完而提前结束销售。最新信息请关注Instagram。",
         },
         {
-          q: "当天临时增加项目可以吗？",
-          a: "若当日行程允许，我们会尽量灵活应对。请直接与工作人员沟通。",
-        },
-        {
-          q: "不在家的情况下也能提供服务吗？",
-          a: "只要事前就钥匙保管与管理方式达成一致，我们可以在您不在家时完成清洁。",
+          q: "支持哪些支付方式？",
+          a: "支持现金及主要无现金支付方式。详情请在店内确认。",
         },
       ],
       contactTitle: "联系我们",
-      contactText:
-        "如需确认预约情况或索取报价，欢迎通过 LINE 或网站表单与我们联系。",
+      contactText: "如有疑问，欢迎通过Instagram私信或直接到店咨询。",
       toProductsText: "返回首页",
     },
   },
@@ -419,33 +402,33 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "本店主要在大阪府與兵庫縣提供居家清潔、家事代辦與收納整理服務。從廚房、浴室等濕區到客廳深度清潔，以及定期方案，我們會依照您的家庭狀況與需求，提供容易長期持續的服務計畫。",
+        "本店是位於大阪市東淀川區和北區的可麗餅專賣店。每份可麗餅均按訂單現做，使用獨特配方的麵糊新鮮烘烤。全部商品均可外帶，部分門店亦提供內用服務。",
     },
     stores: {
       heroTitle: `${site.name} ─ 店鋪一覽`,
-      heroAreas: "大阪府・兵庫縣",
-      heroLead: "提供居家清潔、家事代辦與收納整理服務。",
-      heroTail: "各店鋪的服務範圍與詳細資訊，請在本頁面查看。",
-      heroIntroLine: `${site.name} 以大阪府與兵庫縣為中心，提供居家清潔、家事代辦與收納整理服務。`,
+      heroAreas: "大阪市東淀川區・北區",
+      heroLead: "現做現賣的可麗餅專賣店。",
+      heroTail: "從車站附近的門店到住宅區的隱藏小店，歡迎查看各店營業時間及限定菜單。",
+      heroIntroLine: `${site.name} 是大阪市東淀川區和北區的可麗餅專賣店。`,
     },
     areasLocal: {
-      h1: "大阪東淀川區的家事代辦與居家清潔",
-      lead: "涵蓋淡路、上新莊、大道豐里、井高野、柴島等東淀川區全區。",
+      h1: "東淀川區的可麗餅店",
+      lead: "歡迎來自淡路、上新莊、大道豐里、井高野、柴島等東淀川區全域的顧客。",
       services: [
         {
-          title: "家事代辦（單次／定期）",
+          title: "人氣菜單",
           bullets: [
-            "打掃、整理、洗衣、代購等日常家務",
-            "在家事範圍內照顧小孩／長者",
-            "可指名女性工作人員",
+            "季節水果可麗餅（限定）",
+            "卡士達醬＆鮮奶油（自製醬料）",
+            "巧克力香蕉／草莓牛奶等經典口味",
           ],
         },
         {
-          title: "居家清潔",
+          title: "適合場景",
           bullets: [
-            "水區（廚房、浴室、洗手台、廁所）清潔",
-            "冷氣清洗",
-            "搬家前後／空屋的整體清潔",
+            "外帶・邊走邊吃",
+            "小禮物・伴手禮",
+            "親子出遊・課後點心",
           ],
         },
       ],
@@ -454,25 +437,20 @@ export const copy: Record<string, CopyBundle> = {
         "淡路、東淡路、菅原、豐新、上新莊、瑞光、小松、南江口、北江口、井高野、大桐、大隅、豐里、大道南、柴島、下新莊等地區。",
       faq: [
         {
-          q: "在東淀川區可以當天預約嗎？",
-          a: "視當天空檔情況而定，有時可提供當日服務。請先與我們聯繫確認。",
+          q: "可以外帶嗎？",
+          a: "所有商品均可外帶。鮮奶油加量等客製化需求也歡迎告知。",
         },
         {
-          q: "可以把鑰匙交給你們，在我不在家時打掃嗎？",
-          a: "在事前確認條件並約定鑰匙管理方式後，可以代為保管鑰匙並於您不在家時完成清潔。",
+          q: "有時會售完嗎？",
+          a: "季節限定菜單可能因食材用完而提前結束販售。最新資訊請關注Instagram。",
         },
         {
-          q: "當天臨時追加服務可以嗎？",
-          a: "若當天行程許可，我們會盡量彈性配合。請與工作人員直接溝通。",
-        },
-        {
-          q: "人不在家也可以使用服務嗎？",
-          a: "只要事前就鑰匙保管與管理方式達成共識，我們可以於您不在家時提供清潔服務。",
+          q: "支援哪些付款方式？",
+          a: "支援現金及主要無現金支付方式。詳情請在店內確認。",
         },
       ],
       contactTitle: "聯絡我們",
-      contactText:
-        "如需確認預約情況或索取報價，歡迎透過 LINE 或網站表單與我們聯繫。",
+      contactText: "如有疑問，歡迎透過Instagram私訊或直接到店詢問。",
       toProductsText: "回到首頁",
     },
   },
@@ -482,61 +460,56 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "저희는 오사카와 효고 지역을 중심으로 하우스 클리닝, 가사 대행, 정리 수납 서비스를 제공합니다. 주방과 욕실 등 물 사용이 많은 공간부터 거실 청소, 정기 플랜까지 가정의 상황과 요구에 맞춘 부담 없는 플랜을 제안합니다.",
+        "저희는 오사카시 히가시요도가와구와 기타구에 있는 크레페 전문점입니다. 주문마다 반죽부터 직접 구워 신선한 크레페를 제공합니다. 모든 매장에서 테이크아웃이 가능하며, 일부 매장에서는 이트인도 이용하실 수 있습니다.",
     },
     stores: {
-      heroTitle: `${site.name} ─ 지점 목록`,
-      heroAreas: "오사카・효고",
-      heroLead: "하우스 클리닝, 가사 대행, 정리 수납 서비스를 제공합니다.",
+      heroTitle: `${site.name} ─ 점포 목록`,
+      heroAreas: "오사카시 히가시요도가와구・기타구",
+      heroLead: "주문 즉시 만들어드리는 크레페 전문점입니다.",
       heroTail:
-        "각 지점의 서비스 가능 지역과 자세한 정보는 이 페이지에서 확인하실 수 있습니다.",
-      heroIntroLine: `${site.name}는 오사카와 효고를 중심으로 하우스 클리닝과 가사 대행, 정리 수납 서비스를 제공하고 있습니다.`,
+        "역 근처 매장부터 주택가의 숨은 명소까지, 각 매장의 영업시간 및 한정 메뉴를 확인해 보세요.",
+      heroIntroLine: `${site.name}는 오사카시 히가시요도가와구와 기타구에 전개하는 크레페 전문점입니다.`,
     },
     areasLocal: {
-      h1: "오사카 히가시요도가와구의 가사 대행・하우스 클리닝",
-      lead: "아와지, 가미신조, 다이도토요사토, 이타카노, 쿠니지마 등 히가시요도가와구 전역을 커버합니다.",
+      h1: "히가시요도가와구의 크레페 가게",
+      lead: "아와지, 가미신조, 다이도토요사토, 이타카노, 쿠니지마 등 히가시요도가와구 전역에서 방문하고 계십니다.",
       services: [
         {
-          title: "가사 대행 (단발 / 정기)",
+          title: "인기 메뉴",
           bullets: [
-            "청소, 정리정돈, 세탁, 장보기 대행",
-            "아이/노인 돌봄 (가사 범위 내)",
-            "여성 스태프 지정 가능",
+            "계절 과일 크레페（한정）",
+            "커스터드＆생크림（자가제 소스）",
+            "초코바나나 / 딸기우유 등 정번 메뉴",
           ],
         },
         {
-          title: "하우스 클리닝",
+          title: "이용 장면",
           bullets: [
-            "주방, 욕실, 세면대, 화장실 등 물 사용 공간",
-            "에어컨 청소",
-            "이사 전후 / 공실 청소",
+            "테이크아웃・길거리 음식",
+            "작은 선물・간식 나눔",
+            "아이 동반・방과후 간식",
           ],
         },
       ],
-      coverageTitle: "서비스 지역 (히가시요도가와구)",
+      coverageTitle: "서비스 지역（히가시요도가와구）",
       coverageBody:
-        "아와지, 히가시아와지, 스가하라, 토요신, 가미신조, 즈이코, 코마츠, 미나미에구치, 키타에구치, 이타카노, 오오도리, 오오스미, 토요사토, 다이도미나미, 쿠니지마, 시모신조 등",
+        "아와지, 히가시아와지, 스가하라, 토요신, 가미신조, 즈이코, 코마츠, 미나미에구치, 키타에구치, 이타카노, 오도리, 오스미, 토요사토, 다이도미나미, 쿠니지마, 시모신조 등",
       faq: [
         {
-          q: "히가시요도가와구에서 당일 예약이 가능한가요?",
-          a: "당일 스케줄 상황에 따라 가능한 경우가 있습니다. 먼저 문의해 주세요.",
+          q: "테이크아웃이 가능한가요?",
+          a: "모든 메뉴 테이크아웃 가능합니다. 생크림 많이 등 커스텀도 편하게 말씀해 주세요.",
         },
         {
-          q: "집 열쇠를 맡기고 부재 중에 청소를 맡길 수 있나요?",
-          a: "조건을 확인한 뒤, 열쇠 관리 규정에 따라 안전하게 보관하고 부재 중 청소를 진행할 수 있습니다.",
+          q: "품절이 있나요?",
+          a: "계절 한정 메뉴는 재료 소진 시 종료될 수 있습니다. 최신 정보는 Instagram에서 확인해 주세요.",
         },
         {
-          q: "당일에 추가로 부탁해도 되나요?",
-          a: "당일 일정에 여유가 있다면 최대한 유연하게 대응해 드립니다. 스태프에게 편하게 말씀해 주세요.",
-        },
-        {
-          q: "집에 없을 때도 서비스를 이용할 수 있나요?",
-          a: "사전에 열쇠 보관 및 관리 방법에 대해 합의한 경우, 고객님이 부재 중일 때도 청소가 가능합니다.",
+          q: "결제 방법은 무엇인가요?",
+          a: "현금 외에 주요 캐시리스 결제를 지원합니다. 자세한 내용은 매장에서 확인해 주세요.",
         },
       ],
-      contactTitle: "문의하기",
-      contactText:
-        "예약 가능 여부 확인 및 견적 문의는 LINE 또는 문의 폼을 통해 편하게 연락해 주세요.",
+      contactTitle: "문의",
+      contactText: "Instagram DM 또는 매장 카운터에서 편하게 문의해 주세요.",
       toProductsText: "맨 위 페이지로",
     },
   },
@@ -546,63 +519,57 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "Nous proposons des services de ménage, d’aide à domicile et d’organisation principalement dans les préfectures d’Osaka et de Hyogo. De la cuisine et de la salle de bain au salon, ainsi que des formules régulières, nous vous proposons un service adapté à votre foyer et à vos besoins.",
+        "Nous sommes une crêperie spécialisée dans les quartiers Higashiyodogawa et Kita d’Osaka. Chaque crêpe est préparée à la commande, cuite fraîche selon notre recette exclusive. À emporter dans tous les points de vente, avec service sur place dans certains établissements.",
     },
     stores: {
-      heroTitle: `${site.name} ─ Liste des agences`,
-      heroAreas: "Préfectures d’Osaka et de Hyogo",
-      heroLead:
-        "Nous proposons des services de ménage, d’aide à domicile et d’organisation.",
+      heroTitle: `${site.name} ─ Nos boutiques`,
+      heroAreas: "Higashiyodogawa & Kita, Osaka",
+      heroLead: "Une crêperie spécialisée, tout est fait à la commande.",
       heroTail:
-        "Vous pouvez consulter ici les zones desservies et les informations détaillées de chaque agence.",
-      heroIntroLine: `${site.name} propose des services de ménage, d’aide à domicile et d’organisation principalement dans les préfectures d’Osaka et de Hyogo.`,
+        "Des boutiques en gare aux adresses cachées en quartier résidentiel — consultez les horaires et les menus exclusifs de chaque enseigne.",
+      heroIntroLine: `${site.name} est une crêperie spécialisée dans les quartiers Higashiyodogawa et Kita d’Osaka.`,
     },
     areasLocal: {
-      h1: "Aide ménagère et ménage à Higashiyodogawa (Osaka)",
-      lead: "Nous intervenons dans tout l’arrondissement de Higashiyodogawa : Awaji, Kamishinjo, Daido Toyosato, Itakano, Kunijima, etc.",
+      h1: "Crêperie à Higashiyodogawa, Osaka",
+      lead: "Nos clients viennent de tout le quartier Higashiyodogawa : Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima et bien d’autres.",
       services: [
         {
-          title: "Aide à domicile (ponctuelle / régulière)",
+          title: "Menu populaire",
           bullets: [
-            "Ménage, rangement, lessive, courses",
-            "Surveillance légère des enfants ou des personnes âgées (dans le cadre des tâches ménagères)",
-            "Possibilité de demander une intervenante",
+            "Crêpe aux fruits de saison (édition limitée)",
+            "Crème pâtissière & crème fraîche (sauce maison)",
+            "Chocolat-banane / Fraise-lait et autres classiques",
           ],
         },
         {
-          title: "Ménage de la maison",
+          title: "Occasions idéales",
           bullets: [
-            "Pièces d’eau (cuisine, salle de bain, lavabo, toilettes)",
-            "Nettoyage de climatiseurs",
-            "Nettoyage avant/après déménagement et logements vides",
+            "À emporter & street food",
+            "Petit cadeau ou souvenir gourmand",
+            "Sortie en famille ou goûter après l’école",
           ],
         },
       ],
-      coverageTitle: "Zone d’intervention (Higashiyodogawa)",
+      coverageTitle: "Zone couverte (Higashiyodogawa)",
       coverageBody:
         "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo et environs.",
       faq: [
         {
-          q: "Est-il possible de réserver pour le jour même à Higashiyodogawa ?",
-          a: "En fonction des disponibilités, une réservation le jour même peut être possible. Merci de nous contacter au préalable.",
+          q: "La vente à emporter est-elle possible ?",
+          a: "Oui, tous les articles sont disponibles à emporter. N’hésitez pas à demander des options personnalisées comme plus de crème.",
         },
         {
-          q: "Puis-je vous confier mes clés pour un ménage en mon absence ?",
-          a: "Oui, après validation des conditions, nous gérons les clés de manière sécurisée et intervenons en votre absence.",
+          q: "Certains articles peuvent-ils être en rupture de stock ?",
+          a: "Les articles saisonniers et en édition limitée peuvent être épuisés quand les ingrédients sont terminés. Consultez notre Instagram pour les dernières infos.",
         },
         {
-          q: "Puis-je demander des tâches supplémentaires le jour même ?",
-          a: "Si le planning le permet, nous ferons notre possible pour répondre à votre demande. Merci de vous adresser à l’intervenant.",
-        },
-        {
-          q: "Puis-je bénéficier du service sans être présent(e) au domicile ?",
-          a: "Oui, si nous avons convenu à l’avance des modalités de garde et de gestion des clés.",
+          q: "Quels moyens de paiement acceptez-vous ?",
+          a: "Nous acceptons les espèces et les principaux paiements sans contact. Renseignez-vous en boutique pour les détails.",
         },
       ],
       contactTitle: "Contact",
-      contactText:
-        "Pour vérifier nos disponibilités ou demander un devis, contactez-nous via LINE ou le formulaire de contact.",
-      toProductsText: "Retour à la page d’accueil",
+      contactText: "N’hésitez pas à nous contacter via Instagram DM ou directement en boutique.",
+      toProductsText: "Retour à l’accueil",
     },
   },
 
@@ -611,63 +578,57 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "Ofrecemos servicios de limpieza del hogar, ayuda doméstica y organización principalmente en las prefecturas de Osaka y Hyogo. Desde cocina y baño hasta el salón y planes periódicos, proponemos servicios que se adaptan a su hogar y necesidades.",
+        "Somos una crêperie especializada en los barrios Higashiyodogawa y Kita de Osaka. Cada crêpe se prepara al momento, con nuestra masa de receta exclusiva recién horneada. Servicio para llevar en todos los locales y comedor en locales seleccionados.",
     },
     stores: {
-      heroTitle: `${site.name} ─ Lista de sedes`,
-      heroAreas: "Osaka y Hyogo",
-      heroLead:
-        "Prestamos servicios de limpieza del hogar, ayuda doméstica y organización.",
+      heroTitle: `${site.name} ─ Nuestros locales`,
+      heroAreas: "Higashiyodogawa y Kita, Osaka",
+      heroLead: "Crêperie especializada con todo elaborado al momento.",
       heroTail:
-        "Puede consultar aquí las zonas de servicio y la información detallada de cada sede.",
-      heroIntroLine: `${site.name} ofrece servicios de limpieza, ayuda doméstica y organización principalmente en Osaka y Hyogo.`,
+        "Desde locales junto a la estación hasta rincones escondidos en zonas residenciales — consulta los horarios y los menús exclusivos de cada local.",
+      heroIntroLine: `${site.name} es una crêperie especializada en los barrios Higashiyodogawa y Kita de Osaka.`,
     },
     areasLocal: {
-      h1: "Ayuda doméstica y limpieza en Higashiyodogawa (Osaka)",
-      lead: "Damos servicio en todo el distrito de Higashiyodogawa: Awaji, Kamishinjo, Daido Toyosato, Itakano, Kunijima y más.",
+      h1: "Crêperie en Higashiyodogawa, Osaka",
+      lead: "Nos visitan clientes de todo el barrio Higashiyodogawa: Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima y más.",
       services: [
         {
-          title: "Ayuda doméstica (puntual / periódica)",
+          title: "Menú popular",
           bullets: [
-            "Limpieza, orden, lavado y compras",
-            "Supervisión ligera de niños o personas mayores (dentro de las tareas del hogar)",
-            "Posibilidad de solicitar personal femenino",
+            "Crêpe de fruta de temporada (edición limitada)",
+            "Crema pastelera y nata montada (salsa casera)",
+            "Chocolate con plátano / leche de fresa y otros clásicos",
           ],
         },
         {
-          title: "Limpieza del hogar",
+          title: "Ocasiones perfectas",
           bullets: [
-            "Zonas de agua (cocina, baño, lavabo, aseo)",
-            "Limpieza de aire acondicionado",
-            "Limpieza antes/después de mudanzas y viviendas vacías",
+            "Para llevar & comida callejera",
+            "Pequeño regalo o detalle",
+            "Salida familiar o merienda después del colegio",
           ],
         },
       ],
-      coverageTitle: "Zona de servicio (Higashiyodogawa)",
+      coverageTitle: "Zona de cobertura (Higashiyodogawa)",
       coverageBody:
         "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo y alrededores.",
       faq: [
         {
-          q: "¿Es posible reservar para el mismo día en Higashiyodogawa?",
-          a: "Dependiendo de la disponibilidad, puede ser posible. Por favor, consúltenos primero.",
+          q: "¿Se puede llevar para llevar?",
+          a: "Sí, todos los artículos están disponibles para llevar. No dudes en pedir opciones personalizadas como más nata.",
         },
         {
-          q: "¿Puedo dejarles mis llaves para que limpien cuando no estoy en casa?",
-          a: "Sí, tras acordar las condiciones, podemos custodiar sus llaves y limpiar en su ausencia siguiendo nuestras reglas de gestión de llaves.",
+          q: "¿Hay artículos que se agotan?",
+          a: "Los artículos de temporada y de edición limitada pueden agotarse cuando se acaban los ingredientes. Consulta nuestro Instagram para la información más reciente.",
         },
         {
-          q: "¿Se pueden añadir tareas adicionales el mismo día?",
-          a: "Si el horario lo permite, intentaremos responder con flexibilidad. Hable con el personal en el momento.",
-        },
-        {
-          q: "¿Puedo utilizar el servicio sin estar presente en casa?",
-          a: "Sí, siempre que acordemos de antemano cómo guardar y gestionar las llaves.",
+          q: "¿Qué métodos de pago aceptan?",
+          a: "Aceptamos efectivo y los principales pagos sin contacto. Consulta en el local para más detalles.",
         },
       ],
       contactTitle: "Contacto",
-      contactText:
-        "Para comprobar la disponibilidad o solicitar un presupuesto, contáctenos por LINE o mediante el formulario de la web.",
-      toProductsText: "Volver a la página principal",
+      contactText: "No dudes en contactarnos por Instagram DM o directamente en el local.",
+      toProductsText: "Volver al inicio",
     },
   },
 
@@ -676,63 +637,57 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "Wir bieten Haushaltsreinigung, Haushaltshilfe und Organisationsservice hauptsächlich in den Präfekturen Osaka und Hyogo an. Von Küche und Bad über das Wohnzimmer bis hin zu regelmäßigen Reinigungsplänen erstellen wir ein Angebot, das zu Ihrem Haushalt und Ihren Bedürfnissen passt.",
+        "Wir sind eine spezialisierte Crêperie in den Stadtteilen Higashiyodogawa und Kita in Osaka. Jede Crêpe wird auf Bestellung frisch gebacken – nach unserem einzigartigen Rezept. Zum Mitnehmen an allen Standorten, Sitzplätze an ausgewählten Filialen.",
     },
     stores: {
-      heroTitle: `${site.name} ─ Standorte`,
-      heroAreas: "Osaka & Hyogo",
-      heroLead:
-        "Wir bieten Haushaltsreinigung, Haushaltshilfe und Organisationsservice an.",
+      heroTitle: `${site.name} ─ Unsere Filialen`,
+      heroAreas: "Higashiyodogawa & Kita, Osaka",
+      heroLead: "Spezialisierte Crêperie – alles frisch auf Bestellung.",
       heroTail:
-        "Die Einsatzgebiete und Detailinformationen der einzelnen Standorte finden Sie auf dieser Seite.",
-      heroIntroLine: `${site.name} bietet hauptsächlich in Osaka und Hyogo Haushaltsreinigung, Haushaltshilfe und Organisationsservice an.`,
+        "Von Filialen direkt am Bahnhof bis zu versteckten Läden in Wohngebieten – prüfen Sie Öffnungszeiten und exklusive Menüs jeder Filiale.",
+      heroIntroLine: `${site.name} ist eine spezialisierte Crêperie in den Stadtteilen Higashiyodogawa und Kita in Osaka.`,
     },
     areasLocal: {
-      h1: "Haushaltshilfe & Reinigung in Higashiyodogawa (Osaka)",
-      lead: "Wir bedienen den gesamten Bezirk Higashiyodogawa, darunter Awaji, Kamishinjo, Daido Toyosato, Itakano, Kunijima u. a.",
+      h1: "Crêperie in Higashiyodogawa, Osaka",
+      lead: "Unsere Gäste kommen aus dem gesamten Bezirk Higashiyodogawa: Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima und mehr.",
       services: [
         {
-          title: "Haushaltshilfe (einmalig / regelmäßig)",
+          title: "Beliebte Speisen",
           bullets: [
-            "Reinigung, Aufräumen, Wäsche, Einkäufe",
-            "Leichte Betreuung von Kindern oder Senioren (im Rahmen der Haushaltstätigkeiten)",
-            "Weibliche Mitarbeiterinnen auf Wunsch möglich",
+            "Saisonale Frucht-Crêpe (limitiert)",
+            "Vanillecreme & Schlagsahne (hausgemachte Soße)",
+            "Schokolade-Banane / Erdbeer-Milch und weitere Klassiker",
           ],
         },
         {
-          title: "Haushaltsreinigung",
+          title: "Perfekt für",
           bullets: [
-            "Nassbereiche (Küche, Bad, Waschbecken, WC)",
-            "Klimaanlagenreinigung",
-            "Reinigung vor/nach Umzügen sowie leerstehender Wohnungen",
+            "Zum Mitnehmen & Street Food",
+            "Ein kleines Geschenk oder Mitbringsel",
+            "Familienausflüge oder Nachmittagssnack nach der Schule",
           ],
         },
       ],
-      coverageTitle: "Einsatzgebiet (Bezirk Higashiyodogawa)",
+      coverageTitle: "Einzugsgebiet (Bezirk Higashiyodogawa)",
       coverageBody:
         "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo und Umgebung.",
       faq: [
         {
-          q: "Ist eine Buchung am selben Tag in Higashiyodogawa möglich?",
-          a: "Je nach Verfügbarkeit am jeweiligen Tag kann eine Buchung am selben Tag möglich sein. Bitte kontaktieren Sie uns vorab.",
+          q: "Ist Mitnahme möglich?",
+          a: "Ja, alle Artikel sind zum Mitnehmen verfügbar. Fragen Sie gerne nach individuellen Optionen wie extra Sahne.",
         },
         {
-          q: "Kann ich Ihnen meinen Schlüssel anvertrauen, damit Sie in meiner Abwesenheit reinigen?",
-          a: "Ja, nach Abstimmung der Bedingungen bewahren wir Ihren Schlüssel sicher auf und reinigen gemäß unseren Schlüsselmanagement-Regeln.",
+          q: "Kann es zu Ausverkäufen kommen?",
+          a: "Saisonale und limitierte Artikel können ausverkauft sein, wenn die Zutaten verbraucht sind. Aktuelle Infos gibt es auf unserem Instagram.",
         },
         {
-          q: "Kann ich am selben Tag zusätzliche Arbeiten beauftragen?",
-          a: "Wenn der Zeitplan es erlaubt, reagieren wir so flexibel wie möglich. Sprechen Sie unsere Mitarbeiter einfach an.",
-        },
-        {
-          q: "Kann der Service genutzt werden, wenn ich nicht zu Hause bin?",
-          a: "Ja, sofern wir im Voraus die Schlüsselaufbewahrung und -verwaltung vereinbart haben.",
+          q: "Welche Zahlungsmethoden akzeptieren Sie?",
+          a: "Wir akzeptieren Bargeld und gängige bargeldlose Zahlungsmethoden. Details erfragen Sie bitte vor Ort.",
         },
       ],
       contactTitle: "Kontakt",
-      contactText:
-        "Zur Verfügbarkeitsprüfung oder Angebotsanfrage kontaktieren Sie uns gerne über LINE oder das Kontaktformular.",
-      toProductsText: "Zur Startseite",
+      contactText: "Wenden Sie sich gerne per Instagram-DM oder direkt an unsere Mitarbeiter vor Ort.",
+      toProductsText: "Zurück zur Startseite",
     },
   },
 
@@ -741,63 +696,57 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "Oferecemos serviços de limpeza residencial, assistência doméstica e organização principalmente nas províncias de Osaka e Hyogo. Da cozinha e do banheiro até a sala de estar, além de planos regulares, propomos serviços adequados ao seu lar e às suas necessidades.",
+        "Somos uma crêperia especializada nos bairros Higashiyodogawa e Kita de Osaka. Cada crêpe é preparada na hora, assada fresquinha com nossa receita exclusiva. Disponível para viagem em todos os locais e com opção de consumo no local em estabelecimentos selecionados.",
     },
     stores: {
-      heroTitle: `${site.name} ─ Unidades`,
-      heroAreas: "Osaka e Hyogo",
-      heroLead:
-        "Prestamos serviços de limpeza residencial, assistência doméstica e organização.",
+      heroTitle: `${site.name} ─ Nossas lojas`,
+      heroAreas: "Higashiyodogawa e Kita, Osaka",
+      heroLead: "Crêperia especializada com tudo feito na hora.",
       heroTail:
-        "Você pode conferir aqui as áreas atendidas e as informações detalhadas de cada unidade.",
-      heroIntroLine: `${site.name} oferece serviços de limpeza, assistência doméstica e organização principalmente em Osaka e Hyogo.`,
+        "De lojas perto da estação a espaços escondidos em bairros residenciais — confira horários e menus exclusivos de cada loja.",
+      heroIntroLine: `${site.name} é uma crêperia especializada nos bairros Higashiyodogawa e Kita de Osaka.`,
     },
     areasLocal: {
-      h1: "Assistência doméstica e limpeza em Higashiyodogawa (Osaka)",
-      lead: "Atendemos todo o bairro de Higashiyodogawa, incluindo Awaji, Kamishinjo, Daido Toyosato, Itakano, Kunijima e outros.",
+      h1: "Crêperia em Higashiyodogawa, Osaka",
+      lead: "Nossos clientes vêm de todo o bairro Higashiyodogawa: Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima e mais.",
       services: [
         {
-          title: "Assistência doméstica (avulsa / regular)",
+          title: "Menu popular",
           bullets: [
-            "Limpeza, arrumação, lavagem de roupas e compras",
-            "Acompanhamento leve de crianças ou idosos (dentro das atividades domésticas)",
-            "Possibilidade de solicitar funcionária do sexo feminino",
+            "Crêpe de fruta da estação (edição limitada)",
+            "Creme de confeiteiro & chantilly (molho caseiro)",
+            "Chocolate com banana / leite de morango e outros clássicos",
           ],
         },
         {
-          title: "Limpeza residencial",
+          title: "Perfeito para",
           bullets: [
-            "Áreas molhadas (cozinha, banheiro, lavatório, toalete)",
-            "Limpeza de ar-condicionado",
-            "Limpeza antes/depois de mudança e de imóveis vazios",
+            "Viagem & comida de rua",
+            "Um pequeno presente ou lembrança",
+            "Passeio em família ou lanche pós-escola",
           ],
         },
       ],
-      coverageTitle: "Área de atendimento (Higashiyodogawa)",
+      coverageTitle: "Área de cobertura (Higashiyodogawa)",
       coverageBody:
         "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo e arredores.",
       faq: [
         {
-          q: "É possível agendar para o mesmo dia em Higashiyodogawa?",
-          a: "Dependendo da disponibilidade, pode ser possível. Entre em contato conosco primeiro.",
+          q: "É possível pedir para viagem?",
+          a: "Sim, todos os itens estão disponíveis para viagem. Sinta-se à vontade para pedir opções personalizadas como mais chantilly.",
         },
         {
-          q: "Posso deixar a chave com vocês para limparem quando eu não estiver em casa?",
-          a: "Sim, depois de combinarmos as condições, podemos guardar sua chave com segurança e limpar em sua ausência, seguindo nossas regras de gestão de chaves.",
+          q: "Alguns itens podem esgotar?",
+          a: "Itens sazonais e de edição limitada podem esgotar quando os ingredientes acabam. Confira nosso Instagram para as últimas atualizações.",
         },
         {
-          q: "Posso pedir tarefas adicionais no próprio dia?",
-          a: "Se o horário permitir, faremos o possível para atender. Fale diretamente com o(a) profissional.",
-        },
-        {
-          q: "É possível usar o serviço sem estar em casa?",
-          a: "Sim, desde que tenhamos combinado antecipadamente como a chave será guardada e gerida.",
+          q: "Quais formas de pagamento vocês aceitam?",
+          a: "Aceitamos dinheiro e os principais pagamentos sem contato. Consulte na loja para mais detalhes.",
         },
       ],
-      contactTitle: "Fale conosco",
-      contactText:
-        "Para verificar disponibilidade ou solicitar orçamento, fale conosco pelo LINE ou pelo formulário do site.",
-      toProductsText: "Voltar à página inicial",
+      contactTitle: "Contato",
+      contactText: "Entre em contato pelo DM do Instagram ou pergunte diretamente no balcão.",
+      toProductsText: "Voltar ao início",
     },
   },
 
@@ -806,63 +755,57 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "Offriamo servizi di pulizia domestica, assistenza in casa e organizzazione principalmente nelle prefetture di Osaka e Hyogo. Dalla cucina e dal bagno al soggiorno, fino ai piani di pulizia periodica, proponiamo servizi adatti alla vostra casa e alle vostre esigenze.",
+        "Siamo una crêperia specializzata nei quartieri Higashiyodogawa e Kita di Osaka. Ogni crêpe è preparata su ordinazione, cotta fresca con la nostra ricetta esclusiva. Disponibile da asporto in tutti i punti vendita e con posti a sedere in locali selezionati.",
     },
     stores: {
-      heroTitle: `${site.name} ─ Elenco sedi`,
-      heroAreas: "Osaka e Hyogo",
-      heroLead:
-        "Forniamo servizi di pulizia domestica, assistenza e organizzazione.",
+      heroTitle: `${site.name} ─ I nostri negozi`,
+      heroAreas: "Higashiyodogawa e Kita, Osaka",
+      heroLead: "Crêperia specializzata, tutto preparato su ordinazione.",
       heroTail:
-        "In questa pagina potete verificare le aree di servizio e le informazioni dettagliate di ogni sede.",
-      heroIntroLine: `${site.name} offre servizi di pulizia, assistenza domestica e organizzazione principalmente nelle prefetture di Osaka e Hyogo.`,
+        "Dai negozi vicino alla stazione ai locali nascosti nei quartieri residenziali — controlla gli orari e i menù esclusivi di ogni punto vendita.",
+      heroIntroLine: `${site.name} è una crêperia specializzata nei quartieri Higashiyodogawa e Kita di Osaka.`,
     },
     areasLocal: {
-      h1: "Assistenza domestica e pulizie a Higashiyodogawa (Osaka)",
-      lead: "Serviamo l’intero distretto di Higashiyodogawa: Awaji, Kamishinjo, Daido Toyosato, Itakano, Kunijima e altre zone.",
+      h1: "Crêperia a Higashiyodogawa, Osaka",
+      lead: "I nostri clienti vengono da tutto il quartiere Higashiyodogawa: Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima e altri.",
       services: [
         {
-          title: "Assistenza domestica (singola / periodica)",
+          title: "Menu più amato",
           bullets: [
-            "Pulizia, riordino, bucato, spesa",
-            "Sorveglianza leggera di bambini o anziani (nell’ambito delle faccende domestiche)",
-            "Possibilità di richiedere personale femminile",
+            "Crêpe con frutta di stagione (edizione limitata)",
+            "Crema pasticcera & panna montata (salsa fatta in casa)",
+            "Cioccolato-banana / latte alla fragola e altri classici",
           ],
         },
         {
-          title: "Pulizia della casa",
+          title: "Perfetto per",
           bullets: [
-            "Zone umide (cucina, bagno, lavabo, WC)",
-            "Pulizia dei climatizzatori",
-            "Pulizie prima/dopo il trasloco e di abitazioni vuote",
+            "Asporto & street food",
+            "Un piccolo regalo o souvenir",
+            "Gita in famiglia o merenda dopo scuola",
           ],
         },
       ],
-      coverageTitle: "Zona di servizio (Higashiyodogawa)",
+      coverageTitle: "Area di copertura (Higashiyodogawa)",
       coverageBody:
         "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo e dintorni.",
       faq: [
         {
-          q: "È possibile una prenotazione nello stesso giorno a Higashiyodogawa?",
-          a: "A seconda della disponibilità, può essere possibile. Contattateci prima per confermare.",
+          q: "È possibile ordinare da asporto?",
+          a: "Sì, tutti gli articoli sono disponibili da asporto. Non esitate a chiedere personalizzazioni come più panna.",
         },
         {
-          q: "Posso affidarvi le chiavi per effettuare le pulizie in mia assenza?",
-          a: "Sì, dopo aver concordato le condizioni, possiamo custodire le chiavi in sicurezza e pulire secondo le nostre regole di gestione delle chiavi.",
+          q: "Alcuni articoli possono esaurirsi?",
+          a: "Gli articoli stagionali e in edizione limitata possono esaurirsi quando gli ingredienti finiscono. Consultate il nostro Instagram per gli ultimi aggiornamenti.",
         },
         {
-          q: "Posso richiedere lavori aggiuntivi il giorno stesso?",
-          a: "Se il programma lo consente, cercheremo di essere il più flessibili possibile. Parlatene direttamente con il nostro personale.",
-        },
-        {
-          q: "È possibile utilizzare il servizio senza essere presenti in casa?",
-          a: "Sì, purché si sia concordato in anticipo come conservare e gestire le chiavi.",
+          q: "Quali metodi di pagamento accettate?",
+          a: "Accettiamo contanti e i principali pagamenti cashless. Chiedete in negozio per i dettagli.",
         },
       ],
       contactTitle: "Contattaci",
-      contactText:
-        "Per verificare la disponibilità o richiedere un preventivo, contattaci tramite LINE o tramite il modulo sul sito.",
-      toProductsText: "Torna alla pagina iniziale",
+      contactText: "Contattateci via Instagram DM o chiedete direttamente al bancone.",
+      toProductsText: "Torna all’inizio",
     },
   },
 
@@ -871,63 +814,57 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "Мы предлагаем услуги по уборке домов, помощь по хозяйству и организацию пространства в основном в префектурах Осака и Хёго. От кухни и ванной до гостиной и регулярных планов уборки — мы подбираем сервис, который подходит именно вашей семье и вашим потребностям.",
+        "Мы — специализированная крепери в районах Хигасийодогава и Кита города Осака. Каждый блин готовится под заказ, свежеиспечённый по нашему уникальному рецепту. Возможность взять с собой во всех заведениях; в некоторых точках есть посадочные места.",
     },
     stores: {
-      heroTitle: `${site.name} ─ Список филиалов`,
-      heroAreas: "Префектуры Осака и Хёго",
-      heroLead:
-        "Мы предоставляем услуги по уборке дома, помощь по хозяйству и организацию пространства.",
+      heroTitle: `${site.name} ─ Наши заведения`,
+      heroAreas: "Хигасийодогава и Кита, Осака",
+      heroLead: "Специализированная крепери — всё готовится под заказ.",
       heroTail:
-        "Здесь вы можете узнать зоны обслуживания и подробную информацию по каждому филиалу.",
-      heroIntroLine: `${site.name} оказывает услуги по уборке, помощи по хозяйству и организации пространства в основном в префектурах Осака и Хёго.`,
+        "От заведений у станции до скрытых местечек в жилых кварталах — смотрите часы работы и эксклюзивное меню каждой точки.",
+      heroIntroLine: `${site.name} — специализированная крепери в районах Хигасийодогава и Кита города Осака.`,
     },
     areasLocal: {
-      h1: "Помощь по дому и уборка в районе Хигасийодогава (Осака)",
-      lead: "Мы работаем по всему району Хигасийодогава: Авадзи, Камисиндзё, Дайдо Тойосато, Итакано, Кунидзима и т. д.",
+      h1: "Крепери в Хигасийодогава, Осака",
+      lead: "К нам приходят гости со всего района Хигасийодогава: Авадзи, Камисиндзё, Дайдо-Тойосато, Итакано, Кунидзима и другие.",
       services: [
         {
-          title: "Помощь по хозяйству (разовая / регулярная)",
+          title: "Популярное меню",
           bullets: [
-            "Уборка, наведение порядка, стирка, покупки",
-            "Лёгкий присмотр за детьми или пожилыми (в рамках домашних дел)",
-            "Возможность запросить сотрудницу-женщину",
+            "Блинчик с сезонными фруктами (лимитированный)",
+            "Заварной крем и взбитые сливки (домашний соус)",
+            "Шоколад-банан / клубника-молоко и другие классические вкусы",
           ],
         },
         {
-          title: "Уборка дома",
+          title: "Идеально для",
           bullets: [
-            "Влажные зоны (кухня, ванная, умывальник, туалет)",
-            "Чистка кондиционеров",
-            "Уборка до/после переезда и уборка пустующих квартир",
+            "С собой и уличная еда",
+            "Маленький подарок или угощение",
+            "Семейная прогулка или перекус после школы",
           ],
         },
       ],
-      coverageTitle: "Зона обслуживания (район Хигасийодогава)",
+      coverageTitle: "Зона охвата (район Хигасийодогава)",
       coverageBody:
         "Авадзи, Хигаси-Авадзи, Сугавара, Тоёсин, Камисиндзё, Дзуйко, Комацу, Минами-Эгути, Кита-Эгути, Итакано, Одори, Осуми, Тоёсато, Дайдо-Минами, Кунидзима, Симосиндзё и окрестности.",
       faq: [
         {
-          q: "Можно ли оформить заказ в районе Хигасийодогава в тот же день?",
-          a: "В зависимости от загруженности это возможно. Пожалуйста, сначала свяжитесь с нами для уточнения.",
+          q: "Можно взять с собой?",
+          a: "Да, все позиции доступны на вынос. Не стесняйтесь просить об индивидуальных опциях — например, больше сливок.",
         },
         {
-          q: "Могу ли я передать вам ключи, чтобы вы убрали квартиру в моё отсутствие?",
-          a: "Да, после согласования условий мы безопасно храним ключи и проводим уборку согласно нашим правилам управления ключами.",
+          q: "Бывает ли, что позиции заканчиваются?",
+          a: "Сезонные и лимитированные позиции могут закончиться, когда кончаются ингредиенты. Следите за актуальной информацией в нашем Instagram.",
         },
         {
-          q: "Можно ли в день уборки добавить дополнительные работы?",
-          a: "Если позволяет расписание, мы постараемся пойти навстречу. Обсудите это с нашим сотрудником.",
-        },
-        {
-          q: "Можно ли воспользоваться услугами, если меня не будет дома?",
-          a: "Да, при условии, что мы заранее договорились о порядке хранения и использования ключей.",
+          q: "Какие способы оплаты вы принимаете?",
+          a: "Мы принимаем наличные и основные безналичные способы оплаты. За подробностями обращайтесь в заведение.",
         },
       ],
       contactTitle: "Связаться с нами",
-      contactText:
-        "Чтобы узнать о доступности или запросить стоимость услуг, свяжитесь с нами через LINE или форму на сайте.",
-      toProductsText: "Вернуться на главную страницу",
+      contactText: "Пишите нам в Instagram DM или спрашивайте прямо за стойкой.",
+      toProductsText: "Вернуться на главную",
     },
   },
 
@@ -936,61 +873,56 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "เราให้บริการทำความสะอาดบ้าน แม่บ้าน และจัดระเบียบบ้านเป็นหลักในจังหวัดโอซาก้าและเฮียวโกะ ตั้งแต่ห้องครัว ห้องน้ำ ไปจนถึงห้องนั่งเล่น รวมถึงแพ็กเกจทำความสะอาดแบบรายครั้งและรายเดือนที่เหมาะกับบ้านและความต้องการของคุณ.",
+        "เราคือร้านเครป (Crêpe) เฉพาะทางในย่านฮิกาชิโยโดกาวะและคิตะของโอซาก้า เครปทุกชิ้นทำตามออร์เดอร์ อบสดใหม่ด้วยสูตรเฉพาะของเรา รับเป็น Take Away ได้ทุกสาขา และบางสาขามีพื้นที่นั่งทาน.",
     },
     stores: {
       heroTitle: `${site.name} ─ รายชื่อสาขา`,
-      heroAreas: "โอซาก้าและเฮียวโกะ",
-      heroLead: "ให้บริการทำความสะอาดบ้าน แม่บ้านช่วยงาน และจัดระเบียบบ้าน.",
+      heroAreas: "ฮิกาชิโยโดกาวะ & คิตะ, โอซาก้า",
+      heroLead: "ร้านเครปเฉพาะทาง ทำสดทุกชิ้นตามออร์เดอร์.",
       heroTail:
-        "คุณสามารถตรวจสอบพื้นที่ให้บริการและรายละเอียดของแต่ละสาขาได้จากหน้านี้.",
-      heroIntroLine: `${site.name} ให้บริการทำความสะอาดบ้าน แม่บ้าน และจัดระเบียบบ้านในพื้นที่โอซาก้าและเฮียวโกะ.`,
+        "ตั้งแต่สาขาใกล้สถานีไปจนถึงร้านซ่อนตัวในย่านที่พัก — เช็คเวลาเปิดและเมนูพิเศษของแต่ละสาขาได้เลย.",
+      heroIntroLine: `${site.name} คือร้านเครปเฉพาะทางในย่านฮิกาชิโยโดกาวะและคิตะของโอซาก้า.`,
     },
     areasLocal: {
-      h1: "แม่บ้านและทำความสะอาดในเขตฮิกาชิโยโดกาวะ (โอซาก้า)",
-      lead: "ให้บริการครอบคลุมทั้งเขตฮิกาชิโยโดกาวะ เช่น Awaji, Kamishinjo, Daido Toyosato, Itakano, Kunijima เป็นต้น",
+      h1: "ร้านเครปในย่านฮิกาชิโยโดกาวะ, โอซาก้า",
+      lead: "ลูกค้าของเรามาจากทั่วย่านฮิกาชิโยโดกาวะ เช่น Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima และอื่นๆ.",
       services: [
         {
-          title: "แม่บ้านช่วยงาน (รายครั้ง / รายเดือน)",
+          title: "เมนูยอดนิยม",
           bullets: [
-            "ทำความสะอาด จัดของ ซักผ้า ซื้อของเข้าบ้าน",
-            "ช่วยดูแลเด็กและผู้สูงอายุในขอบเขตงานบ้าน",
-            "สามารถขอให้จัดส่งพนักงานผู้หญิงได้",
+            "เครปผลไม้ตามฤดูกาล (จำนวนจำกัด)",
+            "คัสตาร์ด & วิปครีม (ซอสทำเอง)",
+            "ช็อคโกแลตกล้วย / สตรอเบอร์รี่นม และรสคลาสสิกอื่นๆ",
           ],
         },
         {
-          title: "ทำความสะอาดบ้าน",
+          title: "เหมาะสำหรับ",
           bullets: [
-            "บริเวณที่เปียกน้ำ เช่น ห้องครัว ห้องน้ำ อ่างล้างหน้า ห้องสุขา",
-            "ทำความสะอาดเครื่องปรับอากาศ",
-            "ทำความสะอาดบ้านก่อน/หลังย้าย และห้องว่าง",
+            "Take Away & street food",
+            "ของฝาก / ของขวัญเล็กๆ น้อยๆ",
+            "พาครอบครัว / ของว่างหลังเลิกเรียน",
           ],
         },
       ],
-      coverageTitle: "พื้นที่ให้บริการ (เขตฮิกาชิโยโดกาวะ)",
+      coverageTitle: "พื้นที่ครอบคลุม (ฮิกาชิโยโดกาวะ)",
       coverageBody:
-        "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo และพื้นที่ใกล้เคียง",
+        "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo และพื้นที่ใกล้เคียง.",
       faq: [
         {
-          q: "สามารถจองงานวันเดียวกันในเขตฮิกาชิโยโดกาวะได้ไหม?",
-          a: "ขึ้นอยู่กับตารางงานในวันนั้น หากมีช่องว่างอาจทำได้ กรุณาติดต่อสอบถามก่อน.",
+          q: "สามารถสั่ง Take Away ได้ไหม?",
+          a: "ได้เลย ทุกเมนูรับ Take Away ขอปรับแต่งได้ เช่น วิปครีมเพิ่มพิเศษ.",
         },
         {
-          q: "สามารถฝากกุญแจบ้านให้ไปทำความสะอาดตอนที่ไม่อยู่บ้านได้ไหม?",
-          a: "ได้ เมื่อได้ตกลงเงื่อนไขและวิธีการเก็บรักษากุญแจล่วงหน้า เราจะเก็บกุญแจอย่างปลอดภัยและเข้าไปทำความสะอาดตามกติกา.",
+          q: "มีโอกาสหมดก่อนเวลาไหม?",
+          a: "เมนูตามฤดูกาลและเมนูจำกัดอาจหมดเมื่อวัตถุดิบหมด ติดตามอัปเดตล่าสุดได้ที่ Instagram ของเรา.",
         },
         {
-          q: "สามารถขอเพิ่มงานในวันทำความสะอาดได้ไหม?",
-          a: "ถ้าตารางเวลาว่างเพียงพอ เราจะพยายามช่วยให้ได้มากที่สุด กรุณาคุยกับพนักงานหน้างาน.",
-        },
-        {
-          q: "ใช้บริการได้ไหมถ้าไม่มีคนอยู่บ้าน?",
-          a: "ได้ หากได้ตกลงวิธีการเก็บและจัดการกุญแจล่วงหน้าแล้ว.",
+          q: "รับชำระเงินด้วยวิธีใดบ้าง?",
+          a: "รับเงินสดและการชำระเงินแบบไร้เงินสดหลักๆ สอบถามรายละเอียดได้ที่หน้าร้าน.",
         },
       ],
       contactTitle: "ติดต่อเรา",
-      contactText:
-        "หากต้องการตรวจสอบตารางว่างหรือขอใบเสนอราคา สามารถติดต่อผ่าน LINE หรือแบบฟอร์มบนเว็บไซต์ได้.",
+      contactText: "ติดต่อผ่าน Instagram DM หรือสอบถามที่เคาน์เตอร์ได้เลย.",
       toProductsText: "กลับไปหน้าหลัก",
     },
   },
@@ -1000,62 +932,56 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "Chúng tôi cung cấp dịch vụ vệ sinh nhà ở, giúp việc gia đình và sắp xếp nhà cửa chủ yếu tại Osaka và Hyogo. Từ nhà bếp, phòng tắm đến phòng khách và các gói vệ sinh định kỳ, chúng tôi đề xuất dịch vụ phù hợp với gia đình và nhu cầu của bạn.",
+        "Chúng tôi là tiệm bánh crêpe chuyên biệt tại các quận Higashiyodogawa và Kita, Osaka. Mỗi chiếc crêpe đều được làm theo yêu cầu, nướng tươi từ công thức riêng của chúng tôi. Phục vụ mang về tại tất cả cửa hàng và có chỗ ngồi tại một số cửa hàng chọn lọc.",
     },
     stores: {
-      heroTitle: `${site.name} ─ Danh sách cơ sở`,
-      heroAreas: "Osaka & Hyogo",
-      heroLead:
-        "Cung cấp dịch vụ vệ sinh nhà ở, giúp việc gia đình và sắp xếp không gian.",
+      heroTitle: `${site.name} ─ Danh sách cửa hàng`,
+      heroAreas: "Higashiyodogawa & Kita, Osaka",
+      heroLead: "Tiệm crêpe chuyên biệt, tất cả làm theo đặt hàng.",
       heroTail:
-        "Bạn có thể xem khu vực phục vụ và thông tin chi tiết của từng cơ sở tại đây.",
-      heroIntroLine: `${site.name} cung cấp dịch vụ vệ sinh, giúp việc gia đình và sắp xếp nhà cửa chủ yếu tại Osaka và Hyogo.`,
+        "Từ cửa hàng gần ga đến những quán nhỏ ẩn mình trong khu dân cư — hãy kiểm tra giờ mở cửa và menu đặc biệt của từng cửa hàng.",
+      heroIntroLine: `${site.name} là tiệm bánh crêpe chuyên biệt tại các quận Higashiyodogawa và Kita, Osaka.`,
     },
     areasLocal: {
-      h1: "Giúp việc gia đình và vệ sinh nhà ở tại quận Higashiyodogawa (Osaka)",
-      lead: "Phục vụ toàn bộ quận Higashiyodogawa, bao gồm Awaji, Kamishinjo, Daido Toyosato, Itakano, Kunijima, v.v.",
+      h1: "Tiệm bánh crêpe tại Higashiyodogawa, Osaka",
+      lead: "Khách hàng của chúng tôi đến từ khắp quận Higashiyodogawa: Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima và nhiều nơi khác.",
       services: [
         {
-          title: "Giúp việc gia đình (lẻ / định kỳ)",
+          title: "Menu phổ biến",
           bullets: [
-            "Dọn dẹp, sắp xếp, giặt giũ, đi chợ",
-            "Trông chừng trẻ em hoặc người cao tuổi ở mức độ nhẹ (trong phạm vi công việc nhà)",
-            "Có thể yêu cầu nhân viên nữ",
+            "Crêpe trái cây theo mùa (số lượng có hạn)",
+            "Kem trứng & kem tươi (sốt tự làm)",
+            "Chocolate chuối / dâu sữa và các hương vị cổ điển khác",
           ],
         },
         {
-          title: "Vệ sinh nhà ở",
+          title: "Thích hợp cho",
           bullets: [
-            "Khu vực ướt (bếp, phòng tắm, bồn rửa, nhà vệ sinh)",
-            "Vệ sinh điều hòa",
-            "Vệ sinh nhà trước/sau khi chuyển và nhà trống",
+            "Mang về & ăn vặt đường phố",
+            "Quà nhỏ hay đồ ăn vặt tặng bạn",
+            "Du ngoạn cùng gia đình hay bữa ăn nhẹ sau giờ học",
           ],
         },
       ],
-      coverageTitle: "Khu vực phục vụ (quận Higashiyodogawa)",
+      coverageTitle: "Khu vực phục vụ (Higashiyodogawa)",
       coverageBody:
         "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo và khu vực xung quanh.",
       faq: [
         {
-          q: "Có thể đặt dịch vụ trong ngày tại quận Higashiyodogawa không?",
-          a: "Tùy theo lịch làm việc ngày hôm đó, đôi khi có thể. Vui lòng liên hệ trước để kiểm tra.",
+          q: "Có thể mua mang về không?",
+          a: "Có, tất cả các sản phẩm đều có thể mang về. Đừng ngại yêu cầu tùy chỉnh như thêm kem tươi.",
         },
         {
-          q: "Tôi có thể giao chìa khóa để các bạn dọn nhà khi tôi vắng nhà không?",
-          a: "Được, sau khi thống nhất điều kiện, chúng tôi sẽ giữ chìa khóa an toàn và dọn dẹp theo quy định quản lý chìa khóa.",
+          q: "Có khi nào hết hàng không?",
+          a: "Các mặt hàng theo mùa và phiên bản giới hạn có thể hết khi nguyên liệu cạn. Theo dõi Instagram của chúng tôi để cập nhật thông tin mới nhất.",
         },
         {
-          q: "Có thể yêu cầu thêm công việc ngay trong ngày không?",
-          a: "Nếu lịch làm việc cho phép, chúng tôi sẽ cố gắng hỗ trợ linh hoạt. Hãy trao đổi trực tiếp với nhân viên.",
-        },
-        {
-          q: "Tôi có thể sử dụng dịch vụ khi không có nhà không?",
-          a: "Có, miễn là chúng ta đã thỏa thuận trước về cách giữ và quản lý chìa khóa.",
+          q: "Chấp nhận những hình thức thanh toán nào?",
+          a: "Chúng tôi nhận tiền mặt và các phương thức thanh toán không dùng tiền mặt phổ biến. Vui lòng hỏi tại cửa hàng để biết chi tiết.",
         },
       ],
       contactTitle: "Liên hệ",
-      contactText:
-        "Để kiểm tra lịch trống hoặc yêu cầu báo giá, hãy liên hệ qua LINE hoặc mẫu liên hệ trên website.",
+      contactText: "Liên hệ qua Instagram DM hoặc hỏi trực tiếp tại quầy.",
       toProductsText: "Quay lại trang chủ",
     },
   },
@@ -1065,35 +991,34 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "Kami menyediakan layanan pembersihan rumah, bantuan pekerjaan rumah tangga, dan penataan rumah terutama di wilayah Osaka dan Hyogo. Dari dapur dan kamar mandi hingga ruang keluarga serta paket pembersihan berkala, kami menawarkan layanan yang sesuai dengan kondisi dan kebutuhan rumah Anda.",
+        "Kami adalah crêperie khusus di distrik Higashiyodogawa dan Kita, Osaka. Setiap crêpe dibuat sesuai pesanan, dipanggang segar dengan resep eksklusif kami. Tersedia untuk dibawa pulang di semua gerai dan makan di tempat di beberapa gerai pilihan.",
     },
     stores: {
-      heroTitle: `${site.name} ─ Daftar cabang`,
-      heroAreas: "Osaka & Hyogo",
-      heroLead:
-        "Menyediakan layanan pembersihan rumah, bantuan rumah tangga, dan penataan rumah.",
+      heroTitle: `${site.name} ─ Daftar gerai`,
+      heroAreas: "Higashiyodogawa & Kita, Osaka",
+      heroLead: "Crêperie khusus, semua dibuat sesuai pesanan.",
       heroTail:
-        "Anda dapat melihat area layanan dan informasi detail setiap cabang di halaman ini.",
-      heroIntroLine: `${site.name} menawarkan layanan pembersihan rumah, bantuan rumah tangga, dan penataan rumah terutama di wilayah Osaka dan Hyogo.`,
+        "Dari gerai dekat stasiun hingga tempat tersembunyi di kawasan perumahan — cek jam buka dan menu eksklusif setiap gerai.",
+      heroIntroLine: `${site.name} adalah crêperie khusus di distrik Higashiyodogawa dan Kita, Osaka.`,
     },
     areasLocal: {
-      h1: "Bantuan rumah tangga & pembersihan di Higashiyodogawa (Osaka)",
-      lead: "Kami melayani seluruh distrik Higashiyodogawa, termasuk Awaji, Kamishinjo, Daido Toyosato, Itakano, Kunijima, dan sekitarnya.",
+      h1: "Crêperie di Higashiyodogawa, Osaka",
+      lead: "Pelanggan kami datang dari seluruh distrik Higashiyodogawa: Awaji, Kamishinjo, Daido-Toyosato, Itakano, Kunijima dan lainnya.",
       services: [
         {
-          title: "Bantuan rumah tangga (sekali / rutin)",
+          title: "Menu favorit",
           bullets: [
-            "Membersihkan, merapikan, mencuci, dan belanja kebutuhan",
-            "Mengawasi anak atau lansia secara ringan (dalam lingkup pekerjaan rumah)",
-            "Dapat meminta petugas perempuan",
+            "Crêpe buah musiman (edisi terbatas)",
+            "Krim custard & krim kocok (saus buatan sendiri)",
+            "Cokelat pisang / susu stroberi dan rasa klasik lainnya",
           ],
         },
         {
-          title: "Pembersihan rumah",
+          title: "Cocok untuk",
           bullets: [
-            "Area basah (dapur, kamar mandi, wastafel, toilet)",
-            "Pembersihan AC",
-            "Pembersihan rumah sebelum/sesudah pindahan dan rumah kosong",
+            "Dibawa pulang & street food",
+            "Oleh-oleh atau camilan kecil",
+            "Jalan-jalan bersama keluarga atau camilan sepulang sekolah",
           ],
         },
       ],
@@ -1102,25 +1027,20 @@ export const copy: Record<string, CopyBundle> = {
         "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo dan sekitarnya.",
       faq: [
         {
-          q: "Apakah bisa memesan layanan di hari yang sama di Higashiyodogawa?",
-          a: "Tergantung ketersediaan di hari tersebut, kadang-kadang bisa. Silakan hubungi kami terlebih dahulu.",
+          q: "Apakah bisa dibawa pulang?",
+          a: "Ya, semua item tersedia untuk dibawa pulang. Jangan sungkan meminta opsi kustom seperti krim tambahan.",
         },
         {
-          q: "Bisakah saya menitipkan kunci rumah agar kalian membersihkan saat saya tidak di rumah?",
-          a: "Bisa. Setelah menyepakati syaratnya, kami akan menyimpan kunci dengan aman dan membersihkan sesuai aturan pengelolaan kunci kami.",
+          q: "Apakah ada yang bisa habis terjual?",
+          a: "Item musiman dan edisi terbatas bisa habis saat bahan-bahan sudah habis. Cek Instagram kami untuk info terbaru.",
         },
         {
-          q: "Bisakah menambah pekerjaan tambahan di hari yang sama?",
-          a: "Jika jadwal memungkinkan, kami akan berusaha memberikan respon yang fleksibel. Silakan bicarakan langsung dengan petugas.",
-        },
-        {
-          q: "Apakah bisa menggunakan layanan jika saya tidak berada di rumah?",
-          a: "Bisa, selama sebelumnya sudah disepakati cara penyimpanan dan pengelolaan kunci.",
+          q: "Metode pembayaran apa yang diterima?",
+          a: "Kami menerima uang tunai dan metode pembayaran cashless utama. Tanyakan detail di gerai.",
         },
       ],
       contactTitle: "Hubungi kami",
-      contactText:
-        "Untuk mengecek ketersediaan jadwal atau meminta penawaran harga, hubungi kami melalui LINE atau formulir di situs.",
+      contactText: "Hubungi kami melalui Instagram DM atau tanyakan langsung di kasir.",
       toProductsText: "Kembali ke halaman utama",
     },
   },
@@ -1130,63 +1050,57 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "हम मुख्य रूप से ओसाका और ह्योगो क्षेत्र में हाउस क्लीनिंग, होम हेल्प और व्यवस्थित करने की सेवा प्रदान करते हैं। किचन और बाथरूम से लेकर लिविंग रूम और नियमित क्लीनिंग प्लान तक, हम आपके घर और जरूरतों के अनुसार सेवा सुझाते हैं।",
+        "हम ओसाका के हिगाशियोदोगावा और कीता जिले में एक विशेष क्रेप (Crêpe) की दुकान हैं। हर क्रेप ऑर्डर पर बनाई जाती है, हमारी अनोखी रेसिपी से ताज़ी बेक की हुई। सभी स्टोर पर टेकअवे उपलब्ध है, और कुछ चुनिंदा स्टोर पर बैठने की सुविधा भी है।",
     },
     stores: {
-      heroTitle: `${site.name} ─ शाखाओं की सूची`,
-      heroAreas: "ओसाका और ह्योगो",
-      heroLead:
-        "हम हाउस क्लीनिंग, होम हेल्प और घर व्यवस्थित करने की सेवाएँ प्रदान करते हैं।",
+      heroTitle: `${site.name} ─ हमारी दुकानें`,
+      heroAreas: "हिगाशियोदोगावा और कीता, ओसाका",
+      heroLead: "विशेष क्रेप की दुकान — सब कुछ ऑर्डर पर तैयार।",
       heroTail:
-        "प्रत्येक शाखा के सेवा क्षेत्र और विस्तृत जानकारी आप इस पेज पर देख सकते हैं।",
-      heroIntroLine: `${site.name} मुख्य रूप से ओसाका और ह्योगो क्षेत्र में हाउस क्लीनिंग, होम हेल्प और व्यवस्थित करने की सेवाएँ प्रदान करता है।`,
+        "स्टेशन के पास की दुकानों से लेकर आवासीय इलाकों में छुपे हुए रत्नों तक — हर दुकान के समय और विशेष मेनू देखें।",
+      heroIntroLine: `${site.name} ओसाका के हिगाशियोदोगावा और कीता जिले में एक विशेष क्रेप की दुकान है।`,
     },
     areasLocal: {
-      h1: "हिगाशी-योदोगावा (ओसाका) में होम हेल्प और हाउस क्लीनिंग",
-      lead: "हम हिगाशी-योदोगावा वार्ड के पूरे क्षेत्र में सेवा देते हैं, जैसे Awaji, Kamishinjo, Daido Toyosato, Itakano, Kunijima आदि।",
+      h1: "हिगाशियोदोगावा, ओसाका में क्रेप शॉप",
+      lead: "हमारे ग्राहक हिगाशियोदोगावा जिले के हर कोने से आते हैं: अवाजी, कामिशिंजो, दाइदो-तोयोसातो, इताकानो, कुनिजिमा और अन्य।",
       services: [
         {
-          title: "होम हेल्प (एक बार / नियमित)",
+          title: "लोकप्रिय मेनू",
           bullets: [
-            "सफाई, सामान व्यवस्थित करना, कपड़े धोना, खरीदारी में मदद",
-            "बच्चों या बुजुर्गों की हल्की देखभाल (घर के काम की सीमा में)",
-            "महिला स्टाफ की मांग की जा सकती है",
+            "मौसमी फलों की क्रेप (सीमित)",
+            "कस्टर्ड और फ्रेश क्रीम (घर का बना सॉस)",
+            "चॉकलेट-बनाना / स्ट्रॉबेरी-मिल्क और अन्य क्लासिक",
           ],
         },
         {
-          title: "हाउस क्लीनिंग",
+          title: "इनके लिए आदर्श",
           bullets: [
-            "वेट एरिया (किचन, बाथरूम, वॉशबेसिन, टॉयलेट)",
-            "एयर कंडीशनर की सफाई",
-            "शिफ्टिंग से पहले/बाद और खाली घरों की सफाई",
+            "टेकअवे और स्ट्रीट फूड",
+            "छोटा तोहफा या मिठाई",
+            "परिवार के साथ या स्कूल के बाद स्नैक",
           ],
         },
       ],
-      coverageTitle: "सेवा क्षेत्र (हिगाशी-योदोगावा वार्ड)",
+      coverageTitle: "सेवा क्षेत्र (हिगाशियोदोगावा जिला)",
       coverageBody:
-        "Awaji, Higashi-Awaji, Sugahara, Toyoshin, Kamishinjo, Zuiko, Komatsu, Minami-Eguchi, Kita-Eguchi, Itakano, Odori, Osumi, Toyosato, Daido-Minami, Kunijima, Shimoshinjo और आस-पास के क्षेत्र।",
+        "अवाजी, हिगाशि-अवाजी, सुगावारा, तोयोशिन, कामिशिंजो, ज़ुइको, कोमात्सु, मिनामि-एगुची, कीता-एगुची, इताकानो, ओदोरी, ओसुमी, तोयोसातो, दाइदो-मिनामि, कुनिजिमा, शिमोशिंजो और आसपास के क्षेत्र।",
       faq: [
         {
-          q: "क्या हिगाशी-योदोगावा में उसी दिन बुकिंग संभव है?",
-          a: "उस दिन की उपलब्धता पर निर्भर करता है। कभी-कभी संभव है, कृपया पहले हमसे संपर्क करें।",
+          q: "क्या टेकअवे उपलब्ध है?",
+          a: "हाँ, सभी आइटम टेकअवे के लिए उपलब्ध हैं। अतिरिक्त क्रीम जैसे कस्टम विकल्पों के लिए बेझिझक पूछें।",
         },
         {
-          q: "क्या मैं घर की चाबी आपको दे सकता/सकती हूँ ताकि आप मेरी गैर-मौजूदगी में सफाई कर सकें?",
-          a: "हाँ, शर्तों पर सहमति के बाद हम आपकी चाबी सुरक्षित रूप से रखते हैं और अपने की-मैनेजमेंट नियमों के अनुसार सफाई करते हैं।",
+          q: "क्या कभी-कभी आइटम खत्म हो जाते हैं?",
+          a: "मौसमी और सीमित संस्करण के आइटम सामग्री खत्म होने पर समाप्त हो सकते हैं। नवीनतम अपडेट के लिए हमारा Instagram देखें।",
         },
         {
-          q: "क्या उसी दिन अतिरिक्त काम की रिक्वेस्ट कर सकते हैं?",
-          a: "यदि शेड्यूल में समय हो तो हम यथासंभव लचीला व्यवहार करते हैं। कृपया स्टाफ से सीधे बात करें।",
-        },
-        {
-          q: "क्या मेरी गैर-मौजूदगी में भी सेवा ली जा सकती है?",
-          a: "हाँ, यदि पहले से चाबी रखने और मैनेज करने के तरीके पर सहमति हो जाए तो।",
+          q: "आप कौन से भुगतान तरीके स्वीकार करते हैं?",
+          a: "हम नकद और प्रमुख कैशलेस भुगतान विधियां स्वीकार करते हैं। विवरण के लिए स्टोर पर पूछें।",
         },
       ],
       contactTitle: "संपर्क करें",
-      contactText:
-        "उपलब्धता जाँचने या अनुमान (कोट) के लिए, कृपया LINE या वेबसाइट के संपर्क फॉर्म के माध्यम से हमसे जुड़ें।",
-      toProductsText: "टॉप पेज पर लौटें",
+      contactText: "Instagram DM के माध्यम से या सीधे काउंटर पर पूछें।",
+      toProductsText: "शीर्ष पृष्ठ पर वापस जाएं",
     },
   },
 
@@ -1195,62 +1109,56 @@ export const copy: Record<string, CopyBundle> = {
     home: {
       headline: site.name,
       description:
-        "نقدّم خدمات تنظيف المنازل، والمساعدة المنزلية، وتنظيم البيت بشكل أساسي في محافظتي أوساكا و هيوغو. من المطبخ والحمّام إلى غرفة المعيشة، إضافة إلى خطط تنظيف دورية، نوفّر خدمة تناسب منزلك واحتياجاتك.",
+        "نحن متجر متخصص في الكريب في حيَّي هيغاشي يودوغاوا وكيتا بمدينة أوساكا. يُحضَّر كل كريب عند الطلب، مخبوزاً طازجاً وفق وصفتنا الخاصة. الطلب للاستلام متاح في جميع المتاجر، مع أماكن جلوس في متاجر مختارة.",
     },
     stores: {
-      heroTitle: `${site.name} ─ قائمة الفروع`,
-      heroAreas: "أوساكا و هيوغو",
-      heroLead:
-        "نقدّم خدمات تنظيف المنازل، والمساعدة المنزلية، وتنظيم المساحات.",
+      heroTitle: `${site.name} ─ قائمة المتاجر`,
+      heroAreas: "هيغاشي يودوغاوا وكيتا، أوساكا",
+      heroLead: "متجر كريب متخصص — كل شيء يُحضَّر عند الطلب.",
       heroTail:
-        "يمكنك الاطّلاع على مناطق الخدمة والمعلومات التفصيلية لكل فرع من خلال هذه الصفحة.",
-      heroIntroLine: `${site.name} يقدّم خدمات التنظيف والمساعدة المنزلية وتنظيم البيت بشكل رئيسي في محافظتي أوساكا و هيوغو.`,
+        "من المتاجر القريبة من المحطة إلى الأماكن المخفية في الأحياء السكنية — تحقق من مواعيد العمل والقوائم الحصرية لكل متجر.",
+      heroIntroLine: `${site.name} هو متجر كريب متخصص في حيَّي هيغاشي يودوغاوا وكيتا بمدينة أوساكا.`,
     },
     areasLocal: {
-      h1: "مساعدة منزلية وتنظيف في حي هيغاشي يودوغاوا (أوساكا)",
-      lead: "نغطي جميع أنحاء حي هيغاشي يودوغاوا، بما في ذلك Awaji و Kamishinjo و Daido Toyosato و Itakano و Kunijima وغيرها.",
+      h1: "متجر كريب في هيغاشي يودوغاوا، أوساكا",
+      lead: "يأتينا العملاء من جميع أنحاء حي هيغاشي يودوغاوا: أواجي، كامي شينجو، دايدو تويوساتو، إيتاكانو، كونيجيما وغيرها.",
       services: [
         {
-          title: "مساعدة منزلية (مرة واحدة / دورية)",
+          title: "القائمة الأكثر شعبية",
           bullets: [
-            "تنظيف، ترتيب، غسيل، ومساعدة في التسوق",
-            "مراقبة خفيفة للأطفال أو كبار السن (في نطاق الأعمال المنزلية)",
-            "إمكانية طلب عاملة منزلية (أنثى)",
+            "كريب الفاكهة الموسمية (إصدار محدود)",
+            "كريم الكاسترد والكريمة المخفوقة (صوص منزلي الصنع)",
+            "الشوكولاتة والموز / الفراولة والحليب وغيرها من النكهات الكلاسيكية",
           ],
         },
         {
-          title: "تنظيف المنزل",
+          title: "مثالي لـ",
           bullets: [
-            "المناطق الرطبة (المطبخ، الحمّام، حوض الغسيل، دورة المياه)",
-            "تنظيف أجهزة التكييف",
-            "تنظيف المنازل قبل/بعد الانتقال والمنازل الخالية",
+            "استلام الطلب والطعام الشارعي",
+            "هدية صغيرة أو حلوى للمشاركة",
+            "نزهة عائلية أو وجبة خفيفة بعد المدرسة",
           ],
         },
       ],
       coverageTitle: "منطقة الخدمة (حي هيغاشي يودوغاوا)",
       coverageBody:
-        "Awaji و Higashi-Awaji و Sugahara و Toyoshin و Kamishinjo و Zuiko و Komatsu و Minami-Eguchi و Kita-Eguchi و Itakano و Odori و Osumi و Toyosato و Daido-Minami و Kunijima و Shimoshinjo والمناطق المجاورة.",
+        "أواجي، هيغاشي-أواجي، سوغاهارا، تويوشين، كامي شينجو، زويكو، كوماتسو، ميناميإغوتشي، كيتاإغوتشي، إيتاكانو، أودوري، أوسومي، تويوساتو، دايدو-ميناميا، كونيجيما، شيموشينجو والمناطق المجاورة.",
       faq: [
         {
-          q: "هل يمكن الحجز في نفس اليوم في حي هيغاشي يودوغاوا؟",
-          a: "يعتمد ذلك على مدى توفّر الوقت في ذلك اليوم، وقد يكون ممكنًا أحيانًا. يُرجى التواصل معنا أولًا للتأكّد.",
+          q: "هل يمكن الطلب للاستلام؟",
+          a: "نعم، جميع المنتجات متاحة للاستلام. لا تتردد في طلب خيارات مخصصة كالمزيد من الكريمة.",
         },
         {
-          q: "هل يمكنني تسليمكم مفتاح المنزل لتنظيفه أثناء غيابي؟",
-          a: "نعم، بعد الاتفاق على الشروط، نقوم بحفظ المفتاح بأمان ونلتزم بقواعد إدارة المفاتيح الخاصة بنا أثناء التنظيف.",
+          q: "هل قد تنفد بعض المنتجات؟",
+          a: "المنتجات الموسمية والإصدارات المحدودة قد تنفد عند انتهاء المكونات. تابع حسابنا على Instagram للحصول على آخر التحديثات.",
         },
         {
-          q: "هل يمكن طلب أعمال إضافية في نفس اليوم؟",
-          a: "إذا سمح الجدول الزمني، سنحاول الاستجابة بشكل مرن قدر الإمكان. يُرجى التحدّث مباشرة مع الموظف.",
-        },
-        {
-          q: "هل يمكن الاستفادة من الخدمة دون وجودي في المنزل؟",
-          a: "نعم، طالما تم الاتفاق مسبقًا على طريقة حفظ وإدارة المفتاح.",
+          q: "ما طرق الدفع المتاحة؟",
+          a: "نقبل النقد وطرق الدفع الإلكتروني الرئيسية. استفسر في المتجر للمزيد من التفاصيل.",
         },
       ],
-      contactTitle: "اتصل بنا",
-      contactText:
-        "للاستفسار عن المواعيد المتاحة أو طلب عرض سعر، يُرجى التواصل معنا عبر LINE أو نموذج الاتصال على الموقع.",
+      contactTitle: "تواصل معنا",
+      contactText: "تواصل معنا عبر Instagram DM أو اسأل مباشرة عند الكاونتر.",
       toProductsText: "العودة إلى الصفحة الرئيسية",
     },
   },
@@ -1266,13 +1174,13 @@ function footerAlt(name: string) {
 /** Footer の多言語テキスト */
 export const FOOTER_STRINGS: Record<string, FooterI18n> = {
   ja: {
-    cta: "無料相談・お問い合わせ",
+    cta: "お問い合わせ",
     snsAria: "SNSリンク",
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "公式サイト",
     siteAlt: site.name,
-    areaLinkText: "東淀川区の家事代行・ハウスクリーニング",
+    areaLinkText: "東淀川区の甘味処・クレープ",
     rights: "All rights reserved.",
   },
   en: {
@@ -1282,27 +1190,27 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "Official website",
     siteAlt: footerAlt(site.name),
-    areaLinkText: "Housekeeping & house cleaning in local",
+    areaLinkText: "Crepe shop in Higashiyodogawa",
     rights: "All rights reserved.",
   },
   zh: {
-    cta: "免费咨询・联系",
+    cta: "联系我们",
     snsAria: "社交链接",
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "官网",
-    siteAlt: `Tayotteya 官方网站`,
-    areaLinkText: "东淀川区的家政与家居清洁",
+    siteAlt: site.name,
+    areaLinkText: "东淀川区的可丽饼店",
     rights: "版权所有。",
   },
   "zh-TW": {
-    cta: "免費諮詢・聯絡我們",
+    cta: "聯絡我們",
     snsAria: "社群連結",
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "官方網站",
-    siteAlt: `Tayotteya 官方網站`,
-    areaLinkText: "東淀川區的家事服務・居家清潔",
+    siteAlt: site.name,
+    areaLinkText: "東淀川區的可麗餅店",
     rights: "版權所有。",
   },
   ko: {
@@ -1311,8 +1219,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "공식 사이트",
-    siteAlt: `Tayotteya 공식`,
-    areaLinkText: "히가시요도가와구 가사도우미·하우스 클리닝",
+    siteAlt: site.name,
+    areaLinkText: "히가시요도가와구의 크레페 가게",
     rights: "판권 소유.",
   },
   fr: {
@@ -1321,8 +1229,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "Site officiel",
-    siteAlt: `Tayotteya (Officiel)`,
-    areaLinkText: "Ménage & nettoyage domestique à local",
+    siteAlt: site.name,
+    areaLinkText: "Crêperie à Higashiyodogawa",
     rights: "Tous droits réservés.",
   },
   es: {
@@ -1331,8 +1239,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "Sitio oficial",
-    siteAlt: `Tayotteya (Oficial)`,
-    areaLinkText: "Servicio doméstico y limpieza en local",
+    siteAlt: site.name,
+    areaLinkText: "Crêperie en Higashiyodogawa",
     rights: "Todos los derechos reservados.",
   },
   de: {
@@ -1341,8 +1249,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "Offizielle Website",
-    siteAlt: `Tayotteya (Offiziell)`,
-    areaLinkText: "Haushaltshilfe & Hausreinigung in local",
+    siteAlt: site.name,
+    areaLinkText: "Crêperie in Higashiyodogawa",
     rights: "Alle Rechte vorbehalten.",
   },
   pt: {
@@ -1351,8 +1259,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "Site oficial",
-    siteAlt: `Tayotteya (Oficial)`,
-    areaLinkText: "Serviços domésticos e limpeza em local",
+    siteAlt: site.name,
+    areaLinkText: "Crêperie em Higashiyodogawa",
     rights: "Todos os direitos reservados.",
   },
   it: {
@@ -1361,8 +1269,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "Sito ufficiale",
-    siteAlt: `Tayotteya (Ufficiale)`,
-    areaLinkText: "Servizi domestici e pulizie a local",
+    siteAlt: site.name,
+    areaLinkText: "Crêperie a Higashiyodogawa",
     rights: "Tutti i diritti riservati.",
   },
   ru: {
@@ -1371,8 +1279,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "Официальный сайт",
-    siteAlt: `Tayotteya (Официальный)`,
-    areaLinkText: "Бытовые услуги и уборка в районе Хигасийодогава",
+    siteAlt: site.name,
+    areaLinkText: "Крепери в Хигасийодогава",
     rights: "Все права защищены.",
   },
   th: {
@@ -1381,8 +1289,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "เว็บไซต์ทางการ",
-    siteAlt: `Tayotteya (ทางการ)`,
-    areaLinkText: "แม่บ้านและทำความสะอาดในเขตฮิกาชิโยโดกาวะ",
+    siteAlt: site.name,
+    areaLinkText: "ร้านเครปในย่านฮิกาชิโยโดกาวะ",
     rights: "สงวนลิขสิทธิ์",
   },
   vi: {
@@ -1391,8 +1299,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "Trang chính thức",
-    siteAlt: `Tayotteya (Chính thức)`,
-    areaLinkText: "Dọn dẹp & giúp việc nhà tại local",
+    siteAlt: site.name,
+    areaLinkText: "Tiệm crêpe tại Higashiyodogawa",
     rights: "Mọi quyền được bảo lưu.",
   },
   id: {
@@ -1401,8 +1309,8 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "Situs resmi",
-    siteAlt: `Tayotteya (Resmi)`,
-    areaLinkText: "Jasa bersih-bersih & asisten rumah tangga di local",
+    siteAlt: site.name,
+    areaLinkText: "Crêperie di Higashiyodogawa",
     rights: "Hak cipta dilindungi.",
   },
   hi: {
@@ -1411,18 +1319,18 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     instagramAlt: "Instagram",
     lineAlt: "LINE",
     siteAria: "आधिकारिक वेबसाइट",
-    siteAlt: `Tayotteya (आधिकारिक)`,
-    areaLinkText: "हिगाशी-योदोगावा में हाउसकीपिंग व हाउस क्लीनिंग",
+    siteAlt: site.name,
+    areaLinkText: "हिगाशियोदोगावा में क्रेप की दुकान",
     rights: "सर्वाधिकार सुरक्षित।",
   },
   ar: {
-    cta: "اتصل بنا",
+    cta: "تواصل معنا",
     snsAria: "روابط التواصل الاجتماعي",
     instagramAlt: "إنستغرام",
     lineAlt: "لاين",
     siteAria: "الموقع الرسمي",
-    siteAlt: `تايوتيّا (رسمي)` as unknown as string,
-    areaLinkText: "خدمات التدبير المنزلي وتنظيف المنازل في هيغاشي يودوغاوا",
+    siteAlt: site.name as unknown as string,
+    areaLinkText: "متجر كريب في هيغاشي يودوغاوا",
     rights: "جميع الحقوق محفوظة.",
   },
 };
@@ -1432,29 +1340,29 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
 ========================= */
 export const faqItems: FaqItem[] = [
   {
-    question: "対応エリアはどこですか？",
+    question: "テイクアウトはできますか？",
     answer:
-      "大阪府・兵庫県を中心に対応しています。豊中市・吹田市・東淀川区・池田市・箕面市・尼崎市など、まずはお気軽にご相談ください。",
+      "すべてのメニューをテイクアウトでご利用いただけます。生クリーム多めなどのカスタムもお気軽にお申し付けください。",
   },
   {
-    question: "見積もりは無料ですか？",
+    question: "売り切れはありますか？",
     answer:
-      "はい、無料です。現地確認が必要な場合もありますが、費用はいただきません。",
+      "季節限定メニューや人気商品は、材料がなくなり次第終了となる場合があります。最新情報はInstagram（@yotteya.crape）でお知らせしています。",
   },
   {
     question: "支払い方法は？",
     answer:
-      "現金・銀行振込・各種キャッシュレス（ご相談ください）に対応しています。",
+      "現金のほか、主要なキャッシュレス決済に対応しています。詳細は店頭でご確認ください。",
   },
   {
-    question: "当日の追加依頼や延長は可能ですか？",
+    question: "イートインはできますか？",
     answer:
-      "当日のスケジュール次第ですが、可能な限り柔軟に対応いたします。スタッフへご相談ください。",
+      "店舗によってはイートインスペースをご用意しています。各店舗の情報は店舗一覧ページをご確認ください。",
   },
   {
-    question: "キャンセル料はかかりますか？",
+    question: "アレルギー対応はしていますか？",
     answer:
-      "前日キャンセルは無料、当日キャンセルは作業代の50％を頂戴しております（事前連絡なしの不在は100％）。",
+      "原材料のアレルギー情報については店頭スタッフにお問い合わせください。",
   },
 ];
 
@@ -1464,61 +1372,61 @@ export const faqItems: FaqItem[] = [
 const PAGES = {
   home: {
     path: "/",
-    title: `${site.name}｜家事代行`,
+    title: `${site.name}｜大阪市のクレープ専門店`,
     description:
-      "大阪・兵庫エリア対応のハウスクリーニング／家事代行／整理収納のご案内。",
+      "大阪市東淀川区・北区に展開するクレープ専門店『甘味処 よって屋』。注文ごとに生地から焼き上げるこだわりクレープをご提供。",
     ogType: "website",
   },
   about: {
     path: "/about",
-    title: `私たちの想い｜${site.name}`,
+    title: `当店の思い｜${site.name}`,
     description:
-      "お客様の暮らしに寄り添い、快適で清潔な空間づくりをサポートする私たちの理念。",
+      "甘味処 よって屋の想いをご紹介します。素材へのこだわりとお客様への気持ちを込めたメッセージ。",
     ogType: "website",
   },
   news: {
     path: "/news",
     title: `お知らせ｜${site.name}`,
-    description: `${site.name} の最新情報・キャンペーン・営業時間などのお知らせ。`,
+    description: `${site.name} の最新情報・限定メニュー・営業時間などのお知らせ。`,
     ogType: "website",
   },
   areasLocal: {
     path: "/areas/local",
-    title: `東淀川区の家事代行・ハウスクリーニング｜${site.name}`,
+    title: `東淀川区のクレープ・甘味処｜${site.name}`,
     description:
-      "東淀川区（淡路・上新庄…）で家事代行・ハウスクリーニング。定期/スポット対応。",
+      "大阪市東淀川区のクレープ・甘味は「甘味処 よって屋」へ。テイクアウト・イートイン対応。",
     ogType: "article",
   },
   products: {
     path: "/products",
-    title: `サービス一覧｜${site.name}`,
-    description: `${site.name}の家事代行・ハウスクリーニングのサービス一覧。水回り清掃や整理整頓、エアコン掃除などを掲載。`,
+    title: `メニュー一覧｜${site.name}`,
+    description: `${site.name}のクレープメニュー一覧。季節限定・定番・カスタマイズ可能なクレープを掲載。`,
     ogType: "website",
     ogImage: "/ogp-products.jpg",
   },
   productsEC: {
     path: "/products-ec",
-    title: `サービス一覧（オンライン予約）｜${site.name}`,
-    description: `${site.name}のサービス一覧（オンライン予約対応）。水回り・キッチン・浴室など日常のお手伝いをプロが丁寧に実施。`,
+    title: `メニュー一覧（オンライン）｜${site.name}`,
+    description: `${site.name}のメニュー一覧（オンライン対応）。お気に入りのクレープをチェック。`,
     ogType: "website",
     ogImage: "/ogp-products.jpg",
   },
   projects: {
     path: "/projects",
-    title: `サービス一覧｜${site.name}`,
-    description: `${site.name}のサービス紹介ページ。水回り清掃、リビング清掃、整理収納などを写真付きで掲載。`,
+    title: `クレープ紹介｜${site.name}`,
+    description: `${site.name}のクレープ紹介ページ。季節のフルーツ・定番クリーム・チョコバナナなどを写真付きで掲載。`,
     ogType: "website",
   },
   stores: {
     path: "/stores",
     title: `店舗一覧｜${site.name}`,
-    description: `${site.name}の店舗一覧ページ。大阪・兵庫エリア対応の拠点情報をご紹介します。`,
+    description: `${site.name}の店舗一覧ページ。大阪市東淀川区・北区の店舗情報をご紹介します。`,
     ogType: "website",
   },
   faq: {
     path: "/faq",
     title: `よくある質問（FAQ）｜${site.name}`,
-    description: `料金・対応エリア・キャンセル・支払い方法など、${site.name}のハウスクリーニング／家事代行に関するよくある質問。`,
+    description: `テイクアウト・支払い方法・売り切れ情報など、${site.name}のクレープに関するよくある質問。`,
     ogType: "article",
   },
 } as const;
@@ -1646,12 +1554,12 @@ export const AI_SITE: AiSiteConfig = {
   brand: site.name,
   url: site.baseUrl,
   areasByLang: {
-    ja: "大阪・兵庫（例：大阪市東淀川区／豊中市／吹田市 など）",
-    en: "Osaka & Hyogo (e.g., local, Toyonaka, Suita)",
+    ja: "大阪市東淀川区・北区（淡路・上新庄・下新庄 など）",
+    en: "Higashiyodogawa & Kita, Osaka (e.g., Awaji, Kamishinjo, Shimoshinjo)",
   },
   servicesByLang: {
-    ja: ["ハウスクリーニング", "エアコンクリーニング", "家事代行", "整理収納"],
-    en: ["house cleaning", "A/C cleaning", "housekeeping", "organizing"],
+    ja: ["クレープ", "テイクアウト", "イートイン", "季節限定メニュー"],
+    en: ["crepe", "takeout", "eat-in", "seasonal limited menu"],
   },
   retail: true,
   productPageRoute: "/products",

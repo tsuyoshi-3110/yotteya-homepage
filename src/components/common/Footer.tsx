@@ -107,7 +107,7 @@ export default function Footer() {
                 "h-12 px-5 rounded-2xl shadow-2xl font-bold text-black",
                 gradient
                   ? ["bg-linear-to-r", gradient, "hover:brightness-110"]
-                  : "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-emerald-600 hover:bg-emerald-700",
               )}
             />
           )}
@@ -115,7 +115,7 @@ export default function Footer() {
           {/* SNS */}
           <nav className="flex items-center justify-center gap-5">
             <a
-              href="https://www.instagram.com/yuki.tayotte2017"
+              href="https://www.instagram.com/yotteya.crape/"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -135,19 +135,6 @@ export default function Footer() {
               <Image
                 src="/images/line-logo.png"
                 alt="LINE"
-                width={iconSize}
-                height={iconSize}
-              />
-            </a>
-
-            <a
-              href="https://tayotteya.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Image
-                src="/images/ogpLogo.png"
-                alt="Site"
                 width={iconSize}
                 height={iconSize}
               />

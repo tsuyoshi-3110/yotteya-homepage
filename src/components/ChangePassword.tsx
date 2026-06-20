@@ -39,7 +39,7 @@ export default function ChangePassword({ onClose }: Props) {
   const handleChangePassword = async () => {
     if (!user || !user.email) {
       setMessage(
-        "ログイン情報が確認できません。再度ログインし直してください。"
+        "ログイン情報が確認できません。再度ログインし直してください。",
       );
       setIsSuccess(false);
       return;
@@ -62,7 +62,7 @@ export default function ChangePassword({ onClose }: Props) {
     try {
       const credential = EmailAuthProvider.credential(
         user.email,
-        currentPassword
+        currentPassword,
       );
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
@@ -89,7 +89,7 @@ export default function ChangePassword({ onClose }: Props) {
             break;
           case "auth/network-request-failed":
             setMessage(
-              "ネットワークエラーが発生しました。接続をご確認ください。"
+              "ネットワークエラーが発生しました。接続をご確認ください。",
             );
             break;
           default:
@@ -116,9 +116,8 @@ export default function ChangePassword({ onClose }: Props) {
         </span>
         <br />※ パスワードは英大文字・小文字・数字・記号を含めてください
         <br />
-        例:{" "}
-        <code className="bg-gray-100 px-1 py-0.5 rounded">
-          tayotteya3110123!
+        例: <code className="bg-gray-100 px-1 py-0.5 rounded">
+          yotteya123!
         </code>{" "}
         や <code className="bg-gray-100 px-1 py-0.5 rounded">Sakura2024$</code>
       </p>
