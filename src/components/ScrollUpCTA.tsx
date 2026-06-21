@@ -3,7 +3,7 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { Button } from "@/components/ui/button";
-import { useThemeGradient } from "@/lib/useThemeGradient";
+import { useBtnClassName } from "@/lib/useBtnClassName";
 
 type Props = {
   href?: string;
@@ -16,23 +16,12 @@ export default function ScrollUpCTA({
   label = "無料相談・お問い合わせ",
   className,
 }: Props) {
-  const gradient = useThemeGradient();
+  const btnClass = useBtnClassName();
 
   return (
-    <div
-      className={clsx(
-        className
-      )}
-    >
+    <div className={clsx(className)}>
       <Link href={href} prefetch className="block">
-        <Button
-          className={clsx(
-            "h-12 px-5 rounded-2xl shadow-2xl font-bold text-black",
-            gradient
-              ? ["bg-gradient-to-r", gradient, "hover:brightness-110"]
-              : "bg-emerald-600 hover:bg-emerald-700"
-          )}
-        >
+        <Button className={clsx(btnClass, "h-12 w-full px-5 rounded-2xl shadow-2xl font-bold")}>
           {label}
         </Button>
       </Link>

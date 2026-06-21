@@ -6,7 +6,7 @@ import ScrollUpCTA from "@/components/ScrollUpCTA";
 import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
 import { FOOTER_STRINGS, site } from "@/config/site";
 import clsx from "clsx";
-import { useThemeGradient } from "@/lib/useThemeGradient";
+import { useBtnClassName } from "@/lib/useBtnClassName";
 import VCardDownloadButton from "@/components/common/VCardDownloadButton";
 
 import { useEffect, useState } from "react";
@@ -46,7 +46,7 @@ export default function Footer() {
   const t = FOOTER_STRINGS[lang];
   const dir: "rtl" | "ltr" = lang === "ar" ? "rtl" : "ltr";
   const iconSize = 48;
-  const gradient = useThemeGradient();
+  const btnClass = useBtnClassName();
 
   // Footer も Header と同じ visibleMenuKeys を購読する
   const [visibleMenuKeys, setVisibleMenuKeys] = useState<string[]>([]);
@@ -104,12 +104,7 @@ export default function Footer() {
           {/* 🔵 vCard ボタン */}
           {showVCard && (
             <VCardDownloadButton
-              className={clsx(
-                "h-12 px-5 rounded-2xl shadow-2xl font-bold text-black",
-                gradient
-                  ? ["bg-linear-to-r", gradient, "hover:brightness-110"]
-                  : "bg-emerald-600 hover:bg-emerald-700",
-              )}
+              className={`${btnClass} h-12 px-5 rounded-2xl shadow-2xl font-bold`}
             />
           )}
 

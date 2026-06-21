@@ -41,6 +41,7 @@ import type { UILang } from "@/lib/atoms/uiLangAtom";
 
 // Google Maps Places
 import { Loader } from "@googlemaps/js-api-loader";
+import clsx from "clsx";
 
 // Firestore ref
 const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
@@ -885,6 +886,13 @@ export default function LoginPage() {
   // カード透明度
   const [cardOpacity, setCardOpacity] = useState<number>(0.35);
 
+  // アクセントカラー
+  const [accentColor, setAccentColor] = useState<string>("#ec4899");
+  const [useBgGradientForBtn, setUseBgGradientForBtn] = useState(false);
+
+  // 背景テクスチャ
+  const [bgTexture, setBgTexture] = useState<string>("none");
+
   // Google Maps API Key
   const mapsApiKey = useMemo(
     () => process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -901,6 +909,9 @@ export default function LoginPage() {
 
         if (data.themeGradient) setTheme(data.themeGradient as ThemeKey);
         if (typeof data.cardOpacity === "number") setCardOpacity(data.cardOpacity);
+        if (typeof data.accentColor === "string" && data.accentColor) setAccentColor(data.accentColor);
+        if (typeof data.bgTexture === "string") setBgTexture(data.bgTexture);
+        if (typeof data.useBgGradientForBtn === "boolean") setUseBgGradientForBtn(data.useBgGradientForBtn);
         if (Array.isArray(data.visibleMenuKeys))
           setVisibleKeys(data.visibleMenuKeys);
         if (Array.isArray(data.activeMenuKeys))
@@ -1070,6 +1081,25 @@ export default function LoginPage() {
     setCardOpacity(value);
     document.documentElement.style.setProperty("--card-opacity", String(value));
     await setDoc(META_REF, { cardOpacity: value }, { merge: true });
+  };
+
+  const handleAccentColorChange = async (value: string) => {
+    setAccentColor(value);
+    document.documentElement.style.setProperty("--accent-color", value);
+    await setDoc(META_REF, { accentColor: value }, { merge: true });
+  };
+
+  const handleUseBgGradientForBtnChange = async (value: boolean) => {
+    setUseBgGradientForBtn(value);
+    await setDoc(META_REF, { useBgGradientForBtn: value }, { merge: true });
+  };
+
+  const TEXTURE_CLASSES = ["texture-dots", "texture-stripes", "texture-grid", "texture-cross"];
+  const handleBgTextureChange = async (value: string) => {
+    setBgTexture(value);
+    document.body.classList.remove(...TEXTURE_CLASSES);
+    if (value !== "none") document.body.classList.add(`texture-${value}`);
+    await setDoc(META_REF, { bgTexture: value }, { merge: true });
   };
 
   const handleVisibleKeysChange = async (newKeys: string[]) => {
@@ -1272,10 +1302,53 @@ export default function LoginPage() {
                         {Math.round(cardOpacity * 100)}%
                       </span>
                     </div>
-                    <div
-                      className="mt-2 h-10 rounded-lg border card-bg"
-                      style={{ "--card-opacity": cardOpacity } as React.CSSProperties}
-                    />
+                  </div>
+
+                  <div>
+                    <SectionTitle>アクセントカラー</SectionTitle>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={useBgGradientForBtn}
+                          onChange={(e) => void handleUseBgGradientForBtnChange(e.target.checked)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">背景グラデーションを使う</span>
+                      </label>
+                      <input
+                        type="color"
+                        value={accentColor}
+                        onChange={(e) => void handleAccentColorChange(e.target.value)}
+                        className={`w-12 h-10 rounded cursor-pointer border ${useBgGradientForBtn ? "invisible" : ""}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <SectionTitle>背景テクスチャ</SectionTitle>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: "none", label: "なし" },
+                        { value: "dots", label: "ドット" },
+                        { value: "stripes", label: "ストライプ" },
+                        { value: "grid", label: "グリッド" },
+                        { value: "cross", label: "クロス" },
+                      ].map((t) => (
+                        <button
+                          key={t.value}
+                          onClick={() => void handleBgTextureChange(t.value)}
+                          className={clsx(
+                            "py-2 px-3 rounded-lg border text-sm font-medium transition",
+                            bgTexture === t.value
+                              ? "border-2 border-pink-500 bg-pink-50 text-pink-700"
+                              : "border-gray-200 bg-white text-gray-700"
+                          )}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div>

@@ -83,6 +83,7 @@ export default function ProductMedia({
   const [readyVideoIndexes, setReadyVideoIndexes] = useState<Set<number>>(
     () => new Set(),
   );
+  const touchStartX = useRef<number | null>(null);
   // 画面に入る少し前からプリロードを始めたいので rootMargin を広めに
   const [ref, visible] = useOnScreen<HTMLDivElement>("600px");
 
@@ -184,6 +185,20 @@ export default function ProductMedia({
     goTo(idx);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || total <= 1) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 40) {
+      delta < 0 ? goTo(currentIndex + 1) : goTo(currentIndex - 1);
+    }
+    touchStartX.current = null;
+  };
+
+
   // 動画再生が終わったら、ループしない場合は次のスライドへ
   const handleVideoEnded = () => {
     if (!autoPlay) return;
@@ -242,6 +257,8 @@ export default function ProductMedia({
         fill && "h-full",
         className,
       )}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div
         className={clsx(
@@ -317,14 +334,14 @@ export default function ProductMedia({
           <button
             type="button"
             onClick={handlePrev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-100 rounded-full bg-black/40 text-white w-8 h-8 flex items-center justify-center text-lg"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-100 rounded-full bg-black/40 text-white w-8 h-8 items-center justify-center text-lg hidden md:flex"
           >
             ‹
           </button>
           <button
             type="button"
             onClick={handleNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-100 rounded-full bg-black/40 text-white w-8 h-8 flex items-center justify-center text-lg"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-100 rounded-full bg-black/40 text-white w-8 h-8 items-center justify-center text-lg hidden md:flex"
           >
             ›
           </button>

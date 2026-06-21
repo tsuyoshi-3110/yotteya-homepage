@@ -1,10 +1,9 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { useThemeGradient } from "@/lib/useThemeGradient";
-import { ThemeKey, THEMES } from "@/lib/themes";
+import { useBtnClassName } from "@/lib/useBtnClassName";
 import clsx from "clsx";
 import { AsYouType, parsePhoneNumberFromString } from "libphonenumber-js";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
@@ -18,13 +17,7 @@ export function PhoneSection() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const gradient = useThemeGradient();
-
-  const isDark = useMemo(() => {
-    const darkThemes: ThemeKey[] = ["brandG", "brandH", "brandI"];
-    if (!gradient) return false;
-    return darkThemes.some((key) => gradient === THEMES[key]);
-  }, [gradient]);
+  const btnClass = useBtnClassName();
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -97,10 +90,9 @@ export function PhoneSection() {
             <a
               href={`tel:${phone}`}
               className={clsx(
-                "text-2xl md:text-3xl font-extrabold text-white",
-                `bg-gradient-to-br ${gradient}`,
-                "px-6 py-3 rounded-xl inline-block", // 👈 ここが超重要！
-                "hover:bg-pink-700 transition"
+                "text-2xl md:text-3xl font-extrabold",
+                btnClass,
+                "px-6 py-3 rounded-xl inline-block transition"
               )}
             >
               {formatDisplay(phone)}
