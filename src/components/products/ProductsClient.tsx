@@ -656,7 +656,7 @@ export default function ProductsClient() {
                         "flex flex-col h-full border shadow relative transition-colors duration-200 rounded-2xl",
                         "bg-linear-to-b",
                         gradient,
-                        isDragging ? "bg-yellow-100" : "bg-transparent",
+                        isDragging ? "bg-yellow-100" : "card-bg",
                         "backdrop-blur-sm",
                         "ring-1 ring-white/10"
                       )}
@@ -685,7 +685,7 @@ export default function ProductsClient() {
                         type={primary.type}
                         items={slides}
                         className="rounded-t-xl"
-                        videoDisplay="thumbnailUntilReady"
+                        videoDisplay="play"
                       />
 
                       <div className="p-1 space-y-1">

@@ -136,6 +136,19 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* カード背景透明度（--card-opacity をCardOpacityInjectorが動的に上書き） */
+.card-bg,
+.bg-white\/20,
+.bg-white\/25,
+.bg-white\/30,
+.bg-white\/35,
+.bg-white\/40,
+.bg-white\/50,
+.bg-white\/60,
+.bg-white\/70 {
+  background-color: rgb(255 255 255 / var(--card-opacity, 0.35)) !important;
+}
+
 /* 文字の周りにフチを作る（色はCSS変数で制御、デフォルト transparent = 枠なし） */
 .text-outline {
   text-shadow:

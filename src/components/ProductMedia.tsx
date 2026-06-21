@@ -123,6 +123,15 @@ export default function ProductMedia({
             // モバイルの自動再生制限などは無視
           });
         }
+      } else if (
+        videoDisplay === "thumbnailUntilReady" &&
+        visible &&
+        slide?.type === "video" &&
+        !readyVideoIndexes.has(index) &&
+        video.readyState === 0 // HAVE_NOTHING: まだ何もロードされていない（iOS対応）
+      ) {
+        // iOS は preload を無視するため、可視になった時点で load() を呼んでメタデータを取得する
+        video.load();
       } else {
         video.pause();
       }

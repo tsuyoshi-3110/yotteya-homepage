@@ -588,7 +588,7 @@ export default function HoursSection() {
 
           {/* 週間テーブル */}
           <motion.div
-            className="overflow-hidden rounded-2xl shadow-xl ring-1 ring-black/10 bg-white/50"
+            className="overflow-hidden rounded-2xl shadow-xl ring-1 ring-black/10 card-bg"
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, amount: 0.7 }}

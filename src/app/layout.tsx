@@ -10,6 +10,7 @@ import WallpaperBackground from "@/components/WallpaperBackground";
 import SubscriptionOverlay from "@/components/SubscriptionOverlay";
 import AnalyticsLogger from "@/components/AnalyticsLogger";
 import TextColorLoader from "@/components/TextColorLoader";
+import CardOpacityInjector from "@/components/CardOpacityInjector";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import { CartProvider } from "@/lib/cart/CartContext";
 import { seo, site, pageUrl, PUBLIC_ADDRESS } from "@/config/site";
@@ -98,6 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WallpaperBackground />
         <ThemeBackground />
         <TextColorLoader />
+        <CardOpacityInjector />
         <AnalyticsLogger />
         <CartProvider>
           <SubscriptionOverlay siteKey={SITE_KEY} />

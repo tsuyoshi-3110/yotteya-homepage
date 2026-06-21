@@ -16,6 +16,7 @@ import {
   QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { ExternalLink, Store, X } from "lucide-react";
+import Image from "next/image";
 
 /* ========== 型 ========== */
 type Contact = {
@@ -499,6 +500,15 @@ export default function BusinessCardPage() {
           <p className="mt-2 text-xs opacity-60">
             Pageitと同じアカウントで、そのままXenoCardを利用できます。
           </p>
+          <div className="mt-4 flex justify-center">
+            <Image
+              src="/images/xenoCardIcon.png"
+              alt="XenoCard"
+              width={120}
+              height={120}
+              className="rounded-2xl"
+            />
+          </div>
           <button
             type="button"
             onClick={() => void openXenoCard()}

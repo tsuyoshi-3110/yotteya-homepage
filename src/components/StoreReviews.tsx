@@ -297,7 +297,7 @@ export default function StoreReviews({
       {reviews.map((rv, i) => (
         <div
           key={i}
-          className={`rounded-md border p-4 shadow-sm ${"bg-white/30 text-black"}`}
+          className={`rounded-md border p-4 shadow-sm ${"card-bg text-black"}`}
         >
           <div className="flex items-center gap-3 mb-2">
             <Avatar author={rv.author} url={rv.profilePhotoUrl} />

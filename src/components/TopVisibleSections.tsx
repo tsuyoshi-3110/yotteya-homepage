@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { db, auth } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore"; // ← onSnapshot を使う
+import { doc, onSnapshot } from "firebase/firestore";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 import ProductsClient from "./products/ProductsClient";
@@ -18,7 +18,8 @@ import HoursClient from "./HoursClient";
 
 const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
 
-// トップ表示候補に限定（★ "hours" を追加）
+const LS_KEY = `${SITE_KEY}:topSections`;
+
 const TOP_DISPLAYABLE_ITEMS = [
   "products",
   "pricing",
@@ -39,8 +40,25 @@ const MENU_ITEMS: { key: string; label: string }[] = [
   { key: "stores", label: "店舗一覧" },
   { key: "story", label: "私たちの思い" },
   { key: "news", label: "お知らせ" },
-  { key: "hours", label: "営業時間" }, // ★ 追加
+  { key: "hours", label: "営業時間" },
 ];
+
+function readCache(): { activeMenuKeys: string[]; visibleMenuKeys: string[] } | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(activeMenuKeys: string[], visibleMenuKeys: string[]) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({ activeMenuKeys, visibleMenuKeys }));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 function renderSection(key: string) {
   switch (key) {
@@ -72,30 +90,35 @@ export default function TopVisibleSections() {
   const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Firestore をリアルタイム購読
+  // クライアントマウント直後にキャッシュを反映（SSRと競合しないよう useEffect 内で実行）
+  useEffect(() => {
+    const cached = readCache();
+    if (cached) {
+      setActiveKeys(cached.activeMenuKeys);
+      setVisibleKeys(cached.visibleMenuKeys);
+    }
+  }, []);
+
   useEffect(() => {
     const unsub = onSnapshot(META_REF, (snap) => {
       const data = snap.data() as {
         activeMenuKeys?: string[];
         visibleMenuKeys?: string[];
       };
-      setActiveKeys(
-        Array.isArray(data?.activeMenuKeys) ? data!.activeMenuKeys! : []
-      );
-      setVisibleKeys(
-        Array.isArray(data?.visibleMenuKeys) ? data!.visibleMenuKeys! : []
-      );
+      const ak = Array.isArray(data?.activeMenuKeys) ? data!.activeMenuKeys! : [];
+      const vk = Array.isArray(data?.visibleMenuKeys) ? data!.visibleMenuKeys! : [];
+      setActiveKeys(ak);
+      setVisibleKeys(vk);
+      writeCache(ak, vk);
     });
     return () => unsub();
   }, []);
 
-  // ログイン状態監視
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((user) => setIsLoggedIn(!!user));
     return () => unsub();
   }, []);
 
-  // 両方を満たすキーだけ表示（可視候補 ∩ アクティブ ∩ トップ候補）
   const keysToShow = useMemo(
     () =>
       activeKeys.filter(

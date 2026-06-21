@@ -1,7 +1,7 @@
 // components/StoresClient.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Pin, Plus } from "lucide-react";
 import clsx from "clsx";
@@ -50,7 +50,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import { LANGS, type LangKey } from "@/lib/langs";
@@ -209,6 +209,7 @@ export default function StoresClient() {
   const { uiLang } = useUILang();
 
   const [stores, setStores] = useState<StoreDoc[]>([]);
+  const [storesLoading, setStoresLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [formMode, setFormMode] = useState<"add" | "edit" | null>(null);
@@ -354,6 +355,7 @@ export default function StoresClient() {
       });
       docs.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
       setStores(docs);
+      setStoresLoading(false);
     });
     return () => unsub();
   }, [colRef]);
@@ -613,7 +615,23 @@ export default function StoresClient() {
     }
   };
 
-  if (!gradient) return <CardSpinner />;
+  if (!gradient || (storesLoading && stores.length === 0)) {
+    return (
+      <main className="max-w-5xl mx-auto p-4 mt-20">
+        <div className="h-8 bg-white/30 rounded w-32 mb-6 animate-pulse" />
+        {[0, 1].map((i) => (
+          <div key={i} className="rounded-lg shadow bg-white/30 animate-pulse mt-6">
+            <div className="h-52 bg-white/20 rounded-t-lg" />
+            <div className="p-4 space-y-3">
+              <div className="h-5 bg-white/20 rounded w-1/2" />
+              <div className="h-4 bg-white/20 rounded w-3/4" />
+              <div className="h-4 bg-white/20 rounded w-2/3" />
+            </div>
+          </div>
+        ))}
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-5xl mx-auto p-4 mt-20">
@@ -1037,9 +1055,6 @@ function StoreCard({
   googleEnabled,
   gradientClass,
 }: StoreCardProps) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(ref, { once: true, margin: "0px 0px -150px 0px" });
-
   const addrLines = splitLines(locAddress);
   const primaryAddr = addrLines[0] ?? "";
 
@@ -1048,13 +1063,9 @@ function StoreCard({
 
   return (
     <motion.div
-      ref={ref}
       layout
-      initial={{ opacity: 0, y: 40 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
       className={clsx(
-        "relative overflow-visible rounded-lg shadow mt-6", // ★ ここを overflow-visible に変更（ピンがはみ出しても表示）
+        "relative overflow-visible rounded-lg shadow mt-6",
         "bg-gradient-to-b",
         isDragging ? "bg-yellow-100" : gradientClass
       )}

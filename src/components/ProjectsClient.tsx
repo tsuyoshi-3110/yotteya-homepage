@@ -764,7 +764,7 @@ export default function ProjectsClient() {
                             "flex h-full flex-col border rounded-lg overflow-hidden shadow-xl transition-colors duration-200",
                             "bg-gradient-to-b",
                             gradient,
-                            isDragging ? "bg-yellow-100" : "bg-white",
+                            isDragging ? "bg-yellow-100" : "card-bg",
                             !isDragging && "hover:shadow-lg",
                           )}
                         >

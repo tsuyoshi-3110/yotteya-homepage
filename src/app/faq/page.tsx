@@ -21,7 +21,7 @@ export default function FAQPage() {
 
       <dl className="space-y-6">
         {faqItems.map((f, i) => (
-          <div key={i} className="bg-white/40 rounded-2xl p-4 shadow">
+          <div key={i} className="card-bg rounded-2xl p-4 shadow">
             <dt className="font-bold mb-2">Q. {f.question}</dt>
             <dd className="leading-relaxed">A. {f.answer}</dd>
           </div>

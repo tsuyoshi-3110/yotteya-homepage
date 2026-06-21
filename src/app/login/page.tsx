@@ -882,6 +882,9 @@ export default function LoginPage() {
   const [guideAccepted, setGuideAccepted] = useState<boolean>(false);
   const [guideAcceptedAt, setGuideAcceptedAt] = useState<any>(null);
 
+  // カード透明度
+  const [cardOpacity, setCardOpacity] = useState<number>(0.35);
+
   // Google Maps API Key
   const mapsApiKey = useMemo(
     () => process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -897,6 +900,7 @@ export default function LoginPage() {
         const data = snap.data() as any;
 
         if (data.themeGradient) setTheme(data.themeGradient as ThemeKey);
+        if (typeof data.cardOpacity === "number") setCardOpacity(data.cardOpacity);
         if (Array.isArray(data.visibleMenuKeys))
           setVisibleKeys(data.visibleMenuKeys);
         if (Array.isArray(data.activeMenuKeys))
@@ -1060,6 +1064,12 @@ export default function LoginPage() {
   const handleThemeChange = async (newTheme: ThemeKey) => {
     setTheme(newTheme);
     await setDoc(META_REF, { themeGradient: newTheme }, { merge: true });
+  };
+
+  const handleCardOpacityChange = async (value: number) => {
+    setCardOpacity(value);
+    document.documentElement.style.setProperty("--card-opacity", String(value));
+    await setDoc(META_REF, { cardOpacity: value }, { merge: true });
   };
 
   const handleVisibleKeysChange = async (newKeys: string[]) => {
@@ -1243,6 +1253,28 @@ export default function LoginPage() {
                     <ThemeSelector
                       currentTheme={theme}
                       onChange={handleThemeChange}
+                    />
+                  </div>
+
+                  <div>
+                    <SectionTitle>カードの透明度</SectionTitle>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={cardOpacity}
+                        onChange={(e) => void handleCardOpacityChange(Number(e.target.value))}
+                        className="flex-1"
+                      />
+                      <span className="text-sm w-12 text-right">
+                        {Math.round(cardOpacity * 100)}%
+                      </span>
+                    </div>
+                    <div
+                      className="mt-2 h-10 rounded-lg border card-bg"
+                      style={{ "--card-opacity": cardOpacity } as React.CSSProperties}
                     />
                   </div>
 

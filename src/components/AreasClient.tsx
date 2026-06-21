@@ -442,7 +442,7 @@ export default function AreasClient() {
         viewport={{ once: true, amount: 0.6 }}
         transition={{ duration: 1.2, ease: STAGGER_EASE }}
       >
-        <Card className="shadow-md bg-white/50">
+        <Card className="shadow-md card-bg">
           <CardHeader>
             <CardTitle className="text-lg">{T.map}</CardTitle>
           </CardHeader>
