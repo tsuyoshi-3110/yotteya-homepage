@@ -42,6 +42,7 @@ import type { UILang } from "@/lib/atoms/uiLangAtom";
 // Google Maps Places
 import { Loader } from "@googlemaps/js-api-loader";
 import clsx from "clsx";
+import { resolveCustomerConfigDocument } from "@/lib/customer-config/resolve";
 
 // Firestore ref
 // [migrated to useSiteKey] META_REF
@@ -895,11 +896,15 @@ function SeoSettingsCard() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    getDoc(doc(db, "siteSettings", siteKey)).then((snap) => {
-      const data = snap.data() as Record<string, string> | undefined;
-      setSiteNameLocal(data?.siteName ?? "");
-      setTagline(data?.seoTagline ?? "");
-      setDescription(data?.seoDescription ?? "");
+    Promise.all([
+      getDoc(doc(db, "siteSettings", siteKey)),
+      getDoc(doc(db, "sites", siteKey)),
+    ]).then(([settingsSnap, siteSnap]) => {
+      const settings = settingsSnap.data() as Record<string, string> | undefined;
+      const config = resolveCustomerConfigDocument(siteSnap.exists() ? siteSnap.data() : null);
+      setSiteNameLocal(settings?.siteName ?? "");
+      setTagline(settings?.seoTagline || config.brand.tagline);
+      setDescription(settings?.seoDescription || config.brand.description);
     });
   }, [siteKey]);
 
