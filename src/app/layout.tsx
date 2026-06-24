@@ -12,7 +12,7 @@ import AnalyticsLogger from "@/components/AnalyticsLogger";
 import TextColorLoader from "@/components/TextColorLoader";
 import CardOpacityInjector from "@/components/CardOpacityInjector";
 import { CartProvider } from "@/lib/cart/CartContext";
-import { seo, site } from "@/config/site";
+import { seo } from "@/config/site";
 import { loadSiteJsonLdGraphFromFirestore } from "@/lib/customer-config/site-jsonld-server";
 import { resolveCurrentTenant } from "@/lib/customer-config/tenant-resolver-server";
 import { readCachedSiteDocument, readCachedSiteSettingsEditable, readCachedSiteSettings } from "@/lib/customer-config/site-document-server";
@@ -96,16 +96,23 @@ export default async function RootLayout({
   ]);
 
   let initialSiteName: string | undefined;
+  let tenantLogoUrl: string | null = null;
   try {
-    const [siteDoc, siteSettingsDoc] = await Promise.all([
+    const [siteDoc, siteSettingsDoc, editableDoc] = await Promise.all([
       readCachedSiteDocument(tenant.siteKey),
       readCachedSiteSettings(tenant.siteKey),
+      readCachedSiteSettingsEditable(tenant.siteKey),
     ]);
     const config = siteDoc ? resolveCustomerConfigDocument(siteDoc) : null;
     initialSiteName =
       typeof siteSettingsDoc?.siteName === "string" && siteSettingsDoc.siteName
         ? siteSettingsDoc.siteName
         : config?.brand.name ?? undefined;
+    tenantLogoUrl =
+      typeof editableDoc?.headerLogoUrl === "string" &&
+      editableDoc.headerLogoUrl.startsWith("https://")
+        ? editableDoc.headerLogoUrl
+        : null;
   } catch {
     // undefined のまま → Header 側で空文字として扱う
   }
@@ -122,7 +129,9 @@ export default async function RootLayout({
       ].join(" ")}
     >
       <head>
-        <link rel="preload" as="image" href={site.logoPath} type="image/png" />
+        {tenantLogoUrl && (
+          <link rel="preload" as="image" href={tenantLogoUrl} type="image/png" />
+        )}
         <Script
           id="ld-graph"
           type="application/ld+json"
