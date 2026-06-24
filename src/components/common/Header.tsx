@@ -22,7 +22,7 @@ import UILangFloatingPicker from "../UILangFloatingPicker";
 import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
 import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { doc, onSnapshot } from "firebase/firestore";
-import { siteName } from "@/config/site";
+import { siteName as defaultSiteName } from "@/config/site";
 
 /* ===== 多言語辞書 ===== */
 type Keys =
@@ -490,6 +490,16 @@ export default function Header({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
+  const [siteName, setSiteName] = useState<string>(defaultSiteName);
+
+  useEffect(() => {
+    import("firebase/firestore").then(({ doc, getDoc }) => {
+      getDoc(doc(db, "siteSettings", siteKey)).then((snap) => {
+        const name = snap.data()?.siteName as string | undefined;
+        if (name) setSiteName(name);
+      });
+    });
+  }, [siteKey]);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {

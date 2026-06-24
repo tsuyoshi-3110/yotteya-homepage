@@ -2,15 +2,27 @@
 
 import { copy, site } from "@/config/site";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { motion, type Variants, type Transition } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function HomePageText() {
   const { uiLang } = useUILang();
+  const siteKey = useSiteKey();
   const bundle = copy[uiLang] ?? copy["ja"];
 
-  const headline = bundle.home.headline || site.name;
+  const [headline, setHeadline] = useState(bundle.home.headline || site.name);
   const description = bundle.home.description || "";
+
+  useEffect(() => {
+    getDoc(doc(db, "siteSettings", siteKey)).then((snap) => {
+      const name = snap.data()?.siteName as string | undefined;
+      if (name) setHeadline(name);
+    });
+  }, [siteKey]);
 
   // ★ スクロール検知
   const { ref, inView } = useInView({
