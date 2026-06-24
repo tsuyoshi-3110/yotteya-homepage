@@ -90,8 +90,8 @@ export default function Footer() {
     copyrightName: string;
   }>({
     siteName: site.name,
-    instagramUrl: CUSTOMER.social.instagram,
-    lineUrl: CUSTOMER.social.line,
+    instagramUrl: "",
+    lineUrl: "",
     xUrl: "",
     copyrightName: CUSTOMER.brand.copyrightName,
   });
@@ -106,8 +106,8 @@ export default function Footer() {
         const e = editableSnap.data() ?? {};
         setFooterData({
           siteName: (s.siteName as string) || site.name,
-          instagramUrl: (e.instagramUrl as string) || CUSTOMER.social.instagram,
-          lineUrl: (e.lineUrl as string) || CUSTOMER.social.line,
+          instagramUrl: (e.instagramUrl as string) || "",
+          lineUrl: (e.lineUrl as string) || "",
           xUrl: (e.xUrl as string) || "",
           copyrightName: (e.copyrightName as string) || (s.siteName as string) || CUSTOMER.brand.copyrightName,
         });
