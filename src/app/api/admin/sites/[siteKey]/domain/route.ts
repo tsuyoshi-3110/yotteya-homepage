@@ -77,6 +77,43 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ siteKey: string }> }
+) {
+  try {
+    const [{ siteKey }, uid] = await Promise.all([
+      context.params,
+      authenticate(req),
+    ]);
+    if (!uid) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
+    }
+
+    const ownerSnap = await adminDb.doc(`siteSettings/${siteKey}`).get();
+    const ownerId = ownerSnap.exists ? ownerSnap.get("ownerId") : null;
+    if (typeof ownerId !== "string" || ownerId !== uid) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403, headers: NO_STORE_HEADERS });
+    }
+
+    const hostname = req.nextUrl.searchParams.get("hostname");
+    if (!hostname) {
+      return NextResponse.json({ error: "missing-hostname" }, { status: 400, headers: NO_STORE_HEADERS });
+    }
+
+    const domainSnap = await adminDb.doc(`domains/${hostname}`).get();
+    if (!domainSnap.exists || domainSnap.get("siteKey") !== siteKey) {
+      return NextResponse.json({ error: "not-found" }, { status: 404, headers: NO_STORE_HEADERS });
+    }
+
+    await adminDb.doc(`domains/${hostname}`).delete();
+    return NextResponse.json({ deleted: hostname }, { status: 200, headers: NO_STORE_HEADERS });
+  } catch (error) {
+    console.error("admin domain DELETE failed", error);
+    return NextResponse.json({ error: "internal" }, { status: 500, headers: NO_STORE_HEADERS });
+  }
+}
+
 export async function PUT(
   req: NextRequest,
   context: { params: Promise<{ siteKey: string }> }

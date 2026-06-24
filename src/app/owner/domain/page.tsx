@@ -325,9 +325,37 @@ function DomainSettingsView({
   const [syncState, setSyncState] = useState<DomainStatusSyncState>({
     kind: "idle",
   });
+  const [deletingHostname, setDeletingHostname] = useState<string | null>(null);
   const dirty =
     domain !== (data.domain ?? "") || wwwEnabled !== (data.wwwEnabled === true);
   const saveButton = getDomainSaveButtonState({ saving, dirty });
+
+  const deleteHost = async (hostname: string) => {
+    if (deletingHostname) return;
+    if (!window.confirm(`「${hostname}」を登録ホストから削除しますか？`)) return;
+    setDeletingHostname(hostname);
+    try {
+      const user = auth.currentUser;
+      const token = user ? await user.getIdToken() : null;
+      const res = await fetch(
+        `/api/admin/sites/${siteKey}/domain?hostname=${encodeURIComponent(hostname)}`,
+        {
+          method: "DELETE",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          cache: "no-store",
+        }
+      );
+      if (!res.ok) return;
+      const reloadRes = await fetch(`/api/admin/sites/${siteKey}/domain`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        cache: "no-store",
+      });
+      const reloaded = await reloadRes.json().catch(() => null);
+      if (reloadRes.ok && reloaded) onReloaded(reloaded as DomainSettingsResponse);
+    } finally {
+      setDeletingHostname(null);
+    }
+  };
 
   useEffect(() => {
     setDomain(data.domain ?? "");
@@ -784,14 +812,27 @@ function DomainSettingsView({
             label="www利用"
             value={data.wwwEnabled === true ? "利用する" : "利用しない"}
           />
-          <InfoItem
-            label="登録ホスト"
-            value={
-              data.domains.length > 0
-                ? data.domains.map(({ hostname }) => hostname).join("\n")
-                : "未設定"
-            }
-          />
+          <div>
+            <dt className="text-sm font-medium text-gray-500">登録ホスト</dt>
+            {data.domains.length > 0 ? (
+              <dd className="mt-1 space-y-1">
+                {data.domains.map(({ hostname }) => (
+                  <div key={hostname} className="flex items-center gap-2">
+                    <span className="text-sm break-all">{hostname}</span>
+                    <button
+                      onClick={() => deleteHost(hostname)}
+                      disabled={deletingHostname === hostname}
+                      className="shrink-0 rounded px-2 py-0.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-40"
+                    >
+                      {deletingHostname === hostname ? "削除中…" : "削除"}
+                    </button>
+                  </div>
+                ))}
+              </dd>
+            ) : (
+              <dd className="mt-1 text-sm">未設定</dd>
+            )}
+          </div>
         </dl>
       </section>
 
