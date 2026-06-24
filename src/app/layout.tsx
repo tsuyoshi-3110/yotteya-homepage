@@ -15,7 +15,7 @@ import { CartProvider } from "@/lib/cart/CartContext";
 import { seo, site } from "@/config/site";
 import { loadSiteJsonLdGraphFromFirestore } from "@/lib/customer-config/site-jsonld-server";
 import { resolveCurrentTenant } from "@/lib/customer-config/tenant-resolver-server";
-import { readCachedSiteDocument } from "@/lib/customer-config/site-document-server";
+import { readCachedSiteDocument, readCachedSiteSettingsEditable } from "@/lib/customer-config/site-document-server";
 import { resolveCustomerConfigDocument } from "@/lib/customer-config/resolve";
 import { SiteKeyProvider } from "@/lib/context/SiteKeyContext";
 import {
@@ -29,14 +29,28 @@ export async function generateMetadata(): Promise<Metadata> {
   const base = seo.base();
   try {
     const tenant = await resolveCurrentTenant();
-    const doc = await readCachedSiteDocument(tenant.siteKey);
-    const config = resolveCustomerConfigDocument(doc);
+    const [siteDoc, editableDoc] = await Promise.all([
+      readCachedSiteDocument(tenant.siteKey),
+      readCachedSiteSettingsEditable(tenant.siteKey),
+    ]);
+    const config = resolveCustomerConfigDocument(siteDoc);
     const title = `${config.brand.name}｜${config.brand.tagline}`;
     const description = config.brand.description;
+
+    const logoUrl =
+      typeof editableDoc?.headerLogoUrl === "string" &&
+      editableDoc.headerLogoUrl.startsWith("https://")
+        ? editableDoc.headerLogoUrl
+        : null;
+    const icons: Metadata["icons"] = logoUrl
+      ? { icon: [{ url: logoUrl, type: "image/png" }], apple: logoUrl, shortcut: logoUrl }
+      : base.icons;
+
     return {
       ...base,
       title,
       description,
+      icons,
       openGraph: base.openGraph
         ? { ...base.openGraph, title, description, siteName: config.brand.name }
         : undefined,
@@ -70,6 +84,15 @@ export default async function RootLayout({
     resolveCurrentTenant(),
   ]);
 
+  let initialSiteName = site.name;
+  try {
+    const siteDoc = await readCachedSiteDocument(tenant.siteKey);
+    const config = resolveCustomerConfigDocument(siteDoc);
+    initialSiteName = config.brand.name;
+  } catch {
+    // fall back to default
+  }
+
   return (
     <html
       lang="ja"
@@ -100,7 +123,7 @@ export default async function RootLayout({
           <AnalyticsLogger />
           <CartProvider>
             <SubscriptionOverlay siteKey={tenant.siteKey} />
-            <Header />
+            <Header initialSiteName={initialSiteName} />
             <main className="flex-1">{children}</main>
             <Footer />
           </CartProvider>

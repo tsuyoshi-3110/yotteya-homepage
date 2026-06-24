@@ -485,12 +485,18 @@ type EditableSettings = {
   businessHours?: { enabled?: boolean };
 };
 
-export default function Header({ className = "" }: { className?: string }) {
+export default function Header({
+  className = "",
+  initialSiteName,
+}: {
+  className?: string;
+  initialSiteName?: string;
+}) {
   const siteKey = useSiteKey();
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
-  const [siteName, setSiteName] = useState<string>(defaultSiteName);
+  const [siteName, setSiteName] = useState<string>(initialSiteName ?? defaultSiteName);
 
   useEffect(() => {
     import("firebase/firestore").then(({ doc, getDoc }) => {
