@@ -897,7 +897,7 @@ function SeoSettingsCard() {
   useEffect(() => {
     Promise.all([
       getDoc(doc(db, "siteSettings", siteKey)),
-      fetch("/api/owner/seo-settings").then((r) => r.json() as Promise<{ tagline: string; description: string }>),
+      fetch(`/api/owner/seo-settings?siteKey=${encodeURIComponent(siteKey)}`).then((r) => r.json() as Promise<{ tagline: string; description: string }>),
     ]).then(([settingsSnap, defaults]) => {
       const settings = settingsSnap.data() as Record<string, string> | undefined;
       setSiteNameLocal(settings?.siteName ?? "");

@@ -1,17 +1,21 @@
-import { NextResponse } from "next/server";
-import { resolveCurrentTenant } from "@/lib/customer-config/tenant-resolver-server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   readCachedSiteDocument,
   readCachedSiteSettings,
 } from "@/lib/customer-config/site-document-server";
 import { resolveCustomerConfigDocument } from "@/lib/customer-config/resolve";
+import { isValidAdminSiteKey } from "@/lib/customer-config/admin-domain-settings";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const siteKey = request.nextUrl.searchParams.get("siteKey");
+  if (!isValidAdminSiteKey(siteKey)) {
+    return NextResponse.json({ tagline: "", description: "" }, { status: 400 });
+  }
+
   try {
-    const tenant = await resolveCurrentTenant();
     const [siteDoc, settingsDoc] = await Promise.all([
-      readCachedSiteDocument(tenant.siteKey),
-      readCachedSiteSettings(tenant.siteKey),
+      readCachedSiteDocument(siteKey),
+      readCachedSiteSettings(siteKey),
     ]);
     const config = siteDoc ? resolveCustomerConfigDocument(siteDoc) : null;
 
