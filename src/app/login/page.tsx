@@ -796,6 +796,86 @@ const TOP_DISPLAYABLE_ITEMS = [
   "hours",
 ];
 
+function SiteInfoCard() {
+  const siteKey = useSiteKey();
+  const [siteName, setSiteName] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [lineUrl, setLineUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      getDoc(doc(db, "siteSettings", siteKey)),
+      getDoc(doc(db, "siteSettingsEditable", siteKey)),
+    ]).then(([s, e]) => {
+      setSiteName((s.data()?.siteName as string) ?? "");
+      setInstagramUrl((e.data()?.instagramUrl as string) ?? "");
+      setLineUrl((e.data()?.lineUrl as string) ?? "");
+    });
+  }, [siteKey]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await Promise.all([
+      setDoc(doc(db, "siteSettings", siteKey), { siteName }, { merge: true }),
+      setDoc(
+        doc(db, "siteSettingsEditable", siteKey),
+        { instagramUrl, lineUrl },
+        { merge: true }
+      ),
+    ]);
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  return (
+    <Card className="shadow-xl bg-white/60 backdrop-blur-sm border border-gray-200">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+          <Globe size={18} />
+          サイト基本情報・SNS設定
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1">
+          <label className="text-sm font-medium">店舗名・サイト名</label>
+          <Input
+            value={siteName}
+            onChange={(e) => setSiteName(e.target.value)}
+            placeholder="例：甘味処 よって屋"
+          />
+          <p className="text-xs text-gray-500">ヘッダーとフッターに表示されます</p>
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Instagram URL</label>
+          <Input
+            value={instagramUrl}
+            onChange={(e) => setInstagramUrl(e.target.value)}
+            placeholder="https://www.instagram.com/yourpage/"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium">LINE URL</label>
+          <Input
+            value={lineUrl}
+            onChange={(e) => setLineUrl(e.target.value)}
+            placeholder="https://lin.ee/xxxxxxx"
+          />
+        </div>
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full"
+        >
+          {saving ? "保存中..." : saved ? "✓ 保存しました" : "保存する"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function SeoGuideCard() {
   return (
     <Card className="shadow-xl bg-white/60 backdrop-blur-sm border border-gray-200">
@@ -1586,6 +1666,8 @@ export default function LoginPage() {
 
               {/* Ship&co への導線（Stripeの近くに設置） */}
               {hasConnect && <ShipAndCoLinkCard />}
+
+              <SiteInfoCard />
 
               <SeoGuideCard />
 
