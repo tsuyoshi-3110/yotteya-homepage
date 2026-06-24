@@ -91,13 +91,19 @@ export default async function RootLayout({
     resolveCurrentTenant(),
   ]);
 
-  let initialSiteName = site.name;
+  let initialSiteName: string | undefined;
   try {
-    const siteDoc = await readCachedSiteDocument(tenant.siteKey);
+    const [siteDoc, siteSettingsDoc] = await Promise.all([
+      readCachedSiteDocument(tenant.siteKey),
+      readCachedSiteSettings(tenant.siteKey),
+    ]);
     const config = resolveCustomerConfigDocument(siteDoc);
-    initialSiteName = config.brand.name;
+    initialSiteName =
+      typeof siteSettingsDoc?.siteName === "string" && siteSettingsDoc.siteName
+        ? siteSettingsDoc.siteName
+        : config.brand.name;
   } catch {
-    // fall back to default
+    // undefined のまま → Header 側で空文字として扱う
   }
 
   return (

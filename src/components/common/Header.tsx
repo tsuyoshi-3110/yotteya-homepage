@@ -496,7 +496,7 @@ export default function Header({
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
-  const [siteName, setSiteName] = useState<string>(initialSiteName ?? defaultSiteName);
+  const [siteName, setSiteName] = useState<string>(initialSiteName ?? "");
 
   useEffect(() => {
     import("firebase/firestore").then(({ doc, getDoc }) => {
