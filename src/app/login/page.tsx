@@ -801,6 +801,7 @@ function SiteInfoCard() {
   const [siteName, setSiteName] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
   const [lineUrl, setLineUrl] = useState("");
+  const [xUrl, setXUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -812,6 +813,7 @@ function SiteInfoCard() {
       setSiteName((s.data()?.siteName as string) ?? "");
       setInstagramUrl((e.data()?.instagramUrl as string) ?? "");
       setLineUrl((e.data()?.lineUrl as string) ?? "");
+      setXUrl((e.data()?.xUrl as string) ?? "");
     });
   }, [siteKey]);
 
@@ -821,7 +823,7 @@ function SiteInfoCard() {
       setDoc(doc(db, "siteSettings", siteKey), { siteName }, { merge: true }),
       setDoc(
         doc(db, "siteSettingsEditable", siteKey),
-        { instagramUrl, lineUrl },
+        { instagramUrl, lineUrl, xUrl },
         { merge: true }
       ),
     ]);
@@ -862,6 +864,14 @@ function SiteInfoCard() {
             value={lineUrl}
             onChange={(e) => setLineUrl(e.target.value)}
             placeholder="https://lin.ee/xxxxxxx"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium">X（旧Twitter）URL</label>
+          <Input
+            value={xUrl}
+            onChange={(e) => setXUrl(e.target.value)}
+            placeholder="https://x.com/yourhandle"
           />
         </div>
         <Button
