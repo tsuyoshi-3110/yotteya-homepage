@@ -82,6 +82,36 @@ export default function Footer() {
     return () => unsub();
   }, [siteKey]);
 
+  const [footerData, setFooterData] = useState<{
+    siteName: string;
+    instagramUrl: string;
+    lineUrl: string;
+    copyrightName: string;
+  }>({
+    siteName: site.name,
+    instagramUrl: CUSTOMER.social.instagram,
+    lineUrl: CUSTOMER.social.line,
+    copyrightName: CUSTOMER.brand.copyrightName,
+  });
+
+  useEffect(() => {
+    import("firebase/firestore").then(({ doc: firestoreDoc, getDoc }) => {
+      Promise.all([
+        getDoc(firestoreDoc(db, "siteSettings", siteKey)),
+        getDoc(firestoreDoc(db, "siteSettingsEditable", siteKey)),
+      ]).then(([settingsSnap, editableSnap]) => {
+        const s = settingsSnap.data() ?? {};
+        const e = editableSnap.data() ?? {};
+        setFooterData({
+          siteName: (s.siteName as string) || site.name,
+          instagramUrl: (e.instagramUrl as string) || CUSTOMER.social.instagram,
+          lineUrl: (e.lineUrl as string) || CUSTOMER.social.line,
+          copyrightName: (e.copyrightName as string) || (s.siteName as string) || CUSTOMER.brand.copyrightName,
+        });
+      });
+    });
+  }, [siteKey]);
+
   // Footer が使うキー
   const showContactCTA = visibleMenuKeys.includes("footerCTA");
   const showVCard = visibleMenuKeys.includes("footerVCard");
@@ -111,9 +141,9 @@ export default function Footer() {
 
           {/* SNS */}
           <nav className="flex items-center justify-center gap-5">
-            {CUSTOMER.social.instagram && (
+            {footerData.instagramUrl && (
               <a
-                href={CUSTOMER.social.instagram}
+                href={footerData.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -126,9 +156,9 @@ export default function Footer() {
               </a>
             )}
 
-            {CUSTOMER.social.line && (
+            {footerData.lineUrl && (
               <a
-                href={CUSTOMER.social.line}
+                href={footerData.lineUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -142,17 +172,10 @@ export default function Footer() {
             )}
           </nav>
 
-          {/* エリアリンク */}
-          <p className="text-xs">
-            <a href="/areas/local" className="hover:underline">
-              {CUSTOMER.localPage.footerLinkText}
-            </a>
-          </p>
-
           {/* コピーライト */}
-          <p className="font-semibold">{site.name}</p>
+          <p className="font-semibold">{footerData.siteName}</p>
           <p className="text-xs">
-            © {new Date().getFullYear()} {CUSTOMER.brand.copyrightName}.{" "}
+            © {new Date().getFullYear()} {footerData.copyrightName}.{" "}
             {t.rights}
           </p>
         </div>
