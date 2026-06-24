@@ -34,16 +34,20 @@ export async function generateMetadata(): Promise<Metadata> {
       readCachedSiteSettingsEditable(tenant.siteKey),
       readCachedSiteSettings(tenant.siteKey),
     ]);
-    const config = resolveCustomerConfigDocument(siteDoc);
+    const config = siteDoc ? resolveCustomerConfigDocument(siteDoc) : null;
+    const siteName =
+      typeof siteSettingsDoc?.siteName === "string" && siteSettingsDoc.siteName
+        ? siteSettingsDoc.siteName
+        : config?.brand.name ?? "";
     const tagline =
       typeof siteSettingsDoc?.seoTagline === "string" && siteSettingsDoc.seoTagline
         ? siteSettingsDoc.seoTagline
-        : config.brand.tagline;
+        : config?.brand.tagline ?? "";
     const description =
       typeof siteSettingsDoc?.seoDescription === "string" && siteSettingsDoc.seoDescription
         ? siteSettingsDoc.seoDescription
-        : config.brand.description;
-    const title = `${config.brand.name}｜${tagline}`;
+        : config?.brand.description ?? "";
+    const title = tagline ? `${siteName}｜${tagline}` : siteName;
 
     const logoUrl =
       typeof editableDoc?.headerLogoUrl === "string" &&
@@ -59,7 +63,7 @@ export async function generateMetadata(): Promise<Metadata> {
         ? { icon: [{ url: logoUrl, type: "image/png" }], apple: logoUrl }
         : undefined,
       openGraph: base.openGraph
-        ? { ...base.openGraph, title, description, siteName: config.brand.name }
+        ? { ...base.openGraph, title, description, siteName }
         : undefined,
       twitter: base.twitter
         ? { ...base.twitter, title, description }
@@ -97,11 +101,11 @@ export default async function RootLayout({
       readCachedSiteDocument(tenant.siteKey),
       readCachedSiteSettings(tenant.siteKey),
     ]);
-    const config = resolveCustomerConfigDocument(siteDoc);
+    const config = siteDoc ? resolveCustomerConfigDocument(siteDoc) : null;
     initialSiteName =
       typeof siteSettingsDoc?.siteName === "string" && siteSettingsDoc.siteName
         ? siteSettingsDoc.siteName
-        : config.brand.name;
+        : config?.brand.name ?? undefined;
   } catch {
     // undefined のまま → Header 側で空文字として扱う
   }

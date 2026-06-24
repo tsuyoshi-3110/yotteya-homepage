@@ -13,17 +13,17 @@ export async function GET() {
       readCachedSiteDocument(tenant.siteKey),
       readCachedSiteSettings(tenant.siteKey),
     ]);
-    const config = resolveCustomerConfigDocument(siteDoc);
+    const config = siteDoc ? resolveCustomerConfigDocument(siteDoc) : null;
 
     return NextResponse.json({
       tagline:
         typeof settingsDoc?.seoTagline === "string" && settingsDoc.seoTagline
           ? settingsDoc.seoTagline
-          : config.brand.tagline,
+          : config?.brand.tagline ?? "",
       description:
         typeof settingsDoc?.seoDescription === "string" && settingsDoc.seoDescription
           ? settingsDoc.seoDescription
-          : config.brand.description,
+          : config?.brand.description ?? "",
     });
   } catch {
     return NextResponse.json({ tagline: "", description: "" }, { status: 500 });
