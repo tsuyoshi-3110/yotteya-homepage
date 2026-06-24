@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  readCachedSiteDocument,
-  readCachedSiteSettings,
-} from "@/lib/customer-config/site-document-server";
-import { resolveCustomerConfigDocument } from "@/lib/customer-config/resolve";
+import { readCachedSiteSettings } from "@/lib/customer-config/site-document-server";
 import { isValidAdminSiteKey } from "@/lib/customer-config/admin-domain-settings";
 
 export async function GET(request: NextRequest) {
@@ -13,21 +9,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [siteDoc, settingsDoc] = await Promise.all([
-      readCachedSiteDocument(siteKey),
-      readCachedSiteSettings(siteKey),
-    ]);
-    const config = siteDoc ? resolveCustomerConfigDocument(siteDoc) : null;
-
+    const settingsDoc = await readCachedSiteSettings(siteKey);
     return NextResponse.json({
-      tagline:
-        typeof settingsDoc?.seoTagline === "string" && settingsDoc.seoTagline
-          ? settingsDoc.seoTagline
-          : config?.brand.tagline ?? "",
-      description:
-        typeof settingsDoc?.seoDescription === "string" && settingsDoc.seoDescription
-          ? settingsDoc.seoDescription
-          : config?.brand.description ?? "",
+      tagline: typeof settingsDoc?.seoTagline === "string" ? settingsDoc.seoTagline : "",
+      description: typeof settingsDoc?.seoDescription === "string" ? settingsDoc.seoDescription : "",
     });
   } catch {
     return NextResponse.json({ tagline: "", description: "" }, { status: 500 });
