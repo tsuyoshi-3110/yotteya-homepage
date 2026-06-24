@@ -795,7 +795,7 @@ function DomainSettingsView({
         </dl>
       </section>
 
-      {(data.dns || displayedDnsRecords.length > 0) && (
+      {data.domain !== null && (
         <section className="rounded-2xl border bg-white/85 p-5 shadow-sm">
           <h2 className="text-lg font-semibold" style={{ color: "#111827" }}>
             DNS設定
@@ -803,7 +803,9 @@ function DomainSettingsView({
           <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm leading-6 text-amber-900">
             {vercelDnsRecords.length > 0
               ? "Vercel APIが返した現在の推奨値です。既存表示と異なる場合はこちらを優先してください。"
-              : `${data.dns?.notice ?? "保存済みのDNS参照値"}。この値は現在のよって屋用です。将来追加される他テナントへ固定流用しないでください。`}
+              : displayedDnsRecords.length === 0
+              ? "「Vercel接続状態を確認」ボタンを押すと、このドメイン専用のDNS設定値が確認できます。"
+              : data.dns?.notice ?? "DNS設定値"}
           </p>
           <div className="mt-4 space-y-3">
             {vercelState.kind === "success" &&

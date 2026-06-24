@@ -1,21 +1,5 @@
 type UnknownRecord = Record<string, unknown>;
 
-export const DOMAIN_DNS_REFERENCE = Object.freeze({
-  notice: "現在のyotteya.shopで確認した値",
-  records: [
-    {
-      type: "A",
-      name: "@",
-      value: "216.198.79.1",
-    },
-    {
-      type: "CNAME",
-      name: "www",
-      value: "675cef4eac0f0603.vercel-dns-017.com",
-    },
-  ],
-});
-
 export type DomainDocument = {
   id: string;
   data: unknown;
@@ -150,7 +134,7 @@ export async function getAdminDomainSettings({
       wwwEnabled,
       domainStatus,
       domains,
-      dns: DOMAIN_DNS_REFERENCE,
+      dns: null,
     },
   };
 }

@@ -15,6 +15,8 @@ import { CartProvider } from "@/lib/cart/CartContext";
 import { seo, site } from "@/config/site";
 import { loadSiteJsonLdGraphFromFirestore } from "@/lib/customer-config/site-jsonld-server";
 import { resolveCurrentTenant } from "@/lib/customer-config/tenant-resolver-server";
+import { readCachedSiteDocument } from "@/lib/customer-config/site-document-server";
+import { resolveCustomerConfigDocument } from "@/lib/customer-config/resolve";
 import { SiteKeyProvider } from "@/lib/context/SiteKeyContext";
 import {
   kosugiMaru, notoSansJP, shipporiMincho, reggaeOne, yomogi, hachiMaruPop,
@@ -23,7 +25,29 @@ import {
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
-export const metadata: Metadata = seo.base();
+export async function generateMetadata(): Promise<Metadata> {
+  const base = seo.base();
+  try {
+    const tenant = await resolveCurrentTenant();
+    const doc = await readCachedSiteDocument(tenant.siteKey);
+    const config = resolveCustomerConfigDocument(doc);
+    const title = `${config.brand.name}｜${config.brand.tagline}`;
+    const description = config.brand.description;
+    return {
+      ...base,
+      title,
+      description,
+      openGraph: base.openGraph
+        ? { ...base.openGraph, title, description, siteName: config.brand.name }
+        : undefined,
+      twitter: base.twitter
+        ? { ...base.twitter, title, description }
+        : undefined,
+    };
+  } catch {
+    return base;
+  }
+}
 
 export const viewport: Viewport = {
   themeColor: [
