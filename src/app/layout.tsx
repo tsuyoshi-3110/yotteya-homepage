@@ -42,15 +42,14 @@ export async function generateMetadata(): Promise<Metadata> {
       editableDoc.headerLogoUrl.startsWith("https://")
         ? editableDoc.headerLogoUrl
         : null;
-    const icons: Metadata["icons"] = logoUrl
-      ? { icon: [{ url: logoUrl, type: "image/png" }], apple: logoUrl, shortcut: logoUrl }
-      : base.icons;
 
     return {
       ...base,
       title,
       description,
-      icons,
+      icons: logoUrl
+        ? { icon: [{ url: logoUrl, type: "image/png" }], apple: logoUrl }
+        : undefined,
       openGraph: base.openGraph
         ? { ...base.openGraph, title, description, siteName: config.brand.name }
         : undefined,
@@ -59,7 +58,7 @@ export async function generateMetadata(): Promise<Metadata> {
         : undefined,
     };
   } catch {
-    return base;
+    return { ...base, icons: undefined };
   }
 }
 
