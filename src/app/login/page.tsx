@@ -886,6 +886,94 @@ function SiteInfoCard() {
   );
 }
 
+function SeoSettingsCard() {
+  const siteKey = useSiteKey();
+  const [siteName, setSiteNameLocal] = useState("");
+  const [tagline, setTagline] = useState("");
+  const [description, setDescription] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    getDoc(doc(db, "siteSettings", siteKey)).then((snap) => {
+      const data = snap.data() as Record<string, string> | undefined;
+      setSiteNameLocal(data?.siteName ?? "");
+      setTagline(data?.seoTagline ?? "");
+      setDescription(data?.seoDescription ?? "");
+    });
+  }, [siteKey]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await setDoc(
+      doc(db, "siteSettings", siteKey),
+      { seoTagline: tagline, seoDescription: description },
+      { merge: true }
+    );
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  const previewTitle = [siteName || "サイト名", tagline].filter(Boolean).join("｜");
+
+  return (
+    <Card className="shadow-xl bg-white/60 backdrop-blur-sm border border-gray-200">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+          <Search size={18} />
+          SEO・検索表示設定
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1">
+          <label className="text-sm font-medium">サブタイトル（業種・サービス名）</label>
+          <Input
+            value={tagline}
+            onChange={(e) => setTagline(e.target.value)}
+            placeholder="例：家事代行・ハウスクリーニング"
+            maxLength={40}
+          />
+          <p className="text-xs text-gray-500">
+            Googleの検索タイトルに「サイト名｜サブタイトル」で表示されます（目安：40文字以内）
+          </p>
+          <p className="text-xs text-gray-400 text-right">{tagline.length}/40</p>
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium">サイト説明文（メタディスクリプション）</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="例：大阪・兵庫エリア対応のハウスクリーニング・家事代行・整理収納をご案内します。"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-20 resize-y"
+            maxLength={160}
+          />
+          <p className="text-xs text-gray-500">
+            Googleの検索結果に表示される説明文です（目安：120〜160文字）
+          </p>
+          <p className={clsx("text-xs text-right", description.length > 160 ? "text-red-500" : "text-gray-400")}>
+            {description.length}/160
+          </p>
+        </div>
+        <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 space-y-1">
+          <p className="text-xs font-medium text-gray-500">Googleプレビュー（イメージ）</p>
+          <p className="text-blue-700 text-sm font-medium truncate">{previewTitle || "サイト名｜サブタイトル"}</p>
+          <p className="text-green-700 text-xs">https://example.com</p>
+          <p className="text-gray-600 text-xs leading-relaxed line-clamp-2">
+            {description || "説明文がここに表示されます。"}
+          </p>
+        </div>
+        <Button onClick={handleSave} disabled={saving} className="w-full">
+          {saving ? "保存中..." : saved ? "✓ 保存しました" : "保存する"}
+        </Button>
+        <p className="text-xs text-gray-400 text-center">
+          ※ 変更がGoogleに反映されるまで数日〜数週間かかる場合があります
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function SeoGuideCard() {
   return (
     <Card className="shadow-xl bg-white/60 backdrop-blur-sm border border-gray-200">
@@ -1678,6 +1766,8 @@ export default function LoginPage() {
               {hasConnect && <ShipAndCoLinkCard />}
 
               <SiteInfoCard />
+
+              <SeoSettingsCard />
 
               <SeoGuideCard />
 

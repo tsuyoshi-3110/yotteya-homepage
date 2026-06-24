@@ -20,3 +20,12 @@ export const readCachedSiteSettingsEditable = cache(async (siteKey: string) => {
   const snapshot = await adminDb.collection("siteSettingsEditable").doc(siteKey).get();
   return snapshot.exists ? snapshot.data() : null;
 });
+
+/**
+ * siteSettings の読み取りを同一リクエスト内でキャッシュします。
+ * siteName・seoTagline・seoDescription など管理画面から編集できる設定値を保持します。
+ */
+export const readCachedSiteSettings = cache(async (siteKey: string) => {
+  const snapshot = await adminDb.collection("siteSettings").doc(siteKey).get();
+  return snapshot.exists ? snapshot.data() : null;
+});

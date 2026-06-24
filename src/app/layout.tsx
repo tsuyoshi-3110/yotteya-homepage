@@ -15,7 +15,7 @@ import { CartProvider } from "@/lib/cart/CartContext";
 import { seo, site } from "@/config/site";
 import { loadSiteJsonLdGraphFromFirestore } from "@/lib/customer-config/site-jsonld-server";
 import { resolveCurrentTenant } from "@/lib/customer-config/tenant-resolver-server";
-import { readCachedSiteDocument, readCachedSiteSettingsEditable } from "@/lib/customer-config/site-document-server";
+import { readCachedSiteDocument, readCachedSiteSettingsEditable, readCachedSiteSettings } from "@/lib/customer-config/site-document-server";
 import { resolveCustomerConfigDocument } from "@/lib/customer-config/resolve";
 import { SiteKeyProvider } from "@/lib/context/SiteKeyContext";
 import {
@@ -29,13 +29,21 @@ export async function generateMetadata(): Promise<Metadata> {
   const base = seo.base();
   try {
     const tenant = await resolveCurrentTenant();
-    const [siteDoc, editableDoc] = await Promise.all([
+    const [siteDoc, editableDoc, siteSettingsDoc] = await Promise.all([
       readCachedSiteDocument(tenant.siteKey),
       readCachedSiteSettingsEditable(tenant.siteKey),
+      readCachedSiteSettings(tenant.siteKey),
     ]);
     const config = resolveCustomerConfigDocument(siteDoc);
-    const title = `${config.brand.name}｜${config.brand.tagline}`;
-    const description = config.brand.description;
+    const tagline =
+      typeof siteSettingsDoc?.seoTagline === "string" && siteSettingsDoc.seoTagline
+        ? siteSettingsDoc.seoTagline
+        : config.brand.tagline;
+    const description =
+      typeof siteSettingsDoc?.seoDescription === "string" && siteSettingsDoc.seoDescription
+        ? siteSettingsDoc.seoDescription
+        : config.brand.description;
+    const title = `${config.brand.name}｜${tagline}`;
 
     const logoUrl =
       typeof editableDoc?.headerLogoUrl === "string" &&
