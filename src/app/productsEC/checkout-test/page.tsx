@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 export default function CheckoutTestPage() {
+  const siteKey = useSiteKey();
   const [loading, setLoading] = useState(false);
 
   // まずは SITE_KEY を送る（API 側で docId / siteKey の両方に対応）
-  const sellerId = SITE_KEY;
+  const sellerId = siteKey;
 
   // /productsEC/checkout-test/page.tsx の start()
   const start = async () => {

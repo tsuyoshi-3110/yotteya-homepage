@@ -12,7 +12,7 @@ import {
 } from "firebase/storage";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 
 export default function HeaderLogoPicker({
@@ -20,6 +20,7 @@ export default function HeaderLogoPicker({
 }: {
   onSelectFile: (file: File) => void;
 }) {
+  const siteKey = useSiteKey();
   const url = useHeaderLogoUrl();
   const inputRef = useRef<HTMLInputElement>(null);
   const [deleting, setDeleting] = useState(false);
@@ -31,12 +32,12 @@ export default function HeaderLogoPicker({
 
     const logoRef = storageRef(
       getStorage(),
-      `images/public/${SITE_KEY}/headerLogo.jpg`
+      `images/public/${siteKey}/headerLogo.jpg`
     );
 
     try {
       // Firestore の headerLogoUrl を削除
-      await updateDoc(doc(db, "siteSettingsEditable", SITE_KEY), {
+      await updateDoc(doc(db, "siteSettingsEditable", siteKey), {
         headerLogoUrl: deleteField(),
       });
 

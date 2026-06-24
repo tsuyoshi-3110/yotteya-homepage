@@ -1,16 +1,19 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useBtnClassName } from "@/lib/useBtnClassName";
 import clsx from "clsx";
 import { AsYouType, parsePhoneNumberFromString } from "libphonenumber-js";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
+import { useThemeGradient } from "@/lib/useThemeGradient";
+import { THEMES, type ThemeKey } from "@/lib/themes";
 
 
 
 export function PhoneSection() {
+  const siteKey = useSiteKey();
   const [phone, setPhone] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState("");
@@ -18,6 +21,11 @@ export function PhoneSection() {
   const [loading, setLoading] = useState(true);
 
   const btnClass = useBtnClassName();
+  const gradient = useThemeGradient();
+  const isDark = useMemo(() => {
+    const darkKeys: ThemeKey[] = ["brandG", "brandH", "brandI"];
+    return gradient !== null && darkKeys.some((k) => gradient === THEMES[k]);
+  }, [gradient]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -29,7 +37,7 @@ export function PhoneSection() {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const ref = doc(db, "siteSettingsEditable", SITE_KEY);
+        const ref = doc(db, "siteSettingsEditable", siteKey);
         const snap = await getDoc(ref);
         if (snap.exists()) {
           setPhone(snap.data().phone ?? null);
@@ -56,14 +64,14 @@ export function PhoneSection() {
     }
 
     const e164 = phoneNumber.number; // +81形式
-    const ref = doc(db, "siteSettingsEditable", SITE_KEY);
+    const ref = doc(db, "siteSettingsEditable", siteKey);
     await setDoc(ref, { phone: e164 }, { merge: true });
     setPhone(e164);
     setEditing(false);
   };
 
   const deletePhone = async () => {
-    const ref = doc(db, "siteSettingsEditable", SITE_KEY);
+    const ref = doc(db, "siteSettingsEditable", siteKey);
     await updateDoc(ref, { phone: null });
     setPhone(null);
     setEditing(false);

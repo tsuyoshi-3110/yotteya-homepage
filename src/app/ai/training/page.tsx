@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 type PendingItem = {
   id: string;
@@ -12,6 +12,7 @@ type PendingItem = {
 };
 
 export default function AITrainingPage() {
+  const siteKey = useSiteKey();
   const [items, setItems] = useState<PendingItem[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ export default function AITrainingPage() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/ai-unknown/list?siteKey=${SITE_KEY}`);
+      const res = await fetch(`/api/ai-unknown/list?siteKey=${siteKey}`);
       const data = await res.json();
       if (data.ok) setItems(data.items);
     } catch (e) {
@@ -48,7 +49,7 @@ export default function AITrainingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          siteKey: SITE_KEY,
+          siteKey: siteKey,
           question: item.question,
           answer,
           notificationId: item.id,
@@ -76,7 +77,7 @@ export default function AITrainingPage() {
     <div className="max-w-3xl mx-auto px-4 py-8 rounded-2xl bg-white/50 mt-10">
       <h1 className="text-2xl font-bold mb-3">AI学習（未回答の質問）</h1>
       <p className="text-sm text-gray-600 mb-6">
-        サイトID：<span className="font-mono">{SITE_KEY}</span>
+        サイトID：<span className="font-mono">{siteKey}</span>
       </p>
 
       {loading ? (

@@ -34,7 +34,7 @@ import { IMAGE_MIME_TYPES, VIDEO_MIME_TYPES } from "@/lib/fileTypes";
 /* アップロード共通ロジック（一覧と同じ） */
 import { uploadProductMedia } from "@/lib/media/uploadProductMedia";
 
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 /* ▼ 多言語対応：UI言語 & LangKey */
 import { type LangKey } from "@/lib/langs";
@@ -81,6 +81,7 @@ type EditableMediaItem = {
 };
 
 export default function ProductDetail({ product }: { product: Product }) {
+  const siteKey = useSiteKey();
   /* ---------- 権限・テーマ ---------- */
   const [isAdmin, setIsAdmin] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -175,7 +176,7 @@ export default function ProductDetail({ product }: { product: Product }) {
 
   /* ---------- セクション購読（createdAt → order 昇順） ---------- */
   useEffect(() => {
-    const secRef = collection(db, "siteSections", SITE_KEY, "sections");
+    const secRef = collection(db, "siteSections", siteKey, "sections");
     const q = query(secRef, orderBy("createdAt", "asc"));
     const unsub = onSnapshot(q, (snap) => {
       const rows: Section[] = snap.docs.map((d) => {
@@ -361,7 +362,7 @@ export default function ProductDetail({ product }: { product: Product }) {
 
         const up = await uploadProductMedia({
           file: f,
-          siteKey: SITE_KEY,
+          siteKey: siteKey,
           docId: index === 0 ? product.id : `${product.id}_${index + 1}`,
           previousType:
             index === 0 ? (displayProduct.mediaType as any) : undefined,
@@ -402,7 +403,7 @@ export default function ProductDetail({ product }: { product: Product }) {
         firstNewFile?.name ?? (displayProduct as any).originalFileName;
 
       // --- Firestore 更新 ---
-      await updateDoc(doc(db, "siteProducts", SITE_KEY, "items", product.id), {
+      await updateDoc(doc(db, "siteProducts", siteKey, "items", product.id), {
         title: base.title,
         body: base.body,
         price: priceIncl,
@@ -496,7 +497,7 @@ export default function ProductDetail({ product }: { product: Product }) {
         }
       }
 
-      await deleteDoc(doc(db, "siteProducts", SITE_KEY, "items", product.id));
+      await deleteDoc(doc(db, "siteProducts", siteKey, "items", product.id));
       router.back();
     } catch (e) {
       console.error(e);

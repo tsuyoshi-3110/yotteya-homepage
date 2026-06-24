@@ -12,7 +12,7 @@ import { storage } from "@/lib/firebase";
 import { v4 as uuid } from "uuid";
 import { BlogMedia } from "@/types/blog";
 import { Button } from "@/components/ui/button";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import clsx from "clsx";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { THEMES, ThemeKey } from "@/lib/themes";
@@ -26,6 +26,7 @@ type Props = {
 const DARK_KEYS: ThemeKey[] = ["brandH", "brandG", "brandI"];
 
 export default function MediaUploader({ postIdForPath, value, onChange }: Props) {
+  const siteKey = useSiteKey();
   const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [overallPct, setOverallPct] = useState(0);
@@ -92,7 +93,7 @@ export default function MediaUploader({ postIdForPath, value, onChange }: Props)
       const safePostId = postIdForPath ?? "temp";
       const ext = file.name.split(".").pop() ?? (isVideo ? "mp4" : "jpg");
       const fileId = uuid();
-      const path = `siteBlogs/${SITE_KEY}/posts/${safePostId}/${fileId}.${ext}`;
+      const path = `siteBlogs/${siteKey}/posts/${safePostId}/${fileId}.${ext}`;
       const storageRef = ref(storage, path);
 
       const task = uploadBytesResumable(storageRef, file, { contentType: file.type });

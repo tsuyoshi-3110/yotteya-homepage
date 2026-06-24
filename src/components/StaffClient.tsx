@@ -53,7 +53,7 @@ import SortableItem from "./SortableItem";
 import { motion, useInView } from "framer-motion";
 
 import { type Product } from "@/types/Product";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { LANGS, type LangKey } from "@/lib/langs";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 
@@ -75,7 +75,7 @@ import { UILang } from "@/lib/langsState";
 type MediaType = "image" | "video";
 
 const MAX_VIDEO_SEC = 30;
-const COL_PATH = `siteStaffs/${SITE_KEY}/items`;
+// [migrated to useSiteKey] COL_PATH
 
 /* ==============================
    多言語型
@@ -154,6 +154,8 @@ const PAGE_TITLE_T: Record<UILang, string> = {
    本体
 ============================== */
 export default function StaffClient() {
+  const siteKey = useSiteKey();
+  const COL_PATH = `siteStaffs/${siteKey}/items`;
   const { uiLang } = useUILang();
 
   const [list, setList] = useState<StaffDoc[]>([]);
@@ -369,7 +371,7 @@ export default function StaffClient() {
 
         const sref = storageRef(
           getStorage(),
-          `products/public/${SITE_KEY}/${id}.${ext}`
+          `products/public/${siteKey}/${id}.${ext}`
         );
         const task = uploadBytesResumable(sref, uploadFile, {
           contentType: isVideo ? file.type : "image/jpeg",
@@ -404,7 +406,7 @@ export default function StaffClient() {
             await deleteObject(
               storageRef(
                 getStorage(),
-                `products/public/${SITE_KEY}/${id}.${oldExt}`
+                `products/public/${siteKey}/${id}.${oldExt}`
               )
             ).catch(() => {});
           }
@@ -475,7 +477,7 @@ export default function StaffClient() {
         p.originalFileName?.split(".").pop()?.toLowerCase() ??
         (p.mediaType === "video" ? "mp4" : "jpg");
       await deleteObject(
-        storageRef(getStorage(), `products/public/${SITE_KEY}/${p.id}.${ext}`)
+        storageRef(getStorage(), `products/public/${siteKey}/${p.id}.${ext}`)
       ).catch(() => {});
     }
   };

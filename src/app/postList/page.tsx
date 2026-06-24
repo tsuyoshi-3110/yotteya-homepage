@@ -39,7 +39,7 @@ import {
 import { auth, db } from "@/lib/firebase";
 
 // サイトキー
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 // いいねボタン（API 経由版・互換 props 対応）
 import LikeButton from "@/components/LikeButton";
@@ -89,6 +89,7 @@ type Comment = {
 
 /* ========================= Comments（メディア添付対応／トグル開閉） ========================= */
 function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
+  const siteKey = useSiteKey();
   const [items, setItems] = useState<Comment[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -126,8 +127,8 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
     (async () => {
       try {
         const [siteDoc, editableDoc] = await Promise.all([
-          getDoc(doc(db, "siteSettings", SITE_KEY)),
-          getDoc(doc(db, "siteSettingsEditable", SITE_KEY)),
+          getDoc(doc(db, "siteSettings", siteKey)),
+          getDoc(doc(db, "siteSettingsEditable", siteKey)),
         ]);
         if (!mounted) return;
         setSiteName(String(siteDoc.data()?.siteName ?? ""));
@@ -492,6 +493,7 @@ function Comments({ postId, myUid }: { postId: string; myUid: string | null }) {
 
 /* ========================= メイン一覧 ========================= */
 export default function PostList() {
+  const siteKey = useSiteKey();
   const [posts, setPosts] = useState<Post[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [mineOnly, setMineOnly] = useState(false);

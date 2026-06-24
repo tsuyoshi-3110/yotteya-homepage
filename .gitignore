@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/scripts/backups/
 
 # next.js
 /.next/
@@ -35,6 +36,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# claude code
+.claude/
 
 # typescript
 *.tsbuildinfo

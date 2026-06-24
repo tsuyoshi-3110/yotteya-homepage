@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import clsx from "clsx";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/blogCategories";
 
 export default function CategoryManager() {
+  const siteKey = useSiteKey();
   const [items, setItems] = useState<BlogCategory[]>(DEFAULT_CATEGORIES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -23,11 +24,11 @@ export default function CategoryManager() {
   const [newLabel, setNewLabel] = useState("");
 
   useEffect(() => {
-    if (!SITE_KEY) return;
+    if (!siteKey) return;
     (async () => {
       setLoading(true);
       try {
-        const cats = await loadCategories(SITE_KEY);
+        const cats = await loadCategories(siteKey);
         setItems(cats);
       } finally {
         setLoading(false);
@@ -63,10 +64,10 @@ export default function CategoryManager() {
   };
 
   const save = async () => {
-    if (!SITE_KEY) return;
+    if (!siteKey) return;
     setSaving(true);
     try {
-      await saveCategories(SITE_KEY, items);
+      await saveCategories(siteKey, items);
       alert("保存しました。");
     } catch (e) {
       console.error(e);

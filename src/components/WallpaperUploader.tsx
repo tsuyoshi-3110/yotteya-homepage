@@ -6,9 +6,10 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
 import { db, storage, auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 export default function WallpaperUploader() {
+  const siteKey = useSiteKey();
   const [file, setFile] = useState<File | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -20,13 +21,13 @@ export default function WallpaperUploader() {
   const handleUpload = async () => {
     if (!file) return;
 
-    const path = `images/public/${SITE_KEY}/wallpaper.jpg`;
+    const path = `images/public/${siteKey}/wallpaper.jpg`;
     const imageRef = ref(storage, path);
     await uploadBytes(imageRef, file);
     const url = await getDownloadURL(imageRef);
 
     await setDoc(
-      doc(db, "siteSettingsEditable", SITE_KEY),
+      doc(db, "siteSettingsEditable", siteKey),
       { wallpaperUrl: url },
       { merge: true }
     );

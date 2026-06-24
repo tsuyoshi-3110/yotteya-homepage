@@ -26,7 +26,7 @@ import {
 } from "firebase/storage";
 
 import clsx from "clsx";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import ProductMedia from "@/components/ProductMedia";
 
 import { useUILang } from "@/lib/atoms/uiLangAtom";
@@ -174,6 +174,7 @@ export default function MenuSectionCard({
   onDeleteSection: () => void;
   isLoggedIn: boolean;
 }) {
+  const siteKey = useSiteKey();
   const { uiLang } = useUILang();
 
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -341,7 +342,7 @@ export default function MenuSectionCard({
         }
 
         const ext = getExt(f.name) || (type === "image" ? "jpg" : "mp4");
-        const path = `sections/${SITE_KEY}/${section.id}/${index + 1}.${ext}`;
+        const path = `sections/${siteKey}/${section.id}/${index + 1}.${ext}`;
         const sref = storageRef(storage, path);
 
         const task = uploadBytesResumable(sref, f, {

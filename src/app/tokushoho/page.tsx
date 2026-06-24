@@ -5,7 +5,7 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 type OwnerSettings = {
   siteName?: string;
@@ -29,6 +29,7 @@ type ShippingPolicy = {
 };
 
 export default function TokuShohoPage() {
+  const siteKey = useSiteKey();
   const [s, setS] = useState<OwnerSettings>({});
   const [windowDays, setWindowDays] = useState<number | null>(null);
   const [leadMin, setLeadMin] = useState<number | null>(null);
@@ -41,7 +42,7 @@ export default function TokuShohoPage() {
     (async () => {
       try {
         // オーナー情報
-        const settingsRef = doc(db, "siteSettings", SITE_KEY);
+        const settingsRef = doc(db, "siteSettings", siteKey);
         const settingsSnap = await getDoc(settingsRef);
         const d = (settingsSnap.data() as any) || {};
         setS({
@@ -57,7 +58,7 @@ export default function TokuShohoPage() {
         // 既定のパス: sites/{SITE_KEY}/policies/refund
         let wDays: number | undefined;
         try {
-          const refundRef = doc(db, "sites", SITE_KEY, "policies", "refund");
+          const refundRef = doc(db, "sites", siteKey, "policies", "refund");
           const refundSnap = await getDoc(refundRef);
           if (refundSnap.exists()) {
             const rp = refundSnap.data() as RefundPolicy;
@@ -67,7 +68,7 @@ export default function TokuShohoPage() {
         // フォールバック（任意: 上位に policies がある構成を許容）
         if (wDays === undefined) {
           try {
-            const refundAltRef = doc(db, "policies", SITE_KEY, "refund", "refund");
+            const refundAltRef = doc(db, "policies", siteKey, "refund", "refund");
             const refundAltSnap = await getDoc(refundAltRef);
             if (refundAltSnap.exists()) {
               const rp = refundAltSnap.data() as RefundPolicy;
@@ -79,7 +80,7 @@ export default function TokuShohoPage() {
 
         // 出荷目安（日数）: siteShippingPolicy/{SITE_KEY}
         try {
-          const shipRef = doc(db, "siteShippingPolicy", SITE_KEY);
+          const shipRef = doc(db, "siteShippingPolicy", siteKey);
           const shipSnap = await getDoc(shipRef);
           if (shipSnap.exists()) {
             const sp = shipSnap.data() as ShippingPolicy;

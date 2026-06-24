@@ -1,5 +1,5 @@
 import { adminDb } from "@/lib/firebase-admin";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { resolveCurrentTenant } from "@/lib/customer-config/tenant-resolver-server";
 import SalesLine from "./SalesLine";
 import InsightsPanel from "./InsightsPanel"; // ← これだけでOK（"use client" 側で宣言済み）
 
@@ -113,13 +113,15 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const tenant = await resolveCurrentTenant();
+  const siteKey = tenant.siteKey;
   const sp = await searchParams;
   const { fromJ, toJ } = parseRange(sp.from, sp.to);
 
   // Firestore：期間内（昇順）
   const snap = await adminDb
     .collection("siteOrders")
-    .where("siteKey", "==", SITE_KEY)
+    .where("siteKey", "==", siteKey)
     .where("createdAt", ">=", fromJ)
     .where("createdAt", "<=", toJ)
     .orderBy("createdAt", "asc")
@@ -302,7 +304,7 @@ export default async function ReportsPage({
       {/* AI 改善提案パネル（新規） */}
       <InsightsPanel
         payload={{
-          siteKey: String(SITE_KEY),
+          siteKey: String(siteKey),
           range: { from: fromKeyDisp, to: toKeyDisp },
           kpis: { revenue, count, aov },
           days: days.map((d) => ({ date: d.date, value: d.value })),

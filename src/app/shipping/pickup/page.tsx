@@ -6,7 +6,7 @@ import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { onAuthStateChanged, getAuth } from "firebase/auth";
 // 既存の siteKey 取得方法に合わせて差し替え可
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 type StripeStatus = {
   connected: boolean;
@@ -31,7 +31,7 @@ type PickupAddress = {
 };
 
 export default function PickupAddressPage() {
-  const siteKey = SITE_KEY || "test04"; // フォールバック可
+  const siteKey = useSiteKey();
   const [authed, setAuthed] = useState<boolean>(false);
   const [status, setStatus] = useState<StripeStatus | null>(null);
   const [loading, setLoading] = useState(true);

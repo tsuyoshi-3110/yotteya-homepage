@@ -6,10 +6,11 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { setDoc, doc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db, storage } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 
 export default function HeaderLogoUploader() {
+  const siteKey = useSiteKey();
   const [file, setFile] = useState<File | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -20,13 +21,13 @@ export default function HeaderLogoUploader() {
 
   const uploadLogo = async () => {
     if (!file) return;
-    const path = `images/public/${SITE_KEY}/header-logo.jpg`;
+    const path = `images/public/${siteKey}/header-logo.jpg`;
     const fileRef = ref(storage, path);
     await uploadBytes(fileRef, file);
     const url = await getDownloadURL(fileRef);
 
     await setDoc(
-      doc(db, "siteSettingsEditable", SITE_KEY),
+      doc(db, "siteSettingsEditable", siteKey),
       { headerLogoUrl: url },
       { merge: true }
     );

@@ -34,7 +34,7 @@ import { useRouter } from "next/navigation";
 
 import ProductMedia from "../ProductMedia";
 import { uploadProductMedia } from "@/lib/media/uploadProductMedia";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 // 多言語
 import { useUILang } from "@/lib/atoms/uiLangAtom";
@@ -134,6 +134,7 @@ function StaggerChars({
 /* ======================= 本体 ======================= */
 
 export default function ProductsClient() {
+  const siteKey = useSiteKey();
   /* ===== 状態 ===== */
   const [isAdmin, setIsAdmin] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit" | null>(null);
@@ -180,7 +181,7 @@ export default function ProductsClient() {
 
   /* ===== Firestore refs ===== */
   const productColRef: CollectionReference<DocumentData> = useMemo(
-    () => collection(db, "siteProducts", SITE_KEY, "items"),
+    () => collection(db, "siteProducts", siteKey, "items"),
     []
   );
 
@@ -196,7 +197,7 @@ export default function ProductsClient() {
     add: addSection,
     remove: removeSection,
     reorder: reorderSections,
-  } = useSections(SITE_KEY);
+  } = useSections(siteKey);
 
   /* ===== 権限 ===== */
   useEffect(() => onAuthStateChanged(auth, (u) => setIsAdmin(!!u)), []);
@@ -373,7 +374,7 @@ export default function ProductsClient() {
 
           const up = await uploadProductMedia({
             file: f,
-            siteKey: SITE_KEY,
+            siteKey: siteKey,
             docId: index === 0 ? id : `${id}_${index + 1}`,
             previousType: index === 0 ? editing?.mediaType : undefined,
             onProgress: (pct) => {

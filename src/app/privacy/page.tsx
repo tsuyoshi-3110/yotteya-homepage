@@ -5,7 +5,7 @@ import Head from "next/head";
 import { useEffect, useState, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { LANGS, type LangKey } from "@/lib/langs";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 
@@ -677,6 +677,7 @@ function t(lang: LangKey, key: MsgKey, params?: Record<string, string>) {
 
 /* ================ Page ================ */
 export default function PrivacyPage() {
+  const siteKey = useSiteKey();
   const [s, setS] = useState<OwnerSettings>({});
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "";
   const canonical = APP_URL
@@ -696,7 +697,7 @@ export default function PrivacyPage() {
 
   useEffect(() => {
     (async () => {
-      const snap = await getDoc(doc(db, "siteSettings", SITE_KEY));
+      const snap = await getDoc(doc(db, "siteSettings", siteKey));
       const d = (snap.data() as any) || {};
       setS({
         siteName: d?.siteName ?? "",

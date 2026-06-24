@@ -12,7 +12,7 @@ import VCardDownloadButton from "@/components/common/VCardDownloadButton";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { CUSTOMER } from "@/config/customer";
 
 // Header と完全に同じ Menu キー一覧
@@ -41,6 +41,7 @@ const MENU_KEYS = [
 ];
 
 export default function Footer() {
+  const siteKey = useSiteKey();
   const { uiLang } = useUILang();
   const lang = (uiLang in FOOTER_STRINGS ? uiLang : "ja") as UILang;
   const t = FOOTER_STRINGS[lang];
@@ -52,7 +53,7 @@ export default function Footer() {
   const [visibleMenuKeys, setVisibleMenuKeys] = useState<string[]>([]);
 
   useEffect(() => {
-    const ref = doc(db, "siteSettingsEditable", SITE_KEY);
+    const ref = doc(db, "siteSettingsEditable", siteKey);
 
     const unsub = onSnapshot(ref, (snap) => {
       if (!snap.exists()) return;
@@ -79,7 +80,7 @@ export default function Footer() {
     });
 
     return () => unsub();
-  }, []);
+  }, [siteKey]);
 
   // Footer が使うキー
   const showContactCTA = visibleMenuKeys.includes("footerCTA");

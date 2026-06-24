@@ -29,7 +29,7 @@ import {
   listAll,
 } from "firebase/storage";
 
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { LANGS, type LangKey } from "@/lib/langs";
 import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
 
@@ -249,6 +249,7 @@ function SortableThumb({
 
 /* ---------- 本体 ---------- */
 export default function ProjectsDetail({ product }: { product: Product }) {
+  const siteKey = useSiteKey();
   const router = useRouter();
 
   // 権限
@@ -290,7 +291,7 @@ export default function ProjectsDetail({ product }: { product: Product }) {
   useEffect(() => {
     (async () => {
       // 商品読み直し
-      const docRef = doc(db, "siteProjects", SITE_KEY, "items", product.id);
+      const docRef = doc(db, "siteProjects", siteKey, "items", product.id);
       const snap = await getDoc(docRef);
       const d = snap.data() as any;
       if (d) {
@@ -475,7 +476,7 @@ export default function ProjectsDetail({ product }: { product: Product }) {
 
     setSaving(true);
     try {
-      const docRef = doc(db, "siteProjects", SITE_KEY, "items", product.id);
+      const docRef = doc(db, "siteProjects", siteKey, "items", product.id);
       const storage = getStorage();
 
       // 既存 remote の path（削除判定用）
@@ -517,7 +518,7 @@ export default function ProjectsDetail({ product }: { product: Product }) {
             });
 
         // path は一意（順番は配列で保持する）
-        const path = `projects/public/${SITE_KEY}/${product.id}_${m.type}_${uuid()}.${ext}`;
+        const path = `projects/public/${siteKey}/${product.id}_${m.type}_${uuid()}.${ext}`;
         const sRef = storageRef(storage, path);
 
         const task = uploadBytesResumable(sRef, uploadFile, {
@@ -628,7 +629,7 @@ export default function ProjectsDetail({ product }: { product: Product }) {
 
     // ▼ Firestore 側も siteProjects に統一
     await deleteDoc(
-      doc(db, "siteProjects", SITE_KEY, "items", product.id),
+      doc(db, "siteProjects", siteKey, "items", product.id),
     ).catch(() => {});
 
     try {
@@ -641,7 +642,7 @@ export default function ProjectsDetail({ product }: { product: Product }) {
         );
       } else {
         // ▼ 旧形式も含めて掃除（product.id. / product.id_）
-        const folderRef = storageRef(storage, `projects/public/${SITE_KEY}`);
+        const folderRef = storageRef(storage, `projects/public/${siteKey}`);
         const listing = await listAll(folderRef);
         const mine = listing.items.filter(
           (i) =>

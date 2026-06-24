@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { auth } from "@/lib/firebase";
@@ -145,6 +145,7 @@ const UI_TEXT: Partial<
 const pickText = (lang: UILang) => UI_TEXT[lang] ?? UI_TEXT.en!;
 
 export default function AIChatPage() {
+  const siteKey = useSiteKey();
   const { uiLang } = useUILang();
   const TXT = useMemo(() => pickText(uiLang), [uiLang]);
 
@@ -190,7 +191,7 @@ export default function AIChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage.content,
-          siteKey: SITE_KEY,
+          siteKey: siteKey,
           uiLang, // ← 現在のUI言語をAPIへ
         }),
       });

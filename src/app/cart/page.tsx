@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { ShoppingCart, Trash2, Plus, Minus, X, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart/CartContext";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 import {
   doc,
@@ -169,6 +169,7 @@ type StockRow = {
 };
 
 export default function CartPage() {
+  const siteKey = useSiteKey();
   const {
     items,
     inc,
@@ -223,7 +224,7 @@ export default function CartPage() {
       for (const item of items) {
         try {
           const snap = await getDoc(
-            doc(db, `siteProducts/${SITE_KEY}/items/${item.productId}`)
+            doc(db, `siteProducts/${siteKey}/items/${item.productId}`)
           );
           const data = snap.data() as any;
           const baseTitle = (
@@ -253,7 +254,7 @@ export default function CartPage() {
   useEffect(() => {
     (async () => {
       try {
-        const siteSnap = await getDoc(doc(db, "siteShippingPrices", SITE_KEY));
+        const siteSnap = await getDoc(doc(db, "siteShippingPrices", siteKey));
         if (siteSnap.exists()) {
           setShippingPrices(normalizeLangNumberMap(siteSnap.data()));
         } else {
@@ -272,7 +273,7 @@ export default function CartPage() {
   useEffect(() => {
     (async () => {
       try {
-        const siteSnap = await getDoc(doc(db, "siteShippingPolicy", SITE_KEY));
+        const siteSnap = await getDoc(doc(db, "siteShippingPolicy", siteKey));
         if (siteSnap.exists()) {
           const raw = siteSnap.data() || {};
           setPolicyEnabled(raw?.enabled !== false);
@@ -301,7 +302,7 @@ export default function CartPage() {
   useEffect(() => {
     const qRef = query(
       collection(db, "stock"),
-      where("siteKey", "==", SITE_KEY)
+      where("siteKey", "==", siteKey)
     );
     const unsub = onSnapshot(
       qRef,
@@ -483,7 +484,7 @@ export default function CartPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          siteKey: SITE_KEY,
+          siteKey: siteKey,
           lang: uiLang,
           items: items.map((x) => ({
             id: x.productId,

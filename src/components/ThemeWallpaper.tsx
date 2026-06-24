@@ -7,7 +7,7 @@ import { db } from "@/lib/firebase";
 import { getStorage, ref as storageRef, deleteObject } from "firebase/storage";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 
 export default function ThemeWallpaper({
@@ -15,6 +15,7 @@ export default function ThemeWallpaper({
 }: {
   onFileSelect: (file: File) => void;
 }) {
+  const siteKey = useSiteKey();
   const url = useWallpaperUrl();
   const inputRef = useRef<HTMLInputElement>(null);
   const [deleting, setDeleting] = useState(false);
@@ -26,7 +27,7 @@ export default function ThemeWallpaper({
 
     try {
       // Firestore の imageUrl フィールド削除
-      const ref = doc(db, "siteSettingsEditable", SITE_KEY);
+      const ref = doc(db, "siteSettingsEditable", siteKey);
       await updateDoc(ref, {
         imageUrl: deleteField(),
       });
@@ -34,7 +35,7 @@ export default function ThemeWallpaper({
       // Firebase Storage のファイル削除
       const imageRef = storageRef(
         getStorage(),
-        `images/public/${SITE_KEY}/wallpaper.jpg`
+        `images/public/${siteKey}/wallpaper.jpg`
       );
       await deleteObject(imageRef);
 

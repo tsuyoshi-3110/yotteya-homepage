@@ -1,12 +1,18 @@
 // app/page.tsx
 import type { Metadata } from "next";
 import { seo } from "@/config/site";
+import { loadHomeMetadataFromFirestore } from "@/lib/customer-config/home-metadata-server";
 import BackgroundVideo from "@/components/backgroundVideo/BackgroundVideo";
 import TopVisibleSections from "@/components/TopVisibleSections";
 import HomePageText from "@/components/HomePageText";
 
-// ✅ 共通SEOビルダー（/config/site.ts で集中管理）
-export const metadata: Metadata = seo.page("home");
+const CURRENT_HOME_METADATA: Metadata = seo.page("home");
+
+export async function generateMetadata(): Promise<Metadata> {
+  return loadHomeMetadataFromFirestore({
+    fallback: CURRENT_HOME_METADATA,
+  });
+}
 
 export default function HomePage() {
   return (

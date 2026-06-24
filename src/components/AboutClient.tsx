@@ -24,7 +24,7 @@ import CardSpinner from "./CardSpinner";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 import { LANGS as TARGET_LANGS } from "@/lib/langs";
 
@@ -40,7 +40,7 @@ import { BusyOverlay } from "./BusyOverlay";
 import { UILang } from "@/lib/langsState";
 
 /* ───────── 定数 ───────── */
-const STORAGE_PATH = `sitePages/${SITE_KEY}/about`;
+// [migrated to useSiteKey] STORAGE_PATH
 const MAX_VIDEO_SEC = 60;
 
 /* ───────── 型 ───────── */
@@ -113,10 +113,12 @@ const ABOUT_T: Record<UILang, { heading: string }> = {
 
 /* ───────── 本体 ───────── */
 export default function AboutClient() {
+  const siteKey = useSiteKey();
+  const STORAGE_PATH = `sitePages/${siteKey}/about`;
   const { uiLang } = useUILang();
   const gradient = useThemeGradient();
   const docRef = useMemo(
-    () => doc(db, "sitePages", SITE_KEY, "pages", "about"),
+    () => doc(db, "sitePages", siteKey, "pages", "about"),
     []
   );
 

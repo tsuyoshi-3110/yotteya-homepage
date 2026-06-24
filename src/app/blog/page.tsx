@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { BlogPost } from "@/types/blog";
 import BlogCard from "@/components/blog/BlogCard";
 import CategoryPicker from "@/components/blog/CategoryPicker";
@@ -57,6 +57,7 @@ const createdMillis = (p: any) =>
 
 /* ===== ページ本体 ===== */
 export default function BlogListPage() {
+  const siteKey = useSiteKey();
   const [user, setUser] = useState<User | null>(null);
 
   const [selectedKey, setSelectedKey] = useState<string>("__all");
@@ -83,8 +84,8 @@ export default function BlogListPage() {
   /* ---- クエリを作る（カテゴリなし/ありで分岐） ---- */
   const makeQuery = useCallback(
     (after?: QueryDocumentSnapshot<DocumentData>) => {
-      if (!SITE_KEY) return null;
-      const colRef = collection(db, "siteBlogs", SITE_KEY, "posts");
+      if (!siteKey) return null;
+      const colRef = collection(db, "siteBlogs", siteKey, "posts");
 
       // 「全件」= createdAt 降順
       if (selectedKey === "__all") {
@@ -120,7 +121,7 @@ export default function BlogListPage() {
 
   /* ---- 初回 & カテゴリ変更時：最初のページを取得 ---- */
   const loadFirstPage = useCallback(async () => {
-    if (!SITE_KEY) return;
+    if (!siteKey) return;
     const q = makeQuery();
     if (!q) return;
 
@@ -153,7 +154,7 @@ export default function BlogListPage() {
 
   /* ---- 続きを取得 ---- */
   const loadMore = useCallback(async () => {
-    if (!SITE_KEY || loading || noMore || !lastDoc) return;
+    if (!siteKey || loading || noMore || !lastDoc) return;
     const q = makeQuery(lastDoc);
     if (!q) return;
 

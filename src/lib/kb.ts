@@ -5,7 +5,6 @@
 // 依存: adminDb（Firebase Admin）, SITE_KEY, embedText（src/lib/ai）
 
 import { adminDb } from "@/lib/firebase-admin";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import { embedText } from "@/lib/ai";
 
 /* ================== 型 ================== */
@@ -101,7 +100,7 @@ export async function retrieveKB(params: {
   question: string;
   topK?: number; // 返す件数
   minScore?: number; // 合成スコアの最小閾値
-  siteKey?: string; // 省略時は定数 SITE_KEY
+  siteKey?: string;
   vecWeight?: number; // 既定 0.7
   lexWeight?: number; // 既定 0.3
 }): Promise<KBHit[]> {
@@ -109,10 +108,12 @@ export async function retrieveKB(params: {
     question,
     topK = 5,
     minScore = 0.35,
-    siteKey = SITE_KEY,
+    siteKey: siteKeyParam,
     vecWeight = 0.7,
     lexWeight = 0.3,
   } = params;
+  const { CUSTOMER } = await import("@/config/customer");
+  const siteKey = siteKeyParam ?? CUSTOMER.siteKey;
 
   // 1) KB取得
   const entries = await fetchEntries(siteKey);

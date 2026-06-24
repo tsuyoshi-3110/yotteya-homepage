@@ -1,6 +1,6 @@
 // src/app/owner/orders/page.tsx
 import { adminDb } from "@/lib/firebase-admin";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { resolveCurrentTenant } from "@/lib/customer-config/tenant-resolver-server";
 import Pager from "./Pager";
 import RefundRequestButton from "@/components/RefundRequestButton";
 
@@ -92,13 +92,15 @@ export default async function OrdersPage({
 }: {
   searchParams: Promise<{ p?: string }>;
 }) {
+  const tenant = await resolveCurrentTenant();
+  const siteKey = tenant.siteKey;
   const sp = await searchParams;
   const page = Math.max(1, Number(sp?.p ?? "1"));
   const startIndex = (page - 1) * PAGE_SIZE;
 
   const snap = await adminDb
     .collection("siteOrders")
-    .where("siteKey", "==", SITE_KEY)
+    .where("siteKey", "==", siteKey)
     .orderBy("createdAt", "desc")
     .limit(50) // 直近50件を対象にページング
     .get();

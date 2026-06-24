@@ -7,8 +7,16 @@ import {
   site,
 } from "@/config/site";
 import { CUSTOMER } from "@/config/customer";
+import { loadPageMetadataFromFirestore } from "@/lib/customer-config/home-metadata-server";
 
-export const metadata: Metadata = seo.page("areasLocal");
+const CURRENT_METADATA: Metadata = seo.page("areasLocal");
+
+export function generateMetadata(): Promise<Metadata> {
+  return loadPageMetadataFromFirestore({
+    pageKey: "areasLocal",
+    fallback: CURRENT_METADATA,
+  });
+}
 
 const localCopy = CUSTOMER.localPage;
 

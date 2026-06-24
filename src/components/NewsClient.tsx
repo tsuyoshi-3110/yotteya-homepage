@@ -41,7 +41,7 @@ import Image from "next/image";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { THEMES, type ThemeKey as ThemeKeyGrad } from "@/lib/themes";
 import { AnimatePresence, motion, useInView } from "framer-motion";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { BusyOverlay } from "./BusyOverlay";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 import { LANGS, type LangKey } from "@/lib/langs";
@@ -95,7 +95,7 @@ const ALLOWED_VIDEO = [
   "video/3gpp2",
 ];
 const MAX_VIDEO_SEC = 30;
-const STORAGE_PATH = `siteNews/${SITE_KEY}/items`;
+// [migrated to useSiteKey] STORAGE_PATH
 
 const FIRST_LOAD = 20;
 const PAGE_SIZE = 20;
@@ -126,6 +126,8 @@ const NEWS_T = {
       コンポーネント本体
 ========================================================= */
 export default function NewsClient() {
+  const siteKey = useSiteKey();
+  const STORAGE_PATH = `siteNews/${siteKey}/items`;
   const { uiLang } = useUILang();
   const gradient = useThemeGradient();
   const isDark = useMemo(
@@ -172,7 +174,7 @@ export default function NewsClient() {
 
   /* ---------- Firestore 参照 ---------- */
   const colRef = useMemo(
-    () => collection(db, "siteNews", SITE_KEY, "items"),
+    () => collection(db, "siteNews", siteKey, "items"),
     []
   );
 

@@ -15,7 +15,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAtom } from "jotai";
 import { partnerSiteKeyAtom } from "@/lib/atoms/siteKeyAtom";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 /* ───────── 自店舗 ID ───────── */
 
@@ -31,13 +31,14 @@ type MetaRow = {
 };
 
 export default function InboxPage() {
+  const siteKey = useSiteKey();
   const [, setPartnerSiteKey] = useAtom(partnerSiteKeyAtom);
   const [rows, setRows] = useState<MetaRow[]>([]);
 
   /* ────────── メタ購読 ────────── */
   useEffect(() => {
     const q = query(
-      collection(db, `siteMessageMeta/${SITE_KEY}/conversations`),
+      collection(db, `siteMessageMeta/${siteKey}/conversations`),
       orderBy("updatedAt", "desc")
     );
 

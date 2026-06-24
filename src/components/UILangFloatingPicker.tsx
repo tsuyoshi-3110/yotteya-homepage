@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { LANGS } from "@/lib/langs";
 import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
 import { db } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { doc, onSnapshot } from "firebase/firestore";
 
 type LangOption = { key: UILang; label: string; emoji: string };
@@ -41,6 +41,7 @@ type I18nMeta = {
 };
 
 export default function UILangFloatingPicker() {
+  const siteKey = useSiteKey();
   const { uiLang, setUiLang } = useUILang();
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -60,7 +61,7 @@ export default function UILangFloatingPicker() {
 
   // Firestore 購読
   useEffect(() => {
-    const ref = doc(db, "siteSettingsEditable", SITE_KEY);
+    const ref = doc(db, "siteSettingsEditable", siteKey);
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.data() as I18nMeta | undefined;
       const enabled =

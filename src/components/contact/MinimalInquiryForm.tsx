@@ -10,7 +10,7 @@ import clsx from "clsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { THEMES, ThemeKey } from "@/lib/themes";
@@ -398,6 +398,7 @@ const ACCEPT = [
    本体
 ================================ */
 export default function MinimalInquiryForm() {
+  const siteKey = useSiteKey();
   // ダーク判定
   const gradient = useThemeGradient();
   const isDark =
@@ -490,7 +491,7 @@ export default function MinimalInquiryForm() {
       fd.append("name", v.name);
       fd.append("email", v.email);
       fd.append("message", v.message);
-      fd.append("siteKey", SITE_KEY);
+      fd.append("siteKey", siteKey);
       if (v.website) fd.append("website", v.website);
       files.forEach((f) => fd.append("files", f, f.name));
 

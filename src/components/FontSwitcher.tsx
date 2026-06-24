@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 
 
@@ -19,6 +19,7 @@ const fonts = [
 ];
 
 export default function FontSwitcher() {
+  const siteKey = useSiteKey();
   /* 現在選択中のフォント */
   const [selected, setSelected] = useState<string>("kosugi");
   /* 保存完了のフラグ（✅アイコン表示用） */
@@ -29,7 +30,7 @@ export default function FontSwitcher() {
   /* ---------- 初回：Firestore からフォント取得 ---------- */
   useEffect(() => {
     (async () => {
-      const snap = await getDoc(doc(db, "assets", SITE_KEY));
+      const snap = await getDoc(doc(db, "assets", siteKey));
       if (snap.exists()) {
         const font = snap.data().fontFamily as string | undefined;
         if (font) {
@@ -59,7 +60,7 @@ export default function FontSwitcher() {
           - setDoc + {merge:true} で
             まだドキュメントが無い場合は新規作成、あれば更新 */
     await setDoc(
-      doc(db, "assets", SITE_KEY),
+      doc(db, "assets", siteKey),
       { fontFamily: fontKey },
       { merge: true }
     );

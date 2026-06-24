@@ -41,7 +41,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 // Theme
 import { useThemeGradient } from "@/lib/useThemeGradient";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { StaggerChars } from "./animated/StaggerChars";
 
 // DnD
@@ -133,7 +133,7 @@ const PAGE_TITLE_T: Record<UILang, string> = {
 };
 
 /* ===================== 定数 ===================== */
-const COL_PATH = `siteProjects/${SITE_KEY}/items`;
+// [migrated to useSiteKey] COL_PATH
 const MAX_VIDEO_SEC = 60;
 
 /* ===================== ユーティリティ ===================== */
@@ -219,6 +219,8 @@ async function getVideoDurationSec(f: File): Promise<number> {
 
 /* ===================== 本体 ===================== */
 export default function ProjectsClient() {
+  const siteKey = useSiteKey();
+  const COL_PATH = `siteProjects/${siteKey}/items`;
   const router = useRouter();
 
   // 一覧・権限
@@ -277,7 +279,7 @@ export default function ProjectsClient() {
 
   /* -------- 店舗一覧（名前＋placeId） -------- */
   useEffect(() => {
-    const ref = collection(db, `siteStores/${SITE_KEY}/items`);
+    const ref = collection(db, `siteStores/${siteKey}/items`);
     const unsub = onSnapshot(ref, (snap) => {
       const rows: StorePick[] = snap.docs.map((d) => {
         const v = d.data() as any;
@@ -576,7 +578,7 @@ export default function ProjectsClient() {
               });
 
           // ✅ 複数保存用にパスを分ける
-          const path = `projects/public/${SITE_KEY}/${id}_${type2}_${i}.${ext}`;
+          const path = `projects/public/${siteKey}/${id}_${type2}_${i}.${ext}`;
           const sref = storageRef(storage, path);
 
           const task = uploadBytesResumable(sref, uploadFile, {

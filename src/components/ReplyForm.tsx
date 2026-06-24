@@ -8,7 +8,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 export default function ReplyForm({
   postId,
@@ -17,6 +17,7 @@ export default function ReplyForm({
   postId: string;
   onDone?: () => void;
 }) {
+  const siteKey = useSiteKey();
   const [text, setText] = useState("");
 
   /* ----- サイト名 & アイコン URL を取得 ----- */
@@ -26,13 +27,13 @@ export default function ReplyForm({
   useEffect(() => {
     const fetchMeta = async () => {
       /* siteName */
-      const sSnap = await getDoc(doc(db, "siteSettings", SITE_KEY));
+      const sSnap = await getDoc(doc(db, "siteSettings", siteKey));
       if (sSnap.exists()) {
         setSiteName((sSnap.data() as any).siteName ?? "Anonymous");
       }
 
       /* headerLogoUrl */
-      const eSnap = await getDoc(doc(db, "siteSettingsEditable", SITE_KEY));
+      const eSnap = await getDoc(doc(db, "siteSettingsEditable", siteKey));
       if (eSnap.exists()) {
         setLogoUrl(
           (eSnap.data() as any).headerLogoUrl ?? "/images/noImage.png"

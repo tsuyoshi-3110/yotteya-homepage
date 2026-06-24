@@ -8,7 +8,7 @@ import { auth } from "@/lib/firebase";
 import { LANGS } from "@/lib/langs";
 import type { LangKey } from "@/lib/langs";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 /* =========================
    型
@@ -140,6 +140,7 @@ function ensureAllLangs(src: RefundPolicy): RefundPolicy {
    ページ本体
 ========================= */
 export default function RefundPage() {
+  const siteKey = useSiteKey();
   const router = useRouter();
   const { uiLang } = useUILang();
 
@@ -171,7 +172,7 @@ export default function RefundPage() {
     (async () => {
       try {
         const res = await fetch(
-          `/api/policies/refund?siteKey=${encodeURIComponent(SITE_KEY)}`,
+          `/api/policies/refund?siteKey=${encodeURIComponent(siteKey)}`,
           { cache: "no-store" }
         );
         if (!alive) return;
@@ -285,7 +286,7 @@ export default function RefundPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ siteKey: SITE_KEY, policy: payload }),
+        body: JSON.stringify({ siteKey: siteKey, policy: payload }),
       });
       if (!res.ok) {
         const msg = await res.text().catch(() => "");

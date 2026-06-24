@@ -11,9 +11,11 @@ import SubscriptionOverlay from "@/components/SubscriptionOverlay";
 import AnalyticsLogger from "@/components/AnalyticsLogger";
 import TextColorLoader from "@/components/TextColorLoader";
 import CardOpacityInjector from "@/components/CardOpacityInjector";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 import { CartProvider } from "@/lib/cart/CartContext";
-import { seo, site, pageUrl, PUBLIC_ADDRESS } from "@/config/site";
+import { seo, site } from "@/config/site";
+import { loadSiteJsonLdGraphFromFirestore } from "@/lib/customer-config/site-jsonld-server";
+import { resolveCurrentTenant } from "@/lib/customer-config/tenant-resolver-server";
+import { SiteKeyProvider } from "@/lib/context/SiteKeyContext";
 import {
   kosugiMaru, notoSansJP, shipporiMincho, reggaeOne, yomogi, hachiMaruPop,
 } from "@/lib/font";
@@ -34,45 +36,15 @@ function toLD(obj: unknown) {
   return JSON.stringify(obj).replace(/</g, "\\u003c");
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const BASE = site.baseUrl.replace(/\/$/, "");
-  const sameAs = Object.values(site.socials).filter(Boolean);
-  const mainImage = pageUrl(site.logoPath);
-
-  const ldGraph = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": `${BASE}#org`,
-        name: site.name,
-        url: site.baseUrl,
-        logo: mainImage,
-        image: [mainImage],
-        ...(site.tel ? { telephone: site.tel } : {}),
-        ...(sameAs.length ? { sameAs } : {}),
-      },
-      {
-        "@type": "WebSite",
-        "@id": `${BASE}#website`,
-        name: site.name,
-        url: site.baseUrl,
-        publisher: { "@id": `${BASE}#org` },
-      },
-      {
-        "@type": "LocalBusiness",
-        "@id": `${BASE}#local`,
-        name: site.name,
-        url: site.baseUrl,
-        image: [mainImage],
-        ...(site.tel ? { telephone: site.tel } : {}),
-        address: PUBLIC_ADDRESS.postal,
-        hasMap: PUBLIC_ADDRESS.hasMap,
-        /** ★ここを追加 → 任意の価格帯（￥〜￥￥￥） */
-        priceRange: "￥￥",
-      },
-    ],
-  };
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [ldGraph, tenant] = await Promise.all([
+    loadSiteJsonLdGraphFromFirestore(),
+    resolveCurrentTenant(),
+  ]);
 
   return (
     <html
@@ -95,18 +67,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
 
-      <body className="relative min-h-[100dvh] flex flex-col">
-        <WallpaperBackground />
-        <ThemeBackground />
-        <TextColorLoader />
-        <CardOpacityInjector />
-        <AnalyticsLogger />
-        <CartProvider>
-          <SubscriptionOverlay siteKey={SITE_KEY} />
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </CartProvider>
+      <body className="relative min-h-dvh flex flex-col">
+        <SiteKeyProvider siteKey={tenant.siteKey}>
+          <WallpaperBackground />
+          <ThemeBackground />
+          <TextColorLoader />
+          <CardOpacityInjector />
+          <AnalyticsLogger />
+          <CartProvider>
+            <SubscriptionOverlay siteKey={tenant.siteKey} />
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </CartProvider>
+        </SiteKeyProvider>
       </body>
     </html>
   );

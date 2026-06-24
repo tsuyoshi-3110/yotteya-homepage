@@ -30,7 +30,7 @@ import FontSwitcher from "@/components/FontSwitcher";
 import TextColorPicker from "@/components/TextColorPicker";
 import ThemeSelector from "@/components/ThemeSelector";
 import { ThemeKey } from "@/lib/themes";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import ImageLogoControls from "@/components/ImageLogoControls";
 import { Clock } from "lucide-react";
 import { Search } from "lucide-react";
@@ -44,13 +44,14 @@ import { Loader } from "@googlemaps/js-api-loader";
 import clsx from "clsx";
 
 // Firestore ref
-const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
-const SELLER_REF = doc(db, "siteSellers", SITE_KEY);
+// [migrated to useSiteKey] META_REF
+// [migrated to useSiteKey] SELLER_REF
 
 /* =========================
    Stripe Connect カード（住所設定ボタン込み）
 ========================= */
 function StripeConnectCard() {
+  const siteKey = useSiteKey();
   const [loading, setLoading] = useState(false);
   const [connectStatus, setConnectStatus] = useState<
     "unknown" | "notStarted" | "inProgress" | "completed" | "error"
@@ -61,7 +62,7 @@ function StripeConnectCard() {
   const [fees, setFees] = useState({ stripe: 3.6, platform: 1.0, env: 1.0 });
   const feeTotal = (fees.stripe + fees.platform + fees.env).toFixed(1);
 
-  const sellerId = SITE_KEY; // docID = siteKey
+  const sellerId = siteKey; // docID = siteKey
 
   const GLOBAL_REF = doc(db, "adminSettings", "global");
 
@@ -114,7 +115,7 @@ function StripeConnectCard() {
       const res = await fetch("/api/stripe/create-onboarding-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sellerId, siteKey: SITE_KEY }),
+        body: JSON.stringify({ sellerId, siteKey: siteKey }),
       });
       const data: any = await res.json();
       if (!res.ok || !data?.url) throw new Error(data?.error || "failed");
@@ -459,6 +460,8 @@ const DEFAULT_BH: BusinessHours = {
 };
 
 function BusinessHoursCard() {
+  const siteKey = useSiteKey();
+  const META_REF = doc(db, "siteSettingsEditable", siteKey);
   const [bh, setBh] = useState<BusinessHours>(DEFAULT_BH);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -844,10 +847,38 @@ function SeoGuideCard() {
   );
 }
 
+function CustomDomainSettingsCard() {
+  return (
+    <Card className="shadow-xl bg-white/60 backdrop-blur-sm border border-gray-200">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+          <Globe size={18} />
+          独自ドメイン設定
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm leading-relaxed text-black">
+        <p>
+          独自ドメインの接続状態、www利用状況、DNSレコードを確認できます。
+          現在は読み取り専用です。
+        </p>
+        <a
+          href="/owner/domain"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-blue-600 px-4 font-semibold text-white hover:bg-blue-700 sm:w-auto"
+        >
+          独自ドメイン設定を確認
+        </a>
+      </CardContent>
+    </Card>
+  );
+}
+
 /* =========================
    ページ本体
 ========================= */
 export default function LoginPage() {
+  const siteKey = useSiteKey();
+  const META_REF = doc(db, "siteSettingsEditable", siteKey);
+  const SELLER_REF = doc(db, "siteSellers", siteKey);
   const [theme, setTheme] = useState<ThemeKey>("brandA");
   const [visibleKeys, setVisibleKeys] = useState<string[]>(
     MENU_ITEMS.map((m) => m.key)
@@ -966,7 +997,7 @@ export default function LoginPage() {
     (async () => {
       try {
         const res = await fetch(
-          `/api/sellers/connect-status?siteKey=${encodeURIComponent(SITE_KEY)}`
+          `/api/sellers/connect-status?siteKey=${encodeURIComponent(siteKey)}`
         );
         const data: any = await res.json();
         const completed = data?.status === "completed";
@@ -995,7 +1026,7 @@ export default function LoginPage() {
         return;
       }
       try {
-        const snap = await getDoc(doc(db, "siteSettings", SITE_KEY));
+        const snap = await getDoc(doc(db, "siteSettings", siteKey));
         if (!snap.exists()) {
           setError("サイト情報が見つかりません。");
           await signOut(auth);
@@ -1192,7 +1223,7 @@ export default function LoginPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ siteKey: SITE_KEY, completed: next }),
+      body: JSON.stringify({ siteKey: siteKey, completed: next }),
     });
 
     if (!res.ok) {
@@ -1273,7 +1304,7 @@ export default function LoginPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <ImageLogoControls
-                    siteKey={SITE_KEY}
+                    siteKey={siteKey}
                     onProgress={(p) => console.log(p)}
                     onDone={(type, url) => console.log("done:", type, url)}
                   />
@@ -1557,6 +1588,8 @@ export default function LoginPage() {
               {hasConnect && <ShipAndCoLinkCard />}
 
               <SeoGuideCard />
+
+              <CustomDomainSettingsCard />
 
               {/* アカウント操作（※既存そのまま） */}
               <Card className="shadow-xl bg白/50">

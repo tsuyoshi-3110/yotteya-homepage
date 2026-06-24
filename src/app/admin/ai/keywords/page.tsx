@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function AIKeywordsPage() {
+  const siteKey = useSiteKey();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [lines, setLines] = useState("");
   const [saving, setSaving] = useState(false);
@@ -21,7 +22,7 @@ export default function AIKeywordsPage() {
 
   useEffect(() => {
     (async () => {
-      const ref = doc(db, "aiKnowledge", SITE_KEY, "docs", "keywords");
+      const ref = doc(db, "aiKnowledge", siteKey, "docs", "keywords");
       const snap = await getDoc(ref);
       const data = snap.exists() ? (snap.data() as any) : null;
       const items: string[] = Array.isArray(data?.items) ? data!.items : [];
@@ -42,7 +43,7 @@ export default function AIKeywordsPage() {
     if (!isLoggedIn) return alert("ログインしてください。");
     setSaving(true);
     try {
-      const ref = doc(db, "aiKnowledge", SITE_KEY, "docs", "keywords");
+      const ref = doc(db, "aiKnowledge", siteKey, "docs", "keywords");
       await setDoc(
         ref,
         { items: parse(lines), updatedAt: serverTimestamp() },

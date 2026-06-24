@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 
 /* ===============================
@@ -251,6 +251,7 @@ const STRINGS: Record<LangKey, UIStrings> = {
    本体（Jotaiの uiLang に追従）
 ================================ */
 export default function JobPage() {
+  const siteKey = useSiteKey();
   const { uiLang } = useUILang();
   const lang = useMemo<LangKey>(() => {
     const k = (uiLang || "ja") as LangKey;
@@ -270,7 +271,7 @@ export default function JobPage() {
   // 送信
   const handleSubmit = async () => {
     // 日本語のときは kana 必須。他言語では name を kana に入れて送る。
-    if (!name || !email || !message || !SITE_KEY || (lang === "ja" && !kana)) {
+    if (!name || !email || !message || !siteKey || (lang === "ja" && !kana)) {
       alert(lang === "ja" ? "必須項目を入力してください。" : "Please fill in all required fields.");
       return;
     }
@@ -285,7 +286,7 @@ export default function JobPage() {
           kana: lang === "ja" ? kana : name,
           email,
           message,
-          SITE_KEY,
+          siteKey,
           locale: lang, // 受信側で参照したい場合に利用可
         }),
       });

@@ -5,7 +5,7 @@ import { Loader } from "@googlemaps/js-api-loader";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -53,10 +53,13 @@ const AREAS_T: Record<UILang, { page: string; map: string }> = {
 
 const STAGGER_EASE: Transition["ease"] = [0.16, 1, 0.3, 1];
 
-const SETTINGS_REF = doc(db, "siteSettingsEditable", SITE_KEY);
-const PUBLIC_REF = doc(db, "siteSettings", SITE_KEY);
+// [migrated to useSiteKey] SETTINGS_REF
+// [migrated to useSiteKey] PUBLIC_REF
 
 export default function AreasClient() {
+  const siteKey = useSiteKey();
+  const SETTINGS_REF = doc(db, "siteSettingsEditable", siteKey);
+  const PUBLIC_REF = doc(db, "siteSettings", siteKey);
   const { uiLang } = useUILang(); // 現在の UI 言語（ja / 他）
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);

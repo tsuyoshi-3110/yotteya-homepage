@@ -13,7 +13,7 @@ import {
 import { deleteField, doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { ThemeKey } from "@/lib/themes";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 import { Button } from "@/components/ui/button";
 import imageCompression from "browser-image-compression";
@@ -22,7 +22,7 @@ import AdminControls from "./AdminControls";
 import MediaEditModal, { EditMediaItem, MediaType } from "./MediaEditModal";
 import ProductMedia from "../ProductMedia";
 
-const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
+// [migrated to useSiteKey] META_REF
 
 type HeroItem = {
   src: string;
@@ -49,6 +49,8 @@ type MetaDoc = {
 };
 
 export default function BackgroundMedia() {
+  const siteKey = useSiteKey();
+  const META_REF = doc(db, "siteSettingsEditable", siteKey);
   const [heroItems, setHeroItems] = useState<HeroItem[]>([]);
   const [heroVideoMeta, setHeroVideoMeta] = useState<HeroVideoMeta | undefined>(
     undefined,
@@ -75,7 +77,7 @@ export default function BackgroundMedia() {
 
       const apiUrl = sessionId
         ? `/api/stripe/verify-subscription?session_id=${sessionId}`
-        : `/api/stripe/check-subscription?siteKey=${SITE_KEY}`;
+        : `/api/stripe/check-subscription?siteKey=${siteKey}`;
 
       const res = await fetch(apiUrl);
       const json = await res.json();
@@ -146,7 +148,7 @@ export default function BackgroundMedia() {
   /* 単発画像アップロード（既存機能） */
   const uploadImage = async (imageFile: File) => {
     const storage = getStorage();
-    const imageRef = ref(storage, `images/public/${SITE_KEY}/wallpaper.jpg`);
+    const imageRef = ref(storage, `images/public/${siteKey}/wallpaper.jpg`);
 
     try {
       await deleteObject(imageRef);
@@ -180,7 +182,7 @@ export default function BackgroundMedia() {
   /* ヘッダーロゴアップロード */
   const uploadHeaderImage = async (file: File) => {
     const storage = getStorage();
-    const imageRef = ref(storage, `images/public/${SITE_KEY}/headerLogo.jpg`);
+    const imageRef = ref(storage, `images/public/${siteKey}/headerLogo.jpg`);
 
     const compressedFile = await imageCompression(file, {
       maxWidthOrHeight: 160,
@@ -212,7 +214,7 @@ export default function BackgroundMedia() {
       async () => {
         const url = await getDownloadURL(imageRef);
         await setDoc(
-          doc(db, "siteSettingsEditable", SITE_KEY),
+          doc(db, "siteSettingsEditable", siteKey),
           { headerLogoUrl: url },
           { merge: true },
         );
@@ -278,7 +280,7 @@ export default function BackgroundMedia() {
     else setProgress(null);
 
     const uploadImageFile = async (file: File, index: number) => {
-      const path = `images/public/${SITE_KEY}/hero_${index}.jpg`;
+      const path = `images/public/${siteKey}/hero_${index}.jpg`;
       const imageRef = ref(storage, path);
       try {
         await deleteObject(imageRef);
@@ -295,7 +297,7 @@ export default function BackgroundMedia() {
     const uploadVideoFile = async (file: File) => {
       const videoRef = ref(
         storage,
-        `videos/public/${SITE_KEY}/homeBackground.mp4`,
+        `videos/public/${siteKey}/homeBackground.mp4`,
       );
 
       try {
@@ -362,7 +364,7 @@ export default function BackgroundMedia() {
 
         const posterRef = ref(
           storage,
-          `videos/public/${SITE_KEY}/homeBackground.jpg`,
+          `videos/public/${siteKey}/homeBackground.jpg`,
         );
         try {
           await deleteObject(posterRef);
@@ -405,7 +407,7 @@ export default function BackgroundMedia() {
             newHeroItems.push({ type: "video", src: videoUrl });
 
             heroVideoMetaNext = {
-              name: `${SITE_KEY} 紹介動画`,
+              name: `${siteKey} 紹介動画`,
               description: "サービス紹介動画です。",
               contentUrl: videoUrl,
               uploadDate: new Date().toISOString(),
@@ -478,7 +480,7 @@ export default function BackgroundMedia() {
           const res = await fetch("/api/stripe/resume-subscription", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ siteKey: SITE_KEY }),
+            body: JSON.stringify({ siteKey: siteKey }),
           });
           if (res.ok) {
             alert("解約予約を取り消しました！");

@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { onSnapshot, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_CATEGORIES, type BlogCategory } from "@/lib/blogCategories";
 import clsx from "clsx";
@@ -22,11 +22,12 @@ export default function CategoryPicker({
   showManageButton,
   className,
 }: Props) {
+  const siteKey = useSiteKey();
   const [items, setItems] = useState<BlogCategory[]>(DEFAULT_CATEGORIES);
 
   useEffect(() => {
-    if (!SITE_KEY) return;
-    const ref = doc(db, "siteBlogs", SITE_KEY, "meta", "config");
+    if (!siteKey) return;
+    const ref = doc(db, "siteBlogs", siteKey, "meta", "config");
     const unsub = onSnapshot(ref, (snap) => {
       const list = Array.isArray((snap.data() as any)?.categories)
         ? ((snap.data() as any).categories as BlogCategory[])

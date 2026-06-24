@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { site } from "@/config/site";
 import { auth, db } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import {
   collection,
   doc,
@@ -176,6 +176,7 @@ function downloadVCardFile(file: File, anchorEl: HTMLAnchorElement | null) {
 
 /* ========== ページ本体 ========== */
 export default function BusinessCardPage() {
+  const siteKey = useSiteKey();
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const pageUrl = site?.baseUrl || origin || "https://example.com";
 
@@ -191,17 +192,17 @@ export default function BusinessCardPage() {
 
   useEffect(() => {
     const unsubEditable = onSnapshot(
-      doc(db, "siteSettingsEditable", SITE_KEY),
+      doc(db, "siteSettingsEditable", siteKey),
       (s) => setEditable(s.exists() ? (s.data() as SiteDoc) : null),
       (e) => console.warn("siteSettingsEditable read error:", e)
     );
     const unsubBase = onSnapshot(
-      doc(db, "siteSettings", SITE_KEY),
+      doc(db, "siteSettings", siteKey),
       (s) => setBase(s.exists() ? (s.data() as SiteDoc) : null),
       (e) => console.warn("siteSettings read error:", e)
     );
     const unsubStores = onSnapshot(
-      collection(db, "siteStores", SITE_KEY, "items"),
+      collection(db, "siteStores", siteKey, "items"),
       (snap) => {
         const arr = snap.docs
           .map(readStore)

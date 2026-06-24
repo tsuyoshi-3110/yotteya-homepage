@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 
 import { Button } from "@/components/ui/button";
 import CardSpinner from "@/components/CardSpinner";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { Building2 } from "lucide-react";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 import { StaggerChars } from "../animated/StaggerChars";
@@ -66,6 +66,7 @@ const EMPTY_EDIT_BASE: Required<TranslatableFields> = {
 
 /* ========= Main ========= */
 export default function CompanyOverview() {
+  const siteKey = useSiteKey();
   const { uiLang } = useUILang();
 
   const [user, setUser] = useState<User | null>(null);
@@ -120,7 +121,7 @@ export default function CompanyOverview() {
     (async () => {
       setLoading(true);
       try {
-        const ref = doc(db, "siteMeta", SITE_KEY, "company", "profile");
+        const ref = doc(db, "siteMeta", siteKey, "company", "profile");
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const data = snap.data() as CompanyDoc;
@@ -212,7 +213,7 @@ export default function CompanyOverview() {
         targets.map((lang) => translateCompany(editBase, lang))
       );
 
-      const ref = doc(db, "siteMeta", SITE_KEY, "company", "profile");
+      const ref = doc(db, "siteMeta", siteKey, "company", "profile");
 
       const payload: CompanyDoc = {
         // 多言語

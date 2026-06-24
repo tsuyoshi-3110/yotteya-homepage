@@ -11,7 +11,7 @@ import { Inbox } from "lucide-react";
 import clsx from "clsx";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { ThemeKey, THEMES } from "@/lib/themes";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 /* ---------- 型 ---------- */
 type Industry = { key: string; name: string };
@@ -199,6 +199,7 @@ const toTokens = (q: string) =>
 
 /* ----------  Component ---------- */
 export default function CommunityPage() {
+  const siteKey = useSiteKey();
   const [owners, setOwners] = useState<SiteOwner[]>([]);
   const [query, setQuery] = useState("");
   const [best, setBest] = useState<SiteOwner | null>(null);
@@ -229,7 +230,7 @@ export default function CommunityPage() {
   useEffect(() => {
     const fetchOwners = async () => {
       // 1) 自分の住所 & 業種
-      const mySnap = await getDoc(doc(db, "siteSettings", SITE_KEY));
+      const mySnap = await getDoc(doc(db, "siteSettings", siteKey));
       const myData = mySnap.data() as any;
       const myAddress = myData?.ownerAddress as string | undefined;
       const myLL = myAddress ? await geocodeCached(myAddress) : null;
@@ -248,7 +249,7 @@ export default function CommunityPage() {
       const rows = await Promise.all(
         snap.docs.map(async (d) => {
           const data = d.data() as any;
-          const siteKey = d.id;
+          const partnerId = d.id;
 
           const industry: Industry | null =
             data?.industry && typeof data.industry === "object"
@@ -259,12 +260,12 @@ export default function CommunityPage() {
               : null;
 
           const editableSnap = await getDoc(
-            doc(db, "siteSettingsEditable", siteKey)
+            doc(db, "siteSettingsEditable", partnerId)
           );
           const editableData = editableSnap.exists() ? editableSnap.data() : {};
 
           const row: SiteOwner = {
-            id: siteKey,
+            id: partnerId,
             siteName: data.siteName ?? "(無名の店舗)",
             ownerName: data.ownerName ?? "(名前未設定)",
             ownerAddress: data.ownerAddress ?? "(住所不明)",
@@ -279,7 +280,7 @@ export default function CommunityPage() {
 
       // 3) 自分以外に絞って並べ替え
       const sorted = rows
-        .filter((r) => r.id !== SITE_KEY)
+        .filter((r) => r.id !== siteKey)
         .sort((a, b) => collatorJa.compare(a.siteName, b.siteName));
 
       // 4) 距離付与（キャッシュ利用）

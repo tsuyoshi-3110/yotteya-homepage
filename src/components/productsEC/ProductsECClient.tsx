@@ -54,7 +54,7 @@ import SortableItem from "../SortableItem";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import ProductMedia from "../ProductMedia";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import Image from "next/image";
 
 // 多言語
@@ -92,6 +92,7 @@ import {
 
 /* ======================== 本体 ======================== */
 export default function ProductsECClient() {
+  const siteKey = useSiteKey();
   // ▼ 商品
   const [list, setList] = useState<ProdDoc[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -179,11 +180,11 @@ export default function ProductsECClient() {
   }, [gradient]);
 
   const productColRef: CollectionReference<DocumentData> = useMemo(
-    () => collection(db, "siteProducts", SITE_KEY, "items"),
+    () => collection(db, "siteProducts", siteKey, "items"),
     []
   );
   const sectionColRef: CollectionReference<DocumentData> = useMemo(
-    () => collection(db, "siteSections", SITE_KEY, "sections"),
+    () => collection(db, "siteSections", siteKey, "sections"),
     []
   );
 
@@ -191,7 +192,7 @@ export default function ProductsECClient() {
 
   // 送料無料しきい値
   useEffect(() => {
-    const ref = doc(db, "siteShippingPolicy", SITE_KEY);
+    const ref = doc(db, "siteShippingPolicy", siteKey);
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.data() as any;
       if (!data?.enabled) {
@@ -229,7 +230,7 @@ export default function ProductsECClient() {
 
   // EC 停止フラグ
   useEffect(() => {
-    const ref = doc(db, "siteSellers", SITE_KEY);
+    const ref = doc(db, "siteSellers", siteKey);
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.data() as any;
       setEcStop(!!data?.ecStop);
@@ -241,7 +242,7 @@ export default function ProductsECClient() {
   useEffect(() => {
     const qRef = query(
       collection(db, "stock"),
-      where("siteKey", "==", SITE_KEY)
+      where("siteKey", "==", siteKey)
     );
     const unsub = onSnapshot(
       qRef,
@@ -527,7 +528,7 @@ export default function ProductsECClient() {
             });
         const storageRef = ref(
           getStorage(),
-          `products/public/${SITE_KEY}/${id}.${ext}`
+          `products/public/${siteKey}/${id}.${ext}`
         );
         const task = uploadBytesResumable(storageRef, uploadFile, {
           contentType: isVideo ? file.type : "image/jpeg",
@@ -549,7 +550,7 @@ export default function ProductsECClient() {
           const oldExt = editing.mediaType === "video" ? "mp4" : "jpg";
           if (oldExt !== ext) {
             await deleteObject(
-              ref(getStorage(), `products/public/${SITE_KEY}/${id}.${oldExt}`)
+              ref(getStorage(), `products/public/${siteKey}/${id}.${oldExt}`)
             ).catch(() => {});
           }
         }

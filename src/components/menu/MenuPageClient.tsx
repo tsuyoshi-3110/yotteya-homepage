@@ -17,7 +17,7 @@ import MenuSectionCard from "@/components/menu/MenuSectionCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { onAuthStateChanged } from "firebase/auth";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import {
   getStorage,
   ref as storageRef,
@@ -208,6 +208,7 @@ const MAX_VIDEO_SEC = 60;
    本体
 ========================= */
 export default function MenuPageClient() {
+  const siteKey = useSiteKey();
   const [sections, setSections] = useState<UIMenuSection[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -253,7 +254,7 @@ export default function MenuPageClient() {
   useEffect(() => {
     const qy = query(
       collection(db, "menuSections"),
-      where("siteKey", "==", SITE_KEY),
+      where("siteKey", "==", siteKey),
       orderBy("order", "asc")
     );
     const unsub = onSnapshot(qy, (snap) => {
@@ -453,7 +454,7 @@ export default function MenuPageClient() {
       const refDoc = await addDoc(collection(db, "menuSections"), {
         title: baseJa,
         order: newOrder,
-        siteKey: SITE_KEY,
+        siteKey: siteKey,
         mediaType: null,
         mediaUrl: null,
         mediaItems: [],
@@ -487,7 +488,7 @@ export default function MenuPageClient() {
         const type = item.type;
 
         const ext = getExt(f.name) || (type === "image" ? "jpg" : "mp4");
-        const path = `sections/${SITE_KEY}/${refDoc.id}/${index + 1}.${ext}`;
+        const path = `sections/${siteKey}/${refDoc.id}/${index + 1}.${ext}`;
         const sref = storageRef(getStorage(), path);
 
         const task = uploadBytesResumable(sref, f, {

@@ -5,7 +5,7 @@ import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { LANGS, type LangKey } from "@/lib/langs";
 // ※ あなたの環境にある想定のUI言語フック（未導入でもビルドは通ります）
 import { useUILang } from "@/lib/atoms/uiLangAtom";
@@ -1146,6 +1146,7 @@ function t(lang: LangKey, key: string, params?: Record<string, string>) {
 }
 
 export default function TermsPage() {
+  const siteKey = useSiteKey();
   const [s, setS] = useState<SiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -1165,7 +1166,7 @@ export default function TermsPage() {
   useEffect(() => {
     (async () => {
       try {
-        const ref = doc(db, "siteSettings", SITE_KEY);
+        const ref = doc(db, "siteSettings", siteKey);
         const snap = await getDoc(ref);
         setS((snap.data() as SiteSettings) ?? {});
       } finally {

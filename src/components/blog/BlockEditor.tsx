@@ -17,7 +17,7 @@ import {
 } from "firebase/storage";
 import { useThemeGradient } from "@/lib/useThemeGradient";
 import { THEMES, ThemeKey } from "@/lib/themes";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { Pin } from "lucide-react";
 import { BusyOverlay } from "@/components/BusyOverlay";
 import Image from "next/image";
@@ -185,6 +185,7 @@ function SortableBlockCard({
 
 /* ========== メイン ========== */
 export default function BlockEditor({ value, onChange, postIdForPath }: Props) {
+  const siteKey = useSiteKey();
   // ==== テーマ判定 ====
   const gradient = useThemeGradient();
   const isDark = useMemo(
@@ -381,7 +382,7 @@ export default function BlockEditor({ value, onChange, postIdForPath }: Props) {
     const safePostId = postIdForPath || "temp";
     const ext = extFromMime(file.type) || (isVideo ? "mp4" : "jpg");
     const fileId = uuid();
-    const path = `siteBlogs/${SITE_KEY}/posts/${safePostId}/${fileId}.${ext}`;
+    const path = `siteBlogs/${siteKey}/posts/${safePostId}/${fileId}.${ext}`;
     const ref = sRef(storage, path);
 
     const task = uploadBytesResumable(ref, file, { contentType: file.type });

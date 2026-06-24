@@ -7,15 +7,16 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ProjectsDetail from "@/components/ProjectsDetail";
 import CardSpinner from "@/components/CardSpinner";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 export default function ProductPage() {
+  const siteKey = useSiteKey();
   const { id } = useParams() as { id: string };
   const [product, setProduct] = useState<any | null>(null);
 
   useEffect(() => {
     (async () => {
-      const snap = await getDoc(doc(db, "siteProjects", SITE_KEY, "items", id));
+      const snap = await getDoc(doc(db, "siteProjects", siteKey, "items", id));
       if (snap.exists()) setProduct({ id, ...snap.data() });
     })();
   }, [id]);

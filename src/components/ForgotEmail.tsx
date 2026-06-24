@@ -5,7 +5,7 @@ import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AsYouType } from "libphonenumber-js";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 type Props = {
   onClose: () => void;
@@ -13,6 +13,7 @@ type Props = {
 };
 
 export default function ForgotEmail({ onClose, onEmailFound }: Props) {
+  const siteKey = useSiteKey();
   const [phone, setPhone] = useState("");
   const [rawPhone, setRawPhone] = useState(""); // 数字のみ保持
   const [email, setEmail] = useState("");
@@ -26,7 +27,7 @@ export default function ForgotEmail({ onClose, onEmailFound }: Props) {
     setError("");
 
     try {
-      const ref = doc(db, "siteSettings", SITE_KEY);
+      const ref = doc(db, "siteSettings", siteKey);
       const snap = await getDoc(ref);
       if (!snap.exists()) {
         setError("設定が見つかりません。");

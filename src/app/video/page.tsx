@@ -1,10 +1,12 @@
 // app/video/page.tsx
 import { adminDb } from "@/lib/firebase-admin";
 export const runtime = "nodejs";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { resolveCurrentTenant } from "@/lib/customer-config/tenant-resolver-server";
 
 export default async function VideoPage() {
-  const snap = await adminDb.collection("siteSettingsEditable").doc(SITE_KEY).get();
+  const tenant = await resolveCurrentTenant();
+  const siteKey = tenant.siteKey;
+  const snap = await adminDb.collection("siteSettingsEditable").doc(siteKey).get();
   const s = (snap.data() as any) ?? {};
   const v = s.heroVideo ?? {};
 

@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea"; // なければ shadcn の textarea を追加してください
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { auth, db } from "@/lib/firebase";
 import {
   doc,
@@ -23,6 +23,7 @@ type KeywordDoc = {
 };
 
 export default function AIKeywordsPage() {
+  const siteKey = useSiteKey();
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,7 +34,7 @@ export default function AIKeywordsPage() {
   const [bulkText, setBulkText] = useState("");
 
   const docRef = useMemo(
-    () => doc(db, "aiKnowledge", SITE_KEY, "docs", "keywords"),
+    () => doc(db, "aiKnowledge", siteKey, "docs", "keywords"),
     []
   );
 

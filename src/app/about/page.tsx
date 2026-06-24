@@ -1,8 +1,17 @@
 // app/about/page.tsx
+import type { Metadata } from "next";
 import AboutClient from "@/components/AboutClient";
 import { seo } from "@/config/site";
+import { loadPageMetadataFromFirestore } from "@/lib/customer-config/home-metadata-server";
 
-export const metadata = seo.page("about");
+const CURRENT_METADATA: Metadata = seo.page("about");
+
+export function generateMetadata(): Promise<Metadata> {
+  return loadPageMetadataFromFirestore({
+    pageKey: "about",
+    fallback: CURRENT_METADATA,
+  });
+}
 
 export default function AboutPage() {
   return (

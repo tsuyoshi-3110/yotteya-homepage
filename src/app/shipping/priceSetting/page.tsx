@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -168,6 +168,7 @@ function buildPersistShape(
    Component
    ========================= */
 export default function ShippingPriceSettingPage() {
+  const siteKey = useSiteKey();
   // 送料・閾値
   const [prices, setPrices] = useState<NumOrEmptyDict>({}); // 初期は空（自動で推定値を入れない）
   const [thresholdByLang, setThresholdByLang] = useState<NumOrEmptyDict>({});
@@ -192,13 +193,13 @@ export default function ShippingPriceSettingPage() {
         let loadedThresholds: NumOrEmptyDict = {};
 
         // 送料
-        const priceSnap = await getDoc(doc(db, "siteShippingPrices", SITE_KEY));
+        const priceSnap = await getDoc(doc(db, "siteShippingPrices", siteKey));
         loadedPrices = priceSnap.exists()
           ? ((priceSnap.data() as NumDict) || {})
           : {};
 
         // 送料無料（ドキュメント無い場合は「空欄」を初期値にする）
-        const policySnap = await getDoc(doc(db, "siteShippingPolicy", SITE_KEY));
+        const policySnap = await getDoc(doc(db, "siteShippingPolicy", siteKey));
         if (policySnap.exists()) {
           const p = (policySnap.data() as ShippingPolicyDoc) || {};
           loadedEnabled = p.enabled !== false;
@@ -311,9 +312,9 @@ export default function ShippingPriceSettingPage() {
       }
 
       await Promise.all([
-        setDoc(doc(db, "siteShippingPrices", SITE_KEY), cleanPrices),
+        setDoc(doc(db, "siteShippingPrices", siteKey), cleanPrices),
         setDoc(
-          doc(db, "siteShippingPolicy", SITE_KEY),
+          doc(db, "siteShippingPolicy", siteKey),
           { enabled, thresholdByLang: cleanThresholds } as ShippingPolicyDoc,
           { merge: true }
         ),

@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { db } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { doc, onSnapshot } from "firebase/firestore";
 import clsx from "clsx";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
@@ -489,6 +489,7 @@ function rangesLabel(d?: DayHours | null) {
 }
 
 export default function HoursSection() {
+  const siteKey = useSiteKey();
   const { uiLang } = useUILang();
   const t = HOURS_I18N[uiLang] ?? HOURS_I18N["ja"];
   const dayLabels = DAY_LABELS[uiLang] ?? DAY_LABELS["ja"];
@@ -498,7 +499,7 @@ export default function HoursSection() {
 
   // Firestore 購読
   useEffect(() => {
-    const ref = doc(db, "siteSettingsEditable", SITE_KEY);
+    const ref = doc(db, "siteSettingsEditable", siteKey);
     return onSnapshot(
       ref,
       (snap) => {

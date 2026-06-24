@@ -8,7 +8,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { db } from "@/lib/firebase";
 import {
   collection,
@@ -47,16 +47,15 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | null>(null);
 
-const STORAGE_KEY = `cart:${SITE_KEY}`;
 const VERSION = 1;
 
 type Persisted = { v: number; data: { items: CartItem[] } };
 
 /* ---- localStorage 読み込み ---- */
-function safeRead(): { items: CartItem[] } {
+function safeRead(storageKey: string): { items: CartItem[] } {
   if (typeof window === "undefined") return { items: [] };
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return { items: [] };
     const parsed = JSON.parse(raw) as Persisted;
     if (parsed.v !== VERSION) return { items: [] };
@@ -78,11 +77,11 @@ function safeRead(): { items: CartItem[] } {
 }
 
 /* ---- localStorage 書き込み ---- */
-function safeWrite(state: { items: CartItem[] }) {
+function safeWrite(state: { items: CartItem[] }, storageKey: string) {
   if (typeof window === "undefined") return;
   try {
     const payload: Persisted = { v: VERSION, data: state };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    localStorage.setItem(storageKey, JSON.stringify(payload));
   } catch {
     // ignore
   }
@@ -90,28 +89,30 @@ function safeWrite(state: { items: CartItem[] }) {
 
 /* ---- Provider ---- */
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const siteKey = useSiteKey();
+  const STORAGE_KEY = `cart:${siteKey}`;
   const [state, setState] = useState<{ items: CartItem[] }>({ items: [] });
   const [hydrated, setHydrated] = useState(false);
 
   /* 初期読み込み */
   useEffect(() => {
-    setState(safeRead());
+    setState(safeRead(STORAGE_KEY));
     setHydrated(true);
-  }, []);
+  }, [STORAGE_KEY]);
 
   /* 他タブ同期 */
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) setState(safeRead());
+      if (e.key === STORAGE_KEY) setState(safeRead(STORAGE_KEY));
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [STORAGE_KEY]);
 
   /* 自動保存 */
   useEffect(() => {
-    if (hydrated) safeWrite(state);
-  }, [state, hydrated]);
+    if (hydrated) safeWrite(state, STORAGE_KEY);
+  }, [state, hydrated, STORAGE_KEY]);
 
   /* ✅ Stripe決済完了後、/cart に戻ってもカートを自動クリア */
   useEffect(() => {
@@ -150,7 +151,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const ids = [...new Set(state.items.map((x) => x.productId))];
     if (ids.length === 0) return;
 
-    const colRef = collection(db, "siteProducts", SITE_KEY, "items");
+    const colRef = collection(db, "siteProducts", siteKey, "items");
     const existing = new Set<string>();
 
     for (let i = 0; i < ids.length; i += 10) {

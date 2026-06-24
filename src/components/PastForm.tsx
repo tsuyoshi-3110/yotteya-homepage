@@ -17,7 +17,7 @@ import {
 
 import { auth, db } from "@/lib/firebase";
 import { X } from "lucide-react";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import Image from "next/image";
 
 /* 許可MIME & 制限秒数 */
@@ -31,6 +31,7 @@ const ALLOWED_VIDEO = [
 const MAX_VIDEO_SEC = 60; // 1分
 
 export default function PostForm() {
+  const siteKey = useSiteKey();
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isVideo, setIsVideo] = useState(false);
@@ -53,9 +54,9 @@ export default function PostForm() {
 
   useEffect(() => {
     (async () => {
-      const s1 = await getDoc(doc(db, "siteSettings", SITE_KEY));
+      const s1 = await getDoc(doc(db, "siteSettings", siteKey));
       if (s1.exists()) setSiteName((s1.data() as any).siteName ?? "Anonymous");
-      const s2 = await getDoc(doc(db, "siteSettingsEditable", SITE_KEY));
+      const s2 = await getDoc(doc(db, "siteSettingsEditable", siteKey));
       if (s2.exists())
         setLogoUrl((s2.data() as any).headerLogoUrl ?? "/images/noImage.png");
     })();
@@ -140,7 +141,7 @@ export default function PostForm() {
       // 先にポスト作成（メディアは後で更新）
       const postRef = await addDoc(collection(db, "posts"), {
         authorUid: uid,
-        authorSiteKey: SITE_KEY,
+        authorSiteKey: siteKey,
         authorName: siteName,
         authorIconUrl: logoUrl,
         content: text.trim(), // 空文字も許可

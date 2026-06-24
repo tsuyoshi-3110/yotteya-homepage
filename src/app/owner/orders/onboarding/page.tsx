@@ -2,9 +2,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 export default function OwnerOnboardingToggle() {
+  const siteKey = useSiteKey();
   const [loading, setLoading] = useState(true);
   const [val, setVal] = useState<boolean>(false);
   const [saving, setSaving] = useState(false);
@@ -13,7 +14,7 @@ export default function OwnerOnboardingToggle() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`/api/admin/sellers/${SITE_KEY}/onboarding`);
+        const res = await fetch(`/api/admin/sellers/${siteKey}/onboarding`);
         const json = await res.json();
         setVal(!!json.onboardingCompleted);
       } catch {
@@ -28,7 +29,7 @@ export default function OwnerOnboardingToggle() {
     setSaving(true);
     setMsg(null);
     try {
-      const res = await fetch(`/api/admin/sellers/${SITE_KEY}/onboarding`, {
+      const res = await fetch(`/api/admin/sellers/${siteKey}/onboarding`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

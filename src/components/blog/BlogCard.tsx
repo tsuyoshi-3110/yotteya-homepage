@@ -16,7 +16,7 @@ import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 import { doc, getDoc } from "firebase/firestore";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 const DARK_KEYS: ThemeKey[] = ["brandG", "brandH", "brandI"];
 
@@ -103,6 +103,7 @@ export default function BlogCard({
   deleting,
   className,
 }: Props) {
+  const siteKey = useSiteKey();
   const gradient = useThemeGradient();
   const gradientClass = typeof gradient === "string" ? gradient : "";
   const isDark =
@@ -132,13 +133,13 @@ export default function BlogCard({
     let alive = true;
     (async () => {
       try {
-        if (!SITE_KEY || !catKey) {
+        if (!siteKey || !catKey) {
           if (alive) setCatLabel("");
           return;
         }
 
         const snap = await getDoc(
-          doc(db, "siteBlogs", SITE_KEY, "meta", "config")
+          doc(db, "siteBlogs", siteKey, "meta", "config")
         );
         const raw = (snap.data() as any)?.categories;
         const cats: Array<{ key: string; label: string }> = Array.isArray(raw)

@@ -20,7 +20,7 @@ import { auth, db } from "@/lib/firebase";
 import { THEMES, ThemeKey } from "@/lib/themes";
 import UILangFloatingPicker from "../UILangFloatingPicker";
 import { useUILang, type UILang } from "@/lib/atoms/uiLangAtom";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { doc, onSnapshot } from "firebase/firestore";
 import { siteName } from "@/config/site";
 
@@ -486,6 +486,7 @@ type EditableSettings = {
 };
 
 export default function Header({ className = "" }: { className?: string }) {
+  const siteKey = useSiteKey();
   const [open, setOpen] = useState(false);
   const gradient = useThemeGradient();
   const logoUrl = useHeaderLogoUrl();
@@ -504,7 +505,7 @@ export default function Header({ className = "" }: { className?: string }) {
   const [i18nEnabled, setI18nEnabled] = useState<boolean>(true);
 
   useEffect(() => {
-    const ref = doc(db, "siteSettingsEditable", SITE_KEY);
+    const ref = doc(db, "siteSettingsEditable", siteKey);
 
     const unsubscribe = onSnapshot(
       ref,
@@ -549,7 +550,7 @@ export default function Header({ className = "" }: { className?: string }) {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [siteKey]);
 
   const gradientClass = gradient
     ? `bg-gradient-to-b ${gradient}`

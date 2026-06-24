@@ -1,8 +1,17 @@
 // /app/faq/page.tsx
+import type { Metadata } from "next";
 import { seo, faqItems } from "@/config/site";
 import { buildFAQJsonLd } from "@/lib/jsonld/faq";
+import { loadPageMetadataFromFirestore } from "@/lib/customer-config/home-metadata-server";
 
-export const metadata = seo.page("faq");
+const CURRENT_METADATA: Metadata = seo.page("faq");
+
+export function generateMetadata(): Promise<Metadata> {
+  return loadPageMetadataFromFirestore({
+    pageKey: "faq",
+    fallback: CURRENT_METADATA,
+  });
+}
 
 const safe = (o: object) => JSON.stringify(o).replace(/</g, "\\u003c");
 

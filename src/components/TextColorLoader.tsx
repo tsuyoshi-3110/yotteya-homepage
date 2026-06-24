@@ -4,13 +4,15 @@
 import { useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 export default function TextColorLoader() {
+  const siteKey = useSiteKey();
+
   useEffect(() => {
     (async () => {
-      if (!SITE_KEY) return;
-      const snap = await getDoc(doc(db, "assets", SITE_KEY));
+      if (!siteKey) return;
+      const snap = await getDoc(doc(db, "assets", siteKey));
       if (!snap.exists()) return;
       const data = snap.data();
       const fields: [string, string][] = [
@@ -25,7 +27,6 @@ export default function TextColorLoader() {
         }
       }
 
-      // 文字枠
       const outlineEnabled = data.textOutlineEnabled === true;
       const outlineColor = data.textOutlineColor ?? "#000000";
       document.documentElement.style.setProperty(
@@ -33,7 +34,7 @@ export default function TextColorLoader() {
         outlineEnabled ? outlineColor : "transparent"
       );
     })();
-  }, []);
+  }, [siteKey]);
 
   return null;
 }

@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,7 @@ export default function VCardDownloadButton({
   className?: string;
   label?: string;
 }) {
+  const siteKey = useSiteKey();
   const { uiLang } = useUILang();
   const T = tFor(uiLang);
   const [stores, setStores] = useState<StoreDoc[]>([]);
@@ -72,7 +73,7 @@ export default function VCardDownloadButton({
 
   useEffect(() => {
     (async () => {
-      const snap = await getDocs(collection(db, "siteStores", SITE_KEY, "items"));
+      const snap = await getDocs(collection(db, "siteStores", siteKey, "items"));
       const list: StoreDoc[] = [];
       snap.forEach((doc) => {
         const d = doc.data() as any;

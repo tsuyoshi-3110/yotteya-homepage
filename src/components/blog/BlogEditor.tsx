@@ -11,7 +11,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db, storage } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import type { BlogBlock } from "@/types/blog";
 import { useRouter } from "next/navigation";
 import {
@@ -168,6 +168,7 @@ async function translatePost(
 type Props = { postId?: string };
 
 export default function BlogEditor({ postId }: Props) {
+  const siteKey = useSiteKey();
   const router = useRouter();
   const [title, setTitle] = useState<string>("");
   const [blocks, setBlocks] = useState<BlogBlock[]>([]);
@@ -194,11 +195,11 @@ export default function BlogEditor({ postId }: Props) {
 
   useEffect(() => {
     (async () => {
-      if (!SITE_KEY) return; // ← ガードは残す
+      if (!siteKey) return; // ← ガードは残す
       // ① カテゴリー
       let cats: BlogCategory[] = [];
       try {
-        cats = await loadCategories(SITE_KEY);
+        cats = await loadCategories(siteKey);
         setCategories(cats);
       } catch {
         cats = [];
@@ -207,7 +208,7 @@ export default function BlogEditor({ postId }: Props) {
 
       // ② 記事
       if (!postId) return;
-      const refDoc = doc(db, "siteBlogs", SITE_KEY, "posts", postId);
+      const refDoc = doc(db, "siteBlogs", siteKey, "posts", postId);
       const snap = await getDoc(refDoc);
       if (!snap.exists()) return;
       const d = snap.data() as any;
@@ -240,7 +241,7 @@ export default function BlogEditor({ postId }: Props) {
     setCategories(next);
     setCategoryKey(key);
     setNewCatLabel("");
-    if (SITE_KEY) await saveCategories(SITE_KEY, next);
+    if (siteKey) await saveCategories(siteKey, next);
   };
 
   const save = async () => {
@@ -268,7 +269,7 @@ export default function BlogEditor({ postId }: Props) {
           .join("\n\n")
           .trim();
         await updateDoc(
-          doc(db, "siteBlogs", SITE_KEY, "posts", postId),
+          doc(db, "siteBlogs", siteKey, "posts", postId),
           pruneUndefined({
             base: { title, blocks: moved },
             t: tAll,
@@ -282,7 +283,7 @@ export default function BlogEditor({ postId }: Props) {
         );
       } else {
         const created = await addDoc(
-          collection(db, "siteBlogs", SITE_KEY, "posts"),
+          collection(db, "siteBlogs", siteKey, "posts"),
           {
             base: { title: title || "", blocks: [] as BlogBlock[] },
             t: [] as TranslatedPost[],
@@ -351,7 +352,7 @@ export default function BlogEditor({ postId }: Props) {
           } catch {}
         }
       }
-      await deleteDoc(doc(db, "siteBlogs", SITE_KEY, "posts", postId));
+      await deleteDoc(doc(db, "siteBlogs", siteKey, "posts", postId));
       setUploadPercent(100);
       setTimeout(() => {
         setUploadPercent(null);

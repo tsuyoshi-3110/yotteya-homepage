@@ -7,7 +7,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { db, auth } from "@/lib/firebase";
 import {
   collection,
@@ -179,6 +179,7 @@ function Stepper({
 
 // ---------- 画面本体 ----------
 export default function InventoryPage() {
+  const siteKey = useSiteKey();
   const [products, setProducts] = useState<ProductDoc[]>([]);
   const [stocks, setStocks] = useState<StockDoc[]>([]);
   const [qText, setQText] = useState("");
@@ -196,13 +197,13 @@ export default function InventoryPage() {
 
   // 商品購読（公開）
   useEffect(() => {
-    const col = collection(db, "siteProducts", SITE_KEY, "items");
+    const col = collection(db, "siteProducts", siteKey, "items");
     const unsub = onSnapshot(
       col,
       (snap) => {
         const arr: ProductDoc[] = snap.docs.map((d) => ({
           id: d.id,
-          siteKey: SITE_KEY,
+          siteKey: siteKey,
           ...(d.data() as any),
         }));
         arr.sort((a, b) => prodName(a).localeCompare(prodName(b), "ja"));
@@ -218,7 +219,7 @@ export default function InventoryPage() {
     if (!loggedIn) return;
     const qRef = query(
       collection(db, "stock"),
-      where("siteKey", "==", SITE_KEY)
+      where("siteKey", "==", siteKey)
     );
     const unsub = onSnapshot(
       qRef,
@@ -295,7 +296,7 @@ export default function InventoryPage() {
 
       const logRef = doc(collection(db, "stockAdjustments"));
       tx.set(logRef, {
-        siteKey: SITE_KEY,
+        siteKey: siteKey,
         stockId: stock.id,
         sku: cur.sku || null,
         delta: after - before,
@@ -321,7 +322,7 @@ export default function InventoryPage() {
 
       const logRef = doc(collection(db, "stockAdjustments"));
       tx.set(logRef, {
-        siteKey: SITE_KEY,
+        siteKey: siteKey,
         stockId: stock.id,
         sku: cur.sku || null,
         delta: after - before,
@@ -357,9 +358,9 @@ export default function InventoryPage() {
   async function ensureStockWithAutoCode(p: ProductDoc): Promise<StockDoc> {
     const productId = productIdOf(p);
     const name = prodName(p);
-    const stockId = `${SITE_KEY}__p:${productId}`;
+    const stockId = `${siteKey}__p:${productId}`;
     const stockRef = doc(db, "stock", stockId);
-    const counterRef = doc(db, "inventoryCounters", SITE_KEY);
+    const counterRef = doc(db, "inventoryCounters", siteKey);
 
     await runTransaction(db, async (tx) => {
       const sSnap = await tx.get(stockRef);
@@ -373,11 +374,11 @@ export default function InventoryPage() {
           const next = last + 1;
           tx.set(
             counterRef,
-            { last: next, siteKey: SITE_KEY, updatedAt: serverTimestamp() },
+            { last: next, siteKey: siteKey, updatedAt: serverTimestamp() },
             { merge: true }
           );
           tx.update(stockRef, {
-            siteKey: SITE_KEY,
+            siteKey: siteKey,
             productId,
             sku: `P${pad4(next)}`,
             name,
@@ -385,7 +386,7 @@ export default function InventoryPage() {
           });
         } else {
           tx.update(stockRef, {
-            siteKey: SITE_KEY,
+            siteKey: siteKey,
             productId,
             name,
             updatedAt: serverTimestamp(),
@@ -395,12 +396,12 @@ export default function InventoryPage() {
         const next = last + 1;
         tx.set(
           counterRef,
-          { last: next, siteKey: SITE_KEY, updatedAt: serverTimestamp() },
+          { last: next, siteKey: siteKey, updatedAt: serverTimestamp() },
           { merge: true }
         );
         tx.set(stockRef, {
           id: stockId,
-          siteKey: SITE_KEY,
+          siteKey: siteKey,
           productId,
           sku: `P${pad4(next)}`,
           name,

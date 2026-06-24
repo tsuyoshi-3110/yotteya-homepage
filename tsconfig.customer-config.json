@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": false,
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "src/config/customer.ts",
+    "src/config/customer.types.ts",
+    "src/lib/customer-config/**/*.ts",
+    "src/app/api/admin/sites/[siteKey]/domain/route.ts",
+    "src/app/api/admin/sites/[siteKey]/domain/vercel-status/route.ts",
+    "src/app/api/admin/sites/[siteKey]/domain/sync-status/route.ts",
+    "src/app/owner/domain/page.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

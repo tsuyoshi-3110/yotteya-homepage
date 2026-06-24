@@ -1,0 +1,232 @@
+{
+  "mode": "before",
+  "capturedAt": "2026-06-22T11:02:00.147Z",
+  "projectId": "crepe-shop-homepage",
+  "paths": [
+    "sites/yotteya",
+    "domains/yotteya.shop",
+    "domains/www.yotteya.shop"
+  ],
+  "sha256": "4b37a84fcc603e072d047c38b7f7a52eb3cad42088e430914f12be549cdb0a29",
+  "documents": {
+    "sites/yotteya": {
+      "exists": true,
+      "data": {
+        "canonicalHost": "yotteya.shop",
+        "config": {
+          "address": {
+            "country": "JP",
+            "latitude": 34.739,
+            "locality": "大阪市東淀川区",
+            "longitude": 135.516,
+            "postalCode": "",
+            "region": "大阪府",
+            "street": "淡路４丁目１８−１６",
+            "text": "大阪市東淀川区淡路４丁目１８−１６"
+          },
+          "ai": {
+            "areasEn": "Higashiyodogawa & Kita, Osaka (e.g., Awaji, Kamishinjo, Shimoshinjo)",
+            "areasJa": "大阪市東淀川区・北区（淡路・上新庄・下新庄 など）",
+            "productPageRoute": "/products",
+            "retail": true,
+            "servicesEn": [
+              "crepe",
+              "takeout",
+              "eat-in",
+              "seasonal limited menu"
+            ],
+            "servicesJa": [
+              "クレープ",
+              "テイクアウト",
+              "イートイン",
+              "季節限定メニュー"
+            ]
+          },
+          "brand": {
+            "businessCategory": "クレープ専門店",
+            "copyrightName": "Tayotteya",
+            "description": "大阪市東淀川区・北区に展開するクレープ専門店『甘味処 よって屋』。注文ごとに生地から焼き上げるこだわりのクレープをご提供。テイクアウト・イートイン対応。",
+            "googleSiteVerification": "UcH7-5B4bwpJxxSjIpBskahFhBRTSLRJUZ8A3LAnnFE",
+            "keywords": [
+              "甘味処クレープよって屋",
+              "よって屋",
+              "甘味処",
+              "クレープ",
+              "大阪",
+              "東淀川区",
+              "北区",
+              "下新庄",
+              "淡路",
+              "クレープ専門店"
+            ],
+            "logoPath": "/images/ogpLogo.png",
+            "name": "甘味処 よって屋",
+            "shortName": "よって屋",
+            "tagline": "大阪市のクレープ専門店",
+            "telephone": ""
+          },
+          "faq": [
+            {
+              "answer": "すべてのメニューをテイクアウトでご利用いただけます。生クリーム多めなどのカスタムもお気軽にお申し付けください。",
+              "question": "テイクアウトはできますか？"
+            },
+            {
+              "answer": "季節限定メニューや人気商品は、材料がなくなり次第終了となる場合があります。最新情報は公式SNSでお知らせしています。",
+              "question": "売り切れはありますか？"
+            },
+            {
+              "answer": "現金のほか、主要なキャッシュレス決済に対応しています。詳細は店頭でご確認ください。",
+              "question": "支払い方法は？"
+            },
+            {
+              "answer": "店舗によってはイートインスペースをご用意しています。各店舗の情報は店舗一覧ページをご確認ください。",
+              "question": "イートインはできますか？"
+            },
+            {
+              "answer": "原材料のアレルギー情報については店頭スタッフにお問い合わせください。",
+              "question": "アレルギー対応はしていますか？"
+            }
+          ],
+          "home": {
+            "description": "大阪市東淀川区・北区に展開するクレープ専門店です。注文ごとに生地から焼き上げるこだわりのクレープをご提供しています。テイクアウトはもちろん、店舗によってはイートインもご利用いただけます。お買い物や学校帰りなど、さまざまなシーンでお気軽にお立ち寄りください。",
+            "headline": "甘味処 よって屋"
+          },
+          "localPage": {
+            "accessTitle": "淡路の店舗・アクセス",
+            "areaLabel": "大阪市東淀川区・淡路",
+            "areaName": "大阪市東淀川区",
+            "closingText": "東淀川区でクレープやスイーツをお探しの際は、お買い物帰り、学校帰り、ご家族とのおやつなどにお気軽にお立ち寄りください。",
+            "coverageBody": "淡路・東淡路・菅原・豊新・上新庄・瑞光・小松・南江口・北江口・井高野・大桐・大隅・豊里・大道南・柴島・下新庄 ほか",
+            "coverageTitle": "対応エリア（東淀川区）",
+            "cuisines": [
+              "クレープ",
+              "スイーツ"
+            ],
+            "faq": [
+              {
+                "a": "すべてテイクアウト可能です。生クリーム多めなどのカスタムもお気軽にどうぞ。",
+                "q": "テイクアウトはできますか？"
+              },
+              {
+                "a": "季節限定メニューは材料がなくなり次第終了となる場合があります。最新情報はInstagramでお知らせしています。",
+                "q": "売り切れはありますか？"
+              },
+              {
+                "a": "現金のほか、主要キャッシュレス決済に対応しています。詳細は店頭でご確認ください。",
+                "q": "支払い方法は何がありますか？"
+              }
+            ],
+            "faqTitle": "東淀川区の店舗についてよくある質問",
+            "footerLinkText": "東淀川区の甘味処・クレープ",
+            "h1": "大阪市東淀川区のクレープ専門店 甘味処 よって屋",
+            "homeLinkText": "トップページへ戻る",
+            "introduction": "注文をいただいてから生地を焼き上げ、できたてのクレープをご提供しています。テイクアウトはもちろん、店舗ではイートインもご利用いただけます。",
+            "lead": "淡路・上新庄・だいどう豊里・井高野・柴島など東淀川区全域からご来店いただいています。",
+            "menuLinkText": "クレープメニューを見る",
+            "priceRange": "￥￥",
+            "schemaType": "FoodEstablishment",
+            "services": [
+              {
+                "bullets": [
+                  "季節のフルーツクレープ（限定）",
+                  "カスタード＆生クリーム（自家製ソース）",
+                  "チョコバナナ／いちごみるく ほか定番"
+                ],
+                "title": "人気メニュー"
+              },
+              {
+                "bullets": [
+                  "テイクアウト・食べ歩き",
+                  "ちょっとした手土産・差し入れ",
+                  "お子さま連れ・放課後のおやつに"
+                ],
+                "title": "ご利用シーン"
+              }
+            ],
+            "storesLinkText": "店舗情報を見る"
+          },
+          "localizedContentMode": "template",
+          "productionUrl": "https://yotteya.shop",
+          "seo": {
+            "aboutDescription": "甘味処 よって屋の想いをご紹介します。素材へのこだわりとお客様への気持ちを込めたメッセージ。",
+            "faqDescription": "テイクアウト・支払い方法・売り切れ情報など、甘味処 よって屋のクレープに関するよくある質問。",
+            "homeDescription": "大阪市東淀川区・淡路のクレープ専門店『甘味処 よって屋』。注文ごとに生地から焼き上げるこだわりクレープをご提供。テイクアウト・イートイン対応。",
+            "homeTitle": "東淀川区のクレープ専門店｜甘味処 よって屋",
+            "localDescription": "大阪市東淀川区・淡路でクレープをお探しなら「甘味処 よって屋」へ。焼きたてクレープをテイクアウト・イートインで楽しめます。",
+            "localTitle": "東淀川区のクレープ専門店｜甘味処 よって屋",
+            "productsDescription": "甘味処 よって屋のクレープメニュー一覧。季節限定・定番・カスタマイズ可能なクレープを掲載。",
+            "productsEcDescription": "甘味処 よって屋のオンライン対応メニュー一覧。お気に入りのクレープをチェック。",
+            "projectsDescription": "甘味処 よって屋のクレープ紹介ページ。季節のフルーツ・定番クリーム・チョコバナナなどを写真付きで掲載。",
+            "projectsTitle": "クレープ紹介｜甘味処 よって屋",
+            "storesDescription": "甘味処 よって屋の店舗一覧ページ。大阪市東淀川区・北区の店舗情報をご紹介します。"
+          },
+          "siteKey": "yotteya",
+          "social": {
+            "facebook": "",
+            "instagram": "https://www.instagram.com/yotteya.crape/",
+            "line": "https://lin.ee/YcKAJja",
+            "tiktok": "",
+            "x": "",
+            "youtube": ""
+          },
+          "stores": {
+            "heroAreas": "大阪市東淀川区・北区",
+            "heroIntroLine": "甘味処 よって屋は大阪市東淀川区・北区に展開するクレープ専門店です。",
+            "heroLead": "こだわりのクレープをご提供するクレープ専門店です。",
+            "heroTail": "駅チカ店から住宅街の隠れ家店まで、各店舗の営業時間・限定メニューをチェックしてください。",
+            "heroTitle": "甘味処 よって屋 ─ 店舗一覧"
+          },
+          "structuredData": {
+            "areaServed": [
+              "大阪府",
+              "大阪市東淀川区",
+              "大阪市北区"
+            ],
+            "defaultDescription": "大阪市東淀川区・淡路のクレープ専門店。焼きたてのクレープをテイクアウト・イートインで楽しめます。",
+            "openingHours": {
+              "closes": "18:00",
+              "dayOfWeek": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+              ],
+              "opens": "09:00"
+            },
+            "types": [
+              "LocalBusiness",
+              "FoodEstablishment"
+            ]
+          },
+          "vercelUrl": "https://yotteya-homepage-tsuyoshi-saitos-projects.vercel.app"
+        },
+        "domain": "yotteya.shop",
+        "domainStatus": "active",
+        "siteKey": "yotteya",
+        "wwwEnabled": true
+      }
+    },
+    "domains/yotteya.shop": {
+      "exists": true,
+      "data": {
+        "canonicalHost": "yotteya.shop",
+        "domain": "yotteya.shop",
+        "domainStatus": "active",
+        "siteKey": "yotteya",
+        "wwwEnabled": true
+      }
+    },
+    "domains/www.yotteya.shop": {
+      "exists": true,
+      "data": {
+        "canonicalHost": "yotteya.shop",
+        "domain": "yotteya.shop",
+        "domainStatus": "active",
+        "siteKey": "yotteya",
+        "wwwEnabled": true
+      }
+    }
+  }
+}

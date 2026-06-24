@@ -3,14 +3,16 @@ import { useState } from "react";
 import { ChromePicker } from "react-color";
 import { db } from "@/lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
-const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
+// [migrated to useSiteKey] META_REF
 
 export default function GradientPicker({
   defaultFrom = "#F547C9",
   defaultTo = "#FADB9F",
 }: { defaultFrom?: string; defaultTo?: string }) {
+  const siteKey = useSiteKey();
+  const META_REF = doc(db, "siteSettingsEditable", siteKey);
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
 

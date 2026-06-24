@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { db, auth } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 import ProductsClient from "./products/ProductsClient";
 import StaffClient from "./StaffClient";
@@ -16,9 +16,9 @@ import NewsClient from "./NewsClient";
 import ProjectsClient from "./ProjectsClient";
 import HoursClient from "./HoursClient";
 
-const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
+// [migrated to useSiteKey] META_REF
 
-const LS_KEY = `${SITE_KEY}:topSections`;
+// [migrated to useSiteKey] LS_KEY
 
 const TOP_DISPLAYABLE_ITEMS = [
   "products",
@@ -43,18 +43,18 @@ const MENU_ITEMS: { key: string; label: string }[] = [
   { key: "hours", label: "営業時間" },
 ];
 
-function readCache(): { activeMenuKeys: string[]; visibleMenuKeys: string[] } | null {
+function readCache(lsKey: string): { activeMenuKeys: string[]; visibleMenuKeys: string[] } | null {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(lsKey);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
-function writeCache(activeMenuKeys: string[], visibleMenuKeys: string[]) {
+function writeCache(lsKey: string, activeMenuKeys: string[], visibleMenuKeys: string[]) {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify({ activeMenuKeys, visibleMenuKeys }));
+    localStorage.setItem(lsKey, JSON.stringify({ activeMenuKeys, visibleMenuKeys }));
   } catch {
     // ignore storage errors
   }
@@ -86,13 +86,16 @@ function renderSection(key: string) {
 }
 
 export default function TopVisibleSections() {
+  const siteKey = useSiteKey();
+  const META_REF = doc(db, "siteSettingsEditable", siteKey);
+  const LS_KEY = `${siteKey}:topSections`;
   const [activeKeys, setActiveKeys] = useState<string[]>([]);
   const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // クライアントマウント直後にキャッシュを反映（SSRと競合しないよう useEffect 内で実行）
   useEffect(() => {
-    const cached = readCache();
+    const cached = readCache(LS_KEY);
     if (cached) {
       setActiveKeys(cached.activeMenuKeys);
       setVisibleKeys(cached.visibleMenuKeys);
@@ -109,10 +112,10 @@ export default function TopVisibleSections() {
       const vk = Array.isArray(data?.visibleMenuKeys) ? data!.visibleMenuKeys! : [];
       setActiveKeys(ak);
       setVisibleKeys(vk);
-      writeCache(ak, vk);
+      writeCache(LS_KEY, ak, vk);
     });
     return () => unsub();
-  }, []);
+  }, [LS_KEY, META_REF]);
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((user) => setIsLoggedIn(!!user));

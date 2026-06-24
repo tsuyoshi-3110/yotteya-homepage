@@ -1,7 +1,7 @@
 import { CompanyDoc, MediaKind } from "@/types/company";
 
 import { useState } from "react";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import {
   ref as sRef,
   uploadBytesResumable,
@@ -42,6 +42,7 @@ export function InlineMediaEditor({
   onChange: (v: CompanyDoc) => void;
   storage: FirebaseStorage;
 }) {
+  const siteKey = useSiteKey();
   const [isOver, setIsOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -104,7 +105,7 @@ export function InlineMediaEditor({
     try {
       const ext =
         file.name.split(".").pop() || (kind === "image" ? "jpg" : "mp4");
-      const path = `siteMeta/${SITE_KEY}/company/hero/${Date.now()}_${Math.random()
+      const path = `siteMeta/${siteKey}/company/hero/${Date.now()}_${Math.random()
         .toString(36)
         .slice(2)}.${ext}`;
       const storageRef = sRef(storage, path);

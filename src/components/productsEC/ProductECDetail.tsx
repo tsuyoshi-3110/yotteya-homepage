@@ -34,7 +34,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 import CardSpinner from "../CardSpinner";
 import { BusyOverlay } from "../BusyOverlay";
@@ -152,6 +152,7 @@ type StockRow = {
 type StockStatus = "in_stock" | "low" | "out";
 
 export default function ProductECDetail({ product }: { product: Product }) {
+  const siteKey = useSiteKey();
   // 権限・テーマ
   const [isAdmin, setIsAdmin] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -235,7 +236,7 @@ export default function ProductECDetail({ product }: { product: Product }) {
     const stockCol = collection(db, "stock");
     const qy = query(
       stockCol,
-      where("siteKey", "==", SITE_KEY),
+      where("siteKey", "==", siteKey),
       where("productId", "==", product.id),
       fsLimit(1),
     );
@@ -311,7 +312,7 @@ export default function ProductECDetail({ product }: { product: Product }) {
 
   // セクション購読
   useEffect(() => {
-    const secRef = collection(db, "siteSections", SITE_KEY, "sections");
+    const secRef = collection(db, "siteSections", siteKey, "sections");
     const qy = query(secRef, orderBy("createdAt", "asc"));
     const unsub = onSnapshot(qy, (snap) => {
       const rows: Section[] = snap.docs.map((d) => {
@@ -381,7 +382,7 @@ export default function ProductECDetail({ product }: { product: Product }) {
 
         const storageRef = ref(
           getStorage(),
-          `products/public/${SITE_KEY}/${product.id}.${ext}`,
+          `products/public/${siteKey}/${product.id}.${ext}`,
         );
         const task = uploadBytesResumable(storageRef, uploadFile, {
           contentType: isVideo ? file.type : "image/jpeg",
@@ -442,7 +443,7 @@ export default function ProductECDetail({ product }: { product: Product }) {
       } as const;
 
       await updateDoc(
-        doc(db, "siteProducts", SITE_KEY, "items", product.id),
+        doc(db, "siteProducts", siteKey, "items", product.id),
         payload,
       );
 
@@ -480,7 +481,7 @@ export default function ProductECDetail({ product }: { product: Product }) {
           }
         }
       }
-      await deleteDoc(doc(db, "siteProducts", SITE_KEY, "items", product.id));
+      await deleteDoc(doc(db, "siteProducts", siteKey, "items", product.id));
       router.back();
     } catch (e) {
       console.error(e);

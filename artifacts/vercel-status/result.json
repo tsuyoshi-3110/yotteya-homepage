@@ -1,0 +1,132 @@
+{
+  "before": {
+    "url": "http://localhost:3000/owner/domain",
+    "loggedIn": true,
+    "domainVisible": true,
+    "buttonPresent": true,
+    "buttonDisabled": false
+  },
+  "responses": [
+    {
+      "requestId": "63431.124",
+      "status": 200,
+      "url": "http://localhost:3000/api/admin/sites/yotteya/domain/vercel-status",
+      "body": {
+        "siteKey": "yotteya",
+        "domain": "yotteya.shop",
+        "wwwEnabled": true,
+        "status": "connection_complete",
+        "configured": true,
+        "verified": true,
+        "misconfigured": false,
+        "hosts": {
+          "apex": {
+            "hostname": "yotteya.shop",
+            "kind": "apex",
+            "status": "connection_complete",
+            "configured": true,
+            "verified": true,
+            "misconfigured": false,
+            "verification": [],
+            "redirect": {
+              "target": null,
+              "statusCode": null
+            },
+            "dns": {
+              "configuredBy": "A",
+              "recommended": [
+                {
+                  "type": "A",
+                  "rank": 1,
+                  "value": "216.198.79.1"
+                },
+                {
+                  "type": "A",
+                  "rank": 1,
+                  "value": "64.29.17.1"
+                },
+                {
+                  "type": "A",
+                  "rank": 2,
+                  "value": "76.76.21.21"
+                },
+                {
+                  "type": "CNAME",
+                  "rank": 1,
+                  "value": "675cef4eac0f0603.vercel-dns-017.com."
+                },
+                {
+                  "type": "CNAME",
+                  "rank": 2,
+                  "value": "cname.vercel-dns.com."
+                }
+              ]
+            },
+            "ssl": {
+              "status": "ready",
+              "acceptedChallenges": [
+                "http-01"
+              ]
+            }
+          },
+          "www": {
+            "hostname": "www.yotteya.shop",
+            "kind": "www",
+            "status": "connection_complete",
+            "configured": true,
+            "verified": true,
+            "misconfigured": false,
+            "verification": [],
+            "redirect": {
+              "target": "yotteya.shop",
+              "statusCode": 307
+            },
+            "dns": {
+              "configuredBy": "CNAME",
+              "recommended": [
+                {
+                  "type": "A",
+                  "rank": 1,
+                  "value": "216.198.79.1"
+                },
+                {
+                  "type": "A",
+                  "rank": 1,
+                  "value": "64.29.17.1"
+                },
+                {
+                  "type": "A",
+                  "rank": 2,
+                  "value": "76.76.21.21"
+                },
+                {
+                  "type": "CNAME",
+                  "rank": 1,
+                  "value": "675cef4eac0f0603.vercel-dns-017.com."
+                },
+                {
+                  "type": "CNAME",
+                  "rank": 2,
+                  "value": "cname.vercel-dns.com."
+                }
+              ]
+            },
+            "ssl": {
+              "status": "ready",
+              "acceptedChallenges": [
+                "http-01"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "after": {
+    "bodyText": "甘味処 よって屋\n← 管理画面へ戻る\n独自ドメイン設定\n\n現在の接続状態とDNS設定を確認し、独自ドメインを安全に変更できます。\n\n接続状態\n\n接続完了\n\n独自ドメインで安全に公開されています。\n\n設定を編集\n\nプロトコルやパスを含めず、wwwを除いたドメイン名だけを入力してください。\n\n独自ドメイン\nwww.example.com も利用する\n変更を保存\nVercel接続状態\n\nVercelの現在状態を読み取り専用で確認します。登録や修正は行いません。\n\nVercel接続状態を確認\n\nAPEX\n\nyotteya.shop\n接続完了\n検証\n検証済み\nDNS\nA\nSSL\n証明書発行可能\nリダイレクト\nなし\n\nWWW\n\nwww.yotteya.shop\n接続完了\n検証\n検証済み\nDNS\nCNAME\nSSL\n証明書発行可能\nリダイレクト\nyotteya.shop (307)\nドメイン情報\n独自ドメイン\nyotteya.shop\n正規ドメイン\nyotteya.shop\nwww利用\n利用する\n登録ホスト\nwww.yotteya.shop\nyotteya.shop\nDNS設定\n\nVercel APIが返した現在の推奨値です。既存表示と異なる場合はこちらを優先してください。\n\n種類\nA\n\nホスト名\n\n@\n\n値\n\n216.198.79.1\n値をコピー\n種類\nA\n\nホスト名\n\n@\n\n値\n\n64.29.17.1\n値をコピー\n種類\nA\n\nホスト名\n\n@\n\n値\n\n76.76.21.21\n値をコピー\n種類\nCNAME\n\nホスト名\n\n@\n\n値\n\n675cef4eac0f0603.vercel-dns-017.com.\n値をコピー\n種類\nCNAME\n\nホスト名\n\n@\n\n値\n\ncname.vercel-dns.com.\n値をコピー\n種類\nA\n\nホスト名\n\nwww\n\n値\n\n216.198.79.1\n値をコピー\n種類\nA\n\nホスト名\n\nwww\n\n値\n\n64.29.17.1\n値をコピー\n種類\nA\n\nホスト名\n\nwww\n\n値\n\n76.76.21.21\n値をコピー\n種類\nCNAME\n\nホスト名\n\nwww\n\n値\n\n675cef4eac0f0603.vercel-dns-017.com.\n値をコピー\n種類\nCNAME\n\nホスト名\n\nwww\n\n値\n\ncname.vercel-dns.com.\n値をコピー\nお問い合わせ\n連絡先を保存\n\n東淀川区の甘味処・クレープ\n\n甘味処 よって屋\n\n© 2026 Tayotteya. All rights reserved.",
+    "checking": false,
+    "failure": false,
+    "apexVisible": true,
+    "wwwVisible": true
+  }
+}

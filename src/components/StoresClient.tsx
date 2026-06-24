@@ -52,7 +52,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import { LANGS, type LangKey } from "@/lib/langs";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
 import StoreReviews from "./StoreReviews";
@@ -60,9 +60,9 @@ import { BusyOverlay } from "./BusyOverlay";
 import { UILang } from "@/lib/langsState";
 
 /* ======================== 定数/型 ======================== */
-const STORE_COL = `siteStores/${SITE_KEY}/items`;
-const STORAGE_PATH = `stores/public/${SITE_KEY}`;
-const META_EDIT_REF = doc(db, "siteSettingsEditable", SITE_KEY);
+// [migrated to useSiteKey] STORE_COL
+// [migrated to useSiteKey] STORAGE_PATH
+// [migrated to useSiteKey] META_EDIT_REF
 
 const STORES_T: Record<UILang, { page: string }> = {
   ja: { page: "店舗一覧" },
@@ -206,6 +206,10 @@ async function translateAllStore(
 
 /* ======================== 本体 ======================== */
 export default function StoresClient() {
+  const siteKey = useSiteKey();
+  const STORE_COL = `siteStores/${siteKey}/items`;
+  const STORAGE_PATH = `stores/public/${siteKey}`;
+  const META_EDIT_REF = doc(db, "siteSettingsEditable", siteKey);
   const { uiLang } = useUILang();
 
   const [stores, setStores] = useState<StoreDoc[]>([]);
@@ -1055,6 +1059,8 @@ function StoreCard({
   googleEnabled,
   gradientClass,
 }: StoreCardProps) {
+  const siteKey = useSiteKey();
+  const STORE_COL = `siteStores/${siteKey}/items`;
   const addrLines = splitLines(locAddress);
   const primaryAddr = addrLines[0] ?? "";
 

@@ -4,20 +4,18 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { THEMES, ThemeKey } from "@/lib/themes";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
-
-
-const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 function isThemeKey(value: unknown): value is ThemeKey {
   return typeof value === "string" && Object.keys(THEMES).includes(value);
 }
 
 export default function ThemeBackground() {
-  const [theme, setTheme] = useState<ThemeKey | null>(null); // 初期は null
+  const siteKey = useSiteKey();
+  const [theme, setTheme] = useState<ThemeKey | null>(null);
 
   useEffect(() => {
-    const unsub = onSnapshot(META_REF, (snap) => {
+    const unsub = onSnapshot(doc(db, "siteSettingsEditable", siteKey), (snap) => {
       if (snap.exists()) {
         const data = snap.data();
         if (isThemeKey(data.themeGradient)) {
@@ -27,9 +25,9 @@ export default function ThemeBackground() {
     });
 
     return () => unsub();
-  }, []);
+  }, [siteKey]);
 
-  if (theme === null) return null; // ← Firestoreが未取得なら描画しない
+  if (theme === null) return null;
 
   return (
     <div

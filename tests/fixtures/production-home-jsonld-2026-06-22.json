@@ -1,0 +1,52 @@
+{
+  "source": "https://yotteya.shop/",
+  "capturedAt": "2026-06-22",
+  "scripts": [
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://yotteya.shop#org",
+          "name": "甘味処 よって屋",
+          "url": "https://yotteya.shop",
+          "logo": "https://yotteya.shop/images/ogpLogo.png",
+          "image": [
+            "https://yotteya.shop/images/ogpLogo.png"
+          ],
+          "sameAs": [
+            "https://www.instagram.com/yotteya.crape/",
+            "https://lin.ee/YcKAJja"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://yotteya.shop#website",
+          "name": "甘味処 よって屋",
+          "url": "https://yotteya.shop",
+          "publisher": {
+            "@id": "https://yotteya.shop#org"
+          }
+        },
+        {
+          "@type": "LocalBusiness",
+          "@id": "https://yotteya.shop#local",
+          "name": "甘味処 よって屋",
+          "url": "https://yotteya.shop",
+          "image": [
+            "https://yotteya.shop/images/ogpLogo.png"
+          ],
+          "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "JP",
+            "addressRegion": "大阪府",
+            "addressLocality": "大阪市東淀川区",
+            "streetAddress": "淡路４丁目１８−１６"
+          },
+          "hasMap": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E9%98%AA%E5%B8%82%E6%9D%B1%E6%B7%80%E5%B7%9D%E5%8C%BA%E6%B7%A1%E8%B7%AF%EF%BC%94%E4%B8%81%E7%9B%AE%EF%BC%91%EF%BC%98%E2%88%92%EF%BC%91%EF%BC%96",
+          "priceRange": "￥￥"
+        }
+      ]
+    }
+  ]
+}

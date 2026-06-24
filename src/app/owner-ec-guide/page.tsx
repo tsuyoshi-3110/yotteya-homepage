@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { db, auth } from "@/lib/firebase";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -84,6 +84,7 @@ function normalizeShip(raw: any): ShippingPolicy {
 
 /* ========= Page ========= */
 export default function OwnerECGuidePage() {
+  const siteKey = useSiteKey();
   const [isAdmin, setIsAdmin] = useState(false);
   const [s, setS] = useState<OwnerSettings>({});
   const [refund, setRefund] = useState<RefundLite>({});
@@ -111,7 +112,7 @@ export default function OwnerECGuidePage() {
       try {
         // 事業者情報（siteSettings/{SITE_KEY}）
         try {
-          const settingsSnap = await getDoc(doc(db, "siteSettings", SITE_KEY));
+          const settingsSnap = await getDoc(doc(db, "siteSettings", siteKey));
           if (!alive) return;
           setS((settingsSnap.data() as any) ?? {});
         } catch {}
@@ -119,7 +120,7 @@ export default function OwnerECGuidePage() {
         // 返金ポリシー：API -> Firestore（現行）-> Firestore（互換）
         try {
           const res = await fetch(
-            `/api/policies/refund?siteKey=${encodeURIComponent(SITE_KEY)}`,
+            `/api/policies/refund?siteKey=${encodeURIComponent(siteKey)}`,
             { cache: "no-store" }
           );
           if (res.ok) {
@@ -129,13 +130,13 @@ export default function OwnerECGuidePage() {
           } else {
             // Firestore 現行パス
             const snap1 = await getDoc(
-              doc(db, "sites", SITE_KEY, "policies", "refund")
+              doc(db, "sites", siteKey, "policies", "refund")
             );
             if (!alive) return;
             if (snap1.exists()) setRefund(normalizeRefund(snap1.data()));
             else {
               // Firestore 旧/互換パス（必要なら）
-              const snap2 = await getDoc(doc(db, "sitePolicies", SITE_KEY));
+              const snap2 = await getDoc(doc(db, "sitePolicies", siteKey));
               if (!alive) return;
               if (snap2.exists()) setRefund(normalizeRefund(snap2.data()));
               else setRefund({});
@@ -144,13 +145,13 @@ export default function OwnerECGuidePage() {
         } catch {
           // Firestore 現行パス
           const snap1 = await getDoc(
-            doc(db, "sites", SITE_KEY, "policies", "refund")
+            doc(db, "sites", siteKey, "policies", "refund")
           );
           if (!alive) return;
           if (snap1.exists()) setRefund(normalizeRefund(snap1.data()));
           else {
             // Firestore 旧/互換パス
-            const snap2 = await getDoc(doc(db, "sitePolicies", SITE_KEY));
+            const snap2 = await getDoc(doc(db, "sitePolicies", siteKey));
             if (!alive) return;
             if (snap2.exists()) setRefund(normalizeRefund(snap2.data()));
             else setRefund({});
@@ -160,7 +161,7 @@ export default function OwnerECGuidePage() {
         // 出荷目安（siteShippingPolicy/{SITE_KEY}）
         try {
           const shipSnap = await getDoc(
-            doc(db, "siteShippingPolicy", SITE_KEY)
+            doc(db, "siteShippingPolicy", siteKey)
           );
           if (!alive) return;
           if (shipSnap.exists()) setShip(normalizeShip(shipSnap.data()));
@@ -168,7 +169,7 @@ export default function OwnerECGuidePage() {
 
         // EC状態（siteSellers/{SITE_KEY}）
         try {
-          const sellerSnap = await getDoc(doc(db, "siteSellers", SITE_KEY));
+          const sellerSnap = await getDoc(doc(db, "siteSellers", siteKey));
           if (!alive) return;
           if (sellerSnap.exists()) setSeller(sellerSnap.data() as any);
         } catch {}
@@ -237,7 +238,7 @@ export default function OwnerECGuidePage() {
     try {
       setSaving(true);
       await setDoc(
-        doc(db, "siteSellers", SITE_KEY),
+        doc(db, "siteSellers", siteKey),
         {
           ecStop: false,
           ecGuideAcceptedAt: serverTimestamp(),
@@ -339,7 +340,7 @@ export default function OwnerECGuidePage() {
                 )}
                 <div>
                   <p className="font-medium">
-                    返品・返金ポリシー（sites/{SITE_KEY}/policies/refund）
+                    返品・返金ポリシー（sites/{siteKey}/policies/refund）
                   </p>
                   <p className="text-sm text-gray-600">
                     {refund.enabled ? "有効" : "未有効"}／連絡期限：

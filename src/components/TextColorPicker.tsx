@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
+import { useSiteKey } from "@/lib/atoms/siteKeyAtom";
 
 /* ───────── プリセット ───────── */
 const PRESETS_DARK = [
@@ -165,6 +165,7 @@ function applyOutline(enabled: boolean, color: string) {
 }
 
 export default function TextColorPicker() {
+  const siteKey = useSiteKey();
   const [tab, setTab] = useState<Tab>("content");
   const [colors, setColors] = useState<Record<ColorField, string>>({
     textColorBody:   "#1a1a1a",
@@ -179,7 +180,7 @@ export default function TextColorPicker() {
   /* 初回ロード */
   useEffect(() => {
     (async () => {
-      const snap = await getDoc(doc(db, "assets", SITE_KEY));
+      const snap = await getDoc(doc(db, "assets", siteKey));
       if (!snap.exists()) return;
       const data = snap.data();
 
@@ -206,7 +207,7 @@ export default function TextColorPicker() {
     setColors((p) => ({ ...p, [field]: value }));
     document.documentElement.style.setProperty(CSS_VAR_MAP[field], value);
     setSaving(true);
-    try { await setDoc(doc(db, "assets", SITE_KEY), { [field]: value }, { merge: true }); }
+    try { await setDoc(doc(db, "assets", siteKey), { [field]: value }, { merge: true }); }
     finally { setSaving(false); }
   };
 
@@ -215,7 +216,7 @@ export default function TextColorPicker() {
     setOutlineEnabled(enabled);
     applyOutline(enabled, outlineColor);
     setSaving(true);
-    try { await setDoc(doc(db, "assets", SITE_KEY), { textOutlineEnabled: enabled }, { merge: true }); }
+    try { await setDoc(doc(db, "assets", siteKey), { textOutlineEnabled: enabled }, { merge: true }); }
     finally { setSaving(false); }
   };
 
@@ -224,7 +225,7 @@ export default function TextColorPicker() {
     setOutlineColor(color);
     if (outlineEnabled) applyOutline(true, color);
     setSaving(true);
-    try { await setDoc(doc(db, "assets", SITE_KEY), { textOutlineColor: color }, { merge: true }); }
+    try { await setDoc(doc(db, "assets", siteKey), { textOutlineColor: color }, { merge: true }); }
     finally { setSaving(false); }
   };
 
