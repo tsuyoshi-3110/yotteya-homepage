@@ -168,16 +168,19 @@ export default function ImageLogoControls({
     <div className={`flex gap-8`}>
       <div className="flex flex-col items-center gap-1">
         <span className="text-sm text-white">背景画像</span>
+        <span className="text-xs text-white/60">推奨: 1920×1080px</span>
         <ThemeWallpaper onFileSelect={uploadImage} />
       </div>
 
       <div className="flex flex-col items-center gap-1">
         <span className="text-sm text-white">ロゴ画像</span>
+        <span className="text-xs text-white/60">推奨: 320×160px</span>
         <HeaderLogoPicker onSelectFile={uploadHeaderImage} />
       </div>
 
       <div className="flex flex-col items-center gap-1">
         <span className="text-sm text-white">favicon</span>
+        <span className="text-xs text-white/60">推奨: 256×256px</span>
         <FaviconPicker onSelectFile={uploadFavicon} />
       </div>
 
