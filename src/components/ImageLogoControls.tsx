@@ -12,18 +12,13 @@ import { db } from "@/lib/firebase";
 import imageCompression from "browser-image-compression";
 import ThemeWallpaper from "./ThemeWallpaper";
 import HeaderLogoPicker from "./HeaderLogoPicker";
+import FaviconPicker from "./FaviconPicker";
 
 type Props = {
-  /** どのサイトの設定か（customer.ts の siteKey） */
   siteKey: string;
-  /** Firestore のコレクション（既定: "siteSettingsEditable"） */
   collectionName?: string;
-  /** 位置調整などに使う追加クラス */
-
-  /** 進捗を親でも使いたい場合（任意） */
   onProgress?: (percent: number | null) => void;
-  /** 完了後に親へ通知したい場合（任意） */
-  onDone?: (type: "wallpaper" | "logo", url: string) => void;
+  onDone?: (type: "wallpaper" | "logo" | "favicon", url: string) => void;
 };
 
 export default function ImageLogoControls({
@@ -124,6 +119,51 @@ export default function ImageLogoControls({
     );
   };
 
+  const uploadFavicon = async (file: File) => {
+    const faviconPath = `images/public/${siteKey}/favicon.png`;
+    const faviconRef = ref(getStorage(), faviconPath);
+
+    const compressedFile = await imageCompression(file, {
+      maxWidthOrHeight: 256,
+      maxSizeMB: 0.2,
+      initialQuality: 0.9,
+      useWebWorker: true,
+    });
+
+    try {
+      await deleteObject(faviconRef);
+    } catch {}
+
+    const task = uploadBytesResumable(faviconRef, compressedFile);
+    setP(0);
+
+    task.on(
+      "state_changed",
+      (snapshot) => {
+        const percent = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
+        );
+        setP(percent);
+      },
+      (error) => {
+        console.error("faviconアップロード失敗:", error);
+        setP(null);
+        alert("アップロードに失敗しました");
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(faviconRef);
+        await setDoc(
+          doc(db, collectionName, siteKey),
+          { faviconUrl: downloadURL },
+          { merge: true },
+        );
+        setP(null);
+        onDone?.("favicon", downloadURL);
+        alert("faviconを更新しました！");
+      },
+    );
+  };
+
   return (
     <div className={`flex gap-8`}>
       <div className="flex flex-col items-center gap-1">
@@ -134,6 +174,11 @@ export default function ImageLogoControls({
       <div className="flex flex-col items-center gap-1">
         <span className="text-sm text-white">ロゴ画像</span>
         <HeaderLogoPicker onSelectFile={uploadHeaderImage} />
+      </div>
+
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-sm text-white">favicon</span>
+        <FaviconPicker onSelectFile={uploadFavicon} />
       </div>
 
       {/* 進捗UI（任意） */}

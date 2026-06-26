@@ -55,13 +55,25 @@ export async function generateMetadata(): Promise<Metadata> {
         ? editableDoc.headerLogoUrl
         : null;
 
+    const faviconUrl =
+      typeof editableDoc?.faviconUrl === "string" &&
+      editableDoc.faviconUrl.startsWith("https://")
+        ? editableDoc.faviconUrl
+        : null;
+
+    const resolvedFavicon = faviconUrl ?? logoUrl;
+
     return {
       ...base,
       title,
       description,
-      icons: logoUrl
-        ? { icon: [{ url: logoUrl, type: "image/png" }], apple: logoUrl }
-        : undefined,
+      icons: resolvedFavicon
+        ? {
+            icon: [{ url: resolvedFavicon, type: "image/png" }],
+            apple: logoUrl ?? resolvedFavicon,
+            shortcut: resolvedFavicon,
+          }
+        : base.icons,
       openGraph: base.openGraph
         ? { ...base.openGraph, title, description, siteName }
         : undefined,
@@ -70,7 +82,7 @@ export async function generateMetadata(): Promise<Metadata> {
         : undefined,
     };
   } catch {
-    return { ...base, icons: undefined };
+    return base;
   }
 }
 
