@@ -148,7 +148,7 @@ export default function HomePageText() {
                 <input
                   value={draftHeadline}
                   onChange={(e) => setDraftHeadline(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="店舗名"
                 />
               </div>
@@ -159,7 +159,7 @@ export default function HomePageText() {
                   value={draftDesc}
                   onChange={(e) => setDraftDesc(e.target.value)}
                   rows={5}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
                   placeholder="お店の紹介文を入力..."
                 />
                 <p className="text-right text-xs text-gray-400">{draftDesc.length}文字</p>
@@ -168,7 +168,7 @@ export default function HomePageText() {
               <div className="flex gap-3 justify-end pt-2">
                 <button
                   onClick={() => setEditing(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   キャンセル
                 </button>
